@@ -5,4 +5,4 @@ class PersonSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Person
         geo_field = "location"
-        fields = ('id', 'tag', 'location')
+        fields = ('id', 'first_name', 'last_name', 'tag', 'city', 'state', 'country', 'street', 'birthday', 'phone_number', 'location')
