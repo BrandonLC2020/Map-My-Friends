@@ -138,7 +138,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                     val == null || val.isEmpty ? 'Required' : null,
               ),
               DropdownButtonFormField<String>(
-                value: _tagController.text.isNotEmpty
+                initialValue: _tagController.text.isNotEmpty
                     ? _tagController.text
                     : 'FRIEND',
                 items: const [

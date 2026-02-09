@@ -4,7 +4,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../bloc/location/location_bloc.dart';
 import '../bloc/people/people_bloc.dart';
-import '../models/person.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
