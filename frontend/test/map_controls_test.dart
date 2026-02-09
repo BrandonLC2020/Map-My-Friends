@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,8 +6,7 @@ import 'package:frontend/bloc/people/people_bloc.dart';
 import 'package:frontend/screens/map/map_screen.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:frontend/models/person.dart'; // Needed for List<Person>
+// import 'package:frontend/components/map_controls.dart'; // Implicitly tested via MapScreen
 
 // Mock ApiService
 class MockApiService implements ApiService {

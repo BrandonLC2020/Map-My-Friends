@@ -11,6 +11,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/map/map_screen.dart';
 import 'screens/people/people_screen.dart';
 import 'screens/profile/me_screen.dart';
+import 'utils/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,10 +41,9 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Map My Friends',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
         home: const AuthWrapper(),
       ),
     );
