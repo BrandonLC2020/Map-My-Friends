@@ -11,6 +11,7 @@ class Person {
   final String? phoneNumber;
   final double? latitude;
   final double? longitude;
+  final String? profileImageUrl;
 
   Person({
     required this.id,
@@ -25,6 +26,7 @@ class Person {
     this.phoneNumber,
     this.latitude,
     this.longitude,
+    this.profileImageUrl,
   });
 
   factory Person.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class Person {
       phoneNumber: json['phone_number'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
+      profileImageUrl: json['profile_image'] as String?,
     );
   }
 
@@ -79,6 +82,7 @@ class Person {
     String? phoneNumber,
     double? latitude,
     double? longitude,
+    String? profileImageUrl,
   }) {
     return Person(
       id: id ?? this.id,
@@ -93,6 +97,7 @@ class Person {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 }

@@ -10,6 +10,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app # Syncs your local backend folder to the container
+      - media_data:/app/media # Persist uploaded media files
     ports:
       - "8000:8000"
     depends_on:
@@ -35,3 +36,4 @@ services:
 
 volumes:
   postgres_data:
+  media_data:

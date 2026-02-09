@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/person.dart';
-import '../bloc/people/people_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../models/person.dart';
+import '../../bloc/people/people_bloc.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -14,6 +16,7 @@ class AddEditPersonScreen extends StatefulWidget {
 
 class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _imagePicker = ImagePicker();
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -23,7 +26,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   late TextEditingController _countryController;
   late TextEditingController _streetController;
   late TextEditingController _phoneController;
-  DateTime? _birthday; // Handling date
+  DateTime? _birthday;
+  File? _selectedImage;
+  String? _existingImageUrl;
 
   @override
   void initState() {
@@ -49,6 +54,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
       text: widget.person?.phoneNumber ?? '',
     );
     _birthday = widget.person?.birthday;
+    _existingImageUrl = widget.person?.profileImageUrl;
   }
 
   @override
@@ -64,14 +70,74 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+    }
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            if (_selectedImage != null || _existingImageUrl != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  'Remove Photo',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedImage = null;
+                    _existingImageUrl = null;
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _save() {
     if (_formKey.currentState!.validate()) {
       final person = Person(
-        id:
-            widget.person?.id ??
-            '', // ID handled by backend if empty string? Or maybe omit. Backend likely assigns ID.
-        // If ID is empty, backend assigns. But here we need to know if update or add.
-        // If widget.person is not null, update.
+        id: widget.person?.id ?? '',
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         relationshipTag: _tagController.text,
@@ -85,14 +151,19 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             ? _phoneController.text
             : null,
         birthday: _birthday,
-        latitude: widget.person?.latitude, // Should ideally geocode the address
+        latitude: widget.person?.latitude,
         longitude: widget.person?.longitude,
+        profileImageUrl: _existingImageUrl,
       );
 
       if (widget.person != null) {
-        context.read<PeopleBloc>().add(UpdatePerson(person));
+        context.read<PeopleBloc>().add(
+          UpdatePerson(person, profileImage: _selectedImage),
+        );
       } else {
-        context.read<PeopleBloc>().add(AddPerson(person));
+        context.read<PeopleBloc>().add(
+          AddPerson(person, profileImage: _selectedImage),
+        );
       }
       Navigator.pop(context);
     }
@@ -103,6 +174,47 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
       context.read<PeopleBloc>().add(DeletePerson(widget.person!.id));
       Navigator.pop(context);
     }
+  }
+
+  Widget _buildProfileImagePicker() {
+    return Center(
+      child: GestureDetector(
+        onTap: _showImagePickerOptions,
+        child: Stack(
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.grey[300],
+              backgroundImage: _selectedImage != null
+                  ? FileImage(_selectedImage!)
+                  : (_existingImageUrl != null
+                            ? NetworkImage(_existingImageUrl!)
+                            : null)
+                        as ImageProvider?,
+              child: (_selectedImage == null && _existingImageUrl == null)
+                  ? Icon(Icons.person, size: 60, color: Colors.grey[600])
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -130,6 +242,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                   key: _formKey,
                   child: ListView(
                     children: [
+                      _buildProfileImagePicker(),
+                      const SizedBox(height: 24),
                       TextFormField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(
@@ -147,7 +261,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                             val == null || val.isEmpty ? 'Required' : null,
                       ),
                       DropdownButtonFormField<String>(
-                        initialValue: _tagController.text.isNotEmpty
+                        value: _tagController.text.isNotEmpty
                             ? _tagController.text
                             : 'FRIEND',
                         items: const [

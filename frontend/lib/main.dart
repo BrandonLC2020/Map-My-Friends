@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'bloc/auth/auth_bloc.dart';
+import 'bloc/auth/auth_event.dart';
+import 'bloc/auth/auth_state.dart';
 import 'bloc/location/location_bloc.dart';
 import 'bloc/people/people_bloc.dart';
+import 'bloc/profile/profile_bloc.dart';
 import 'services/api_service.dart';
-import 'screens/map_screen.dart';
-import 'screens/people_screen.dart';
-import 'screens/me_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/map/map_screen.dart';
+import 'screens/people/people_screen.dart';
+import 'screens/profile/me_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,6 +26,9 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc()..add(CheckAuthStatus()),
+        ),
         BlocProvider<LocationBloc>(
           create: (context) => LocationBloc()..add(LoadLocation()),
         ),
@@ -28,6 +36,7 @@ class MyApp extends StatelessWidget {
           create: (context) =>
               PeopleBloc(apiService: apiService)..add(LoadPeople()),
         ),
+        BlocProvider<ProfileBloc>(create: (context) => ProfileBloc()),
       ],
       child: MaterialApp(
         title: 'Map My Friends',
@@ -35,8 +44,31 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home: const MainScreen(),
+        home: const AuthWrapper(),
       ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthInitial || state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is Authenticated) {
+          return const MainScreen();
+        }
+
+        return const LoginScreen();
+      },
     );
   }
 }
@@ -70,6 +102,10 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _logout() {
+    context.read<AuthBloc>().add(LogoutRequested());
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -79,6 +115,16 @@ class _MainScreenState extends State<MainScreen> {
         if (isDesktop) {
           // Desktop layout with NavigationRail
           return Scaffold(
+            appBar: AppBar(
+              title: const Text('Map My Friends'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: _logout,
+                  tooltip: 'Logout',
+                ),
+              ],
+            ),
             body: Row(
               children: [
                 NavigationRail(
@@ -111,6 +157,16 @@ class _MainScreenState extends State<MainScreen> {
         } else {
           // Mobile layout with BottomNavigationBar
           return Scaffold(
+            appBar: AppBar(
+              title: const Text('Map My Friends'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: _logout,
+                  tooltip: 'Logout',
+                ),
+              ],
+            ),
             body: _getScreen(_selectedIndex),
             bottomNavigationBar: BottomNavigationBar(
               items: const <BottomNavigationBarItem>[

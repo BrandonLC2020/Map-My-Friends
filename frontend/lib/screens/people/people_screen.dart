@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/people/people_bloc.dart';
+import '../../bloc/people/people_bloc.dart';
 import 'add_edit_person_screen.dart';
 
 class PeopleScreen extends StatelessWidget {

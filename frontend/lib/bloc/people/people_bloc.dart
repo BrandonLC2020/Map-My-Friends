@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../models/person.dart';
@@ -35,7 +36,10 @@ class PeopleBloc extends Bloc<PeopleEvent, PeopleState> {
     final currentState = state;
     if (currentState is PeopleLoaded) {
       try {
-        final newPerson = await _apiService.addPerson(event.person);
+        final newPerson = await _apiService.addPerson(
+          event.person,
+          profileImage: event.profileImage,
+        );
         final updatedList = List<Person>.from(currentState.people)
           ..add(newPerson);
         emit(PeopleLoaded(updatedList));
@@ -59,7 +63,10 @@ class PeopleBloc extends Bloc<PeopleEvent, PeopleState> {
     final currentState = state;
     if (currentState is PeopleLoaded) {
       try {
-        final updatedPerson = await _apiService.updatePerson(event.person);
+        final updatedPerson = await _apiService.updatePerson(
+          event.person,
+          profileImage: event.profileImage,
+        );
         final updatedList = currentState.people.map((p) {
           return p.id == updatedPerson.id ? updatedPerson : p;
         }).toList();

@@ -1,15 +1,11 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/person.dart';
+import 'auth_service.dart';
 
 class ApiService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl:
-          'http://localhost:8000/api/', // Adjust for emulator/device if needed (10.0.2.2 for Android emulator)
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 3),
-    ),
-  );
+  late final Dio _dio;
+  final AuthService _authService = AuthService();
 
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -18,7 +14,42 @@ class ApiService {
     return _instance;
   }
 
-  ApiService._internal();
+  ApiService._internal() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'http://localhost:8000/api/',
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 3),
+      ),
+    );
+
+    // Add auth interceptor
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _authService.getAccessToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            // Try to refresh the token
+            final newToken = await _authService.refreshAccessToken();
+            if (newToken != null) {
+              // Retry the request with new token
+              error.requestOptions.headers['Authorization'] =
+                  'Bearer $newToken';
+              final response = await _dio.fetch(error.requestOptions);
+              return handler.resolve(response);
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+  }
 
   Future<List<Person>> getPeople() async {
     try {
@@ -34,9 +65,23 @@ class ApiService {
     }
   }
 
-  Future<Person> addPerson(Person person) async {
+  Future<Person> addPerson(Person person, {File? profileImage}) async {
     try {
-      final response = await _dio.post('people/', data: person.toJson());
+      FormData formData;
+
+      if (profileImage != null) {
+        formData = FormData.fromMap({
+          ...person.toJson(),
+          'profile_image': await MultipartFile.fromFile(
+            profileImage.path,
+            filename: profileImage.path.split('/').last,
+          ),
+        });
+      } else {
+        formData = FormData.fromMap(person.toJson());
+      }
+
+      final response = await _dio.post('people/', data: formData);
       if (response.statusCode == 201) {
         return Person.fromJson(response.data);
       } else {
@@ -47,12 +92,23 @@ class ApiService {
     }
   }
 
-  Future<Person> updatePerson(Person person) async {
+  Future<Person> updatePerson(Person person, {File? profileImage}) async {
     try {
-      final response = await _dio.put(
-        'people/${person.id}/',
-        data: person.toJson(),
-      );
+      FormData formData;
+
+      if (profileImage != null) {
+        formData = FormData.fromMap({
+          ...person.toJson(),
+          'profile_image': await MultipartFile.fromFile(
+            profileImage.path,
+            filename: profileImage.path.split('/').last,
+          ),
+        });
+      } else {
+        formData = FormData.fromMap(person.toJson());
+      }
+
+      final response = await _dio.put('people/${person.id}/', data: formData);
       if (response.statusCode == 200) {
         return Person.fromJson(response.data);
       } else {

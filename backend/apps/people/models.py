@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models
 
+
 class Person(models.Model):
     TAG_CHOICES = [
         ('FRIEND', 'Friend'),
@@ -18,6 +19,8 @@ class Person(models.Model):
     
     birthday = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     
     location = models.PointField()
 
