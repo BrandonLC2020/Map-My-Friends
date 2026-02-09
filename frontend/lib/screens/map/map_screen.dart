@@ -19,7 +19,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Map')),
       body: BlocConsumer<LocationBloc, LocationState>(
         listener: (context, state) {
           if (state is LocationLoaded && state.position != null) {

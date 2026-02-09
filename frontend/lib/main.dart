@@ -12,6 +12,7 @@ import 'screens/map/map_screen.dart';
 import 'screens/people/people_screen.dart';
 import 'screens/profile/me_screen.dart';
 import 'utils/app_theme.dart';
+import 'components/glass_container.dart';
 
 void main() {
   runApp(const MyApp());
@@ -112,78 +113,196 @@ class _MainScreenState extends State<MainScreen> {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 600;
 
-        if (isDesktop) {
-          // Desktop layout with NavigationRail
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Map My Friends'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: _logout,
-                  tooltip: 'Logout',
-                ),
-              ],
-            ),
-            body: Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: _onItemTapped,
-                  labelType: NavigationRailLabelType.all,
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.map_outlined),
-                      selectedIcon: Icon(Icons.map),
-                      label: Text('Map'),
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          // Removed AppBar as requested
+          body: Stack(
+            children: [
+              // Content Layer
+              Positioned.fill(child: _getScreen(_selectedIndex)),
+
+              // Mobile Floating Logout Button (Top Right)
+              if (!isDesktop)
+                Positioned(
+                  top: 50, // Safe area padding
+                  right: 20,
+                  child: GlassContainer(
+                    padding: EdgeInsets.zero,
+                    borderRadius: 30,
+                    child: IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.indigo),
+                      onPressed: _logout,
+                      tooltip: 'Logout',
                     ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.people_outline),
-                      selectedIcon: Icon(Icons.people),
-                      label: Text('People'),
+                  ),
+                ),
+
+              // Glass Navigation Rail (Desktop)
+              if (isDesktop)
+                Positioned(
+                  left: 20,
+                  top: 20,
+                  bottom: 20,
+                  child: GlassContainer(
+                    width: 80,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        // App Logo or Icon could go here
+                        const Icon(
+                          Icons.map_outlined,
+                          size: 32,
+                          color: Colors.indigo,
+                        ),
+                        const SizedBox(height: 40),
+
+                        _buildGlassNavItem(
+                          icon: Icons.map_outlined,
+                          selectedIcon: Icons.map,
+                          label: 'Map',
+                          index: 0,
+                          isSelected: _selectedIndex == 0,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildGlassNavItem(
+                          icon: Icons.people_outline,
+                          selectedIcon: Icons.people,
+                          label: 'People',
+                          index: 1,
+                          isSelected: _selectedIndex == 1,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildGlassNavItem(
+                          icon: Icons.person_outline,
+                          selectedIcon: Icons.person,
+                          label: 'Me',
+                          index: 2,
+                          isSelected: _selectedIndex == 2,
+                        ),
+
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.indigo),
+                          onPressed: _logout,
+                          tooltip: 'Logout',
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.person_outline),
-                      selectedIcon: Icon(Icons.person),
-                      label: Text('Me'),
+                  ),
+                ),
+
+              // Glass Bottom Navigation (Mobile)
+              if (!isDesktop)
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 20,
+                  child: GlassContainer(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
                     ),
-                  ],
+                    borderRadius: 30,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildGlassNavItemMobile(
+                          icon: Icons.map,
+                          label: 'Map',
+                          index: 0,
+                          isSelected: _selectedIndex == 0,
+                        ),
+                        _buildGlassNavItemMobile(
+                          icon: Icons.people,
+                          label: 'People',
+                          index: 1,
+                          isSelected: _selectedIndex == 1,
+                        ),
+                        _buildGlassNavItemMobile(
+                          icon: Icons.person,
+                          label: 'Me',
+                          index: 2,
+                          isSelected: _selectedIndex == 2,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
-                Expanded(child: _getScreen(_selectedIndex)),
-              ],
-            ),
-          );
-        } else {
-          // Mobile layout with BottomNavigationBar
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Map My Friends'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: _logout,
-                  tooltip: 'Logout',
-                ),
-              ],
-            ),
-            body: _getScreen(_selectedIndex),
-            bottomNavigationBar: BottomNavigationBar(
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.people),
-                  label: 'People',
-                ),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Me'),
-              ],
-              currentIndex: _selectedIndex,
-              selectedItemColor: Colors.blue,
-              onTap: _onItemTapped,
-            ),
-          );
-        }
+            ],
+          ),
+        );
       },
+    );
+  }
+
+  Widget _buildGlassNavItem({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required int index,
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: () => _onItemTapped(index),
+      child: Container(
+        width: 60,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: isSelected
+            ? BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              )
+            : null,
+        child: Column(
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? Colors.indigo : Colors.grey[700],
+              size: 28,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.indigo : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassNavItemMobile({
+    required IconData icon,
+    required String label,
+    required int index,
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? Colors.indigo : Colors.grey[700],
+            size: 28,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Colors.indigo : Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
