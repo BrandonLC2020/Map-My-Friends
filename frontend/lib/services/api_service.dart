@@ -55,8 +55,16 @@ class ApiService {
     try {
       final response = await _dio.get('people/');
       if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        return data.map((json) => Person.fromJson(json)).toList();
+        final data = response.data;
+        if (data is Map<String, dynamic> &&
+            data['type'] == 'FeatureCollection') {
+          final features = data['features'] as List;
+          return features.map((json) => Person.fromGeoJson(json)).toList();
+        } else if (data is List) {
+          return data.map((json) => Person.fromJson(json)).toList();
+        } else {
+          throw Exception('Unexpected response format');
+        }
       } else {
         throw Exception('Failed to load people');
       }
@@ -83,7 +91,7 @@ class ApiService {
 
       final response = await _dio.post('people/', data: formData);
       if (response.statusCode == 201) {
-        return Person.fromJson(response.data);
+        return Person.fromGeoJson(response.data);
       } else {
         throw Exception('Failed to add person');
       }
@@ -110,7 +118,7 @@ class ApiService {
 
       final response = await _dio.put('people/${person.id}/', data: formData);
       if (response.statusCode == 200) {
-        return Person.fromJson(response.data);
+        return Person.fromGeoJson(response.data);
       } else {
         throw Exception('Failed to update person');
       }

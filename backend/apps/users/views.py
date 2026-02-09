@@ -24,9 +24,13 @@ class UserProfileView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        """Get the current user's profile."""
-        profile = request.user.profile
-        serializer = UserProfileSerializer(profile, context={'request': request})
+        """Get current user's profile."""
+        try:
+            profile = request.user.profile
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=request.user)
+            
+        serializer = UserProfileSerializer(profile)
         return Response(serializer.data)
 
     def patch(self, request):

@@ -44,7 +44,7 @@ class AuthService {
   Future<Map<String, String>> login(String username, String password) async {
     try {
       final response = await _dio.post(
-        'auth/token/',
+        'user/auth/token/',
         data: {'username': username, 'password': password},
       );
 
@@ -82,7 +82,7 @@ class AuthService {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/register/',
+        'user/auth/register/',
         data: {
           'username': username,
           'email': email,
@@ -110,7 +110,7 @@ class AuthService {
 
   Future<void> requestPasswordReset(String email) async {
     try {
-      await _dio.post('auth/password-reset/', data: {'email': email});
+      await _dio.post('user/auth/password-reset/', data: {'email': email});
     } on DioException catch (e) {
       throw Exception('Password reset request failed: ${e.message}');
     }
@@ -143,7 +143,7 @@ class AuthService {
 
     try {
       final response = await _dio.post(
-        'auth/token/refresh/',
+        'user/auth/token/refresh/',
         data: {'refresh': refreshToken},
       );
 

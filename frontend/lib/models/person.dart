@@ -49,6 +49,33 @@ class Person {
     );
   }
 
+  factory Person.fromGeoJson(Map<String, dynamic> json) {
+    final properties = json['properties'] as Map<String, dynamic>;
+    final geometry = json['geometry'] as Map<String, dynamic>?;
+    final coordinates = geometry?['coordinates'] as List<dynamic>?;
+
+    return Person(
+      id: json['id'].toString(),
+      firstName: properties['first_name'] as String,
+      lastName: properties['last_name'] as String,
+      relationshipTag: properties['relationship_tag'] as String,
+      city: properties['city'] as String,
+      state: properties['state'] as String,
+      country: properties['country'] as String,
+      street: properties['street'] as String?,
+      birthday: properties['birthday'] != null
+          ? DateTime.parse(properties['birthday'] as String)
+          : null,
+      phoneNumber: properties['phone_number'] as String?,
+      // GeoJSON Point coordinates are [longitude, latitude]
+      latitude: coordinates != null ? (coordinates[1] as num).toDouble() : null,
+      longitude: coordinates != null
+          ? (coordinates[0] as num).toDouble()
+          : null,
+      profileImageUrl: properties['profile_image'] as String?,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {
       'first_name': firstName,

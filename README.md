@@ -2,20 +2,42 @@
 
 A personal geospatial application to track and visualize friends' locations in relation to each other. This project uses a "Batteries Included" approach with **GeoDjango** for complex spatial queries and **Flutter** for a cross-platform mobile experience, all orchestrated via **Docker**.
 
+## ✨ Features
+
+### Authentication & User Management
+- **JWT Authentication** - Secure token-based auth with refresh tokens
+- **User Registration** - Create new accounts with email verification
+- **Password Reset** - Request and confirm password resets
+- **User Profiles** - Profile picture upload and address management
+
+### People Management
+- **Contact CRUD** - Create, read, update, and delete contacts
+- **Geolocation** - Store and display friend locations on a map
+- **Tags** - Categorize contacts as Friends or Family
+- **Rich Contact Info** - Name, address, birthday, phone number, profile image
+
+### Map Visualization
+- **Interactive Map** - View all contacts on an OSM-powered map
+- **Location Pins** - See where your friends are located geographically
+
+---
+
 ## 🚀 Tech Stack
 
 ### Backend (The Geo-Engine)
 * **Framework:** Django 6.0 + Django REST Framework
+* **Authentication:** Simple JWT (JSON Web Tokens)
 * **Database:** PostgreSQL 16 + PostGIS (Geospatial extension)
 * **Dependency Manager:** Poetry 2.0+
 * **Infrastructure:** Docker & Docker Compose
 * **Hosting Goal:** AWS (App Runner/ECS)
 
 ### Frontend (The Map)
-* **Framework:** Flutter (iOS/Android)
+* **Framework:** Flutter (iOS/Android/Desktop)
+* **State Management:** BLoC Pattern
+* **Networking:** Dio HTTP Client
 * **Map Rendering:** `flutter_map` (Leaflet based)
 * **Map Data:** OpenStreetMap (OSM)
-* **Geospatial Math:** `latlong2`
 
 ---
 
@@ -34,19 +56,21 @@ The backend is fully containerized. You do **not** need to install Python, GDAL,
 
 ```bash
 # 1. Clone the repo
-git clone [https://github.com/brandonlc2020/map-my-friends.git](https://github.com/brandonlc2020/map-my-friends.git)
+git clone https://github.com/brandonlc2020/map-my-friends.git
 cd map-my-friends
 
 # 2. Build and Start the Containers
-# This installs all Python dependencies (GDAL, etc.) inside the container.
-docker compose up --build
+make up
+# Or: docker compose up --build
 
+# 3. Run database migrations
+make mig
 ```
 
 Once running:
 
-* **API Root:** [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
-* **Django Admin:** [http://localhost:8000/admin](https://www.google.com/search?q=http://localhost:8000/admin)
+* **API Root:** http://localhost:8000
+* **Django Admin:** http://localhost:8000/admin
 
 ### 2. Frontend Setup (Flutter)
 
@@ -60,51 +84,57 @@ flutter pub get
 
 # 2. Run the App (Select your Simulator/Emulator)
 flutter run
-
 ```
+
+---
+
+## 🔌 API Endpoints
+
+### Authentication (`/api/user/auth/`)
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/api/user/auth/register/` | Register a new user |
+| POST | `/api/user/auth/token/` | Obtain JWT token pair |
+| POST | `/api/user/auth/token/refresh/` | Refresh access token |
+| POST | `/api/user/auth/password-reset/` | Request password reset |
+| POST | `/api/user/auth/password-reset/confirm/` | Confirm password reset |
+
+### User Profile (`/api/user/`)
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/api/user/profile/` | Get current user's profile |
+| PATCH | `/api/user/profile/` | Update profile (supports image upload) |
+
+### People (`/api/people/`)
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/api/people/` | List all people |
+| POST | `/api/people/` | Create a new person (auth required) |
+| GET | `/api/people/{id}/` | Get person details |
+| PUT | `/api/people/{id}/` | Update person (auth required) |
+| DELETE | `/api/people/{id}/` | Delete person (auth required) |
 
 ---
 
 ## 🕹 Development Workflow & Commands
 
-Since the backend runs inside a Docker container, you cannot simply type `python manage.py ...` in your local terminal. You must execute commands *inside* the container.
+Since the backend runs inside a Docker container, you must execute commands *inside* the container.
 
 ### Using the Makefile (Recommended)
 
-A `Makefile` is included to shortcut these long commands:
-
-| Action | Command | Actual Docker Command |
-| --- | --- | --- |
-| **Start Server** | `make up` | `docker compose up` |
-| **Stop Server** | `make down` | `docker compose down` |
-| **Run Migrations** | `make mig` | `docker compose exec api python manage.py makemigrations && ... migrate` |
-| **Create Superuser** | `make user` | `docker compose exec api python manage.py createsuperuser` |
-| **Open Python Shell** | `make shell` | `docker compose exec api python manage.py shell` |
-
-### Manual Docker Commands
-
-If you prefer running commands manually or need to run something custom:
-
-**Apply Migrations:**
-
-```bash
-docker compose exec api python manage.py migrate
-
-```
-
-**Create New Migrations (after changing models):**
-
-```bash
-docker compose exec api python manage.py makemigrations
-
-```
-
-**Access the Container's Bash Shell:**
-
-```bash
-docker compose exec api /bin/bash
-
-```
+| Action | Command |
+| --- | --- |
+| **Start Server** | `make up` |
+| **Stop Server** | `make down` |
+| **Build Containers** | `make build` |
+| **Run Migrations** | `make mig` |
+| **Create Superuser** | `make user` |
+| **Open Python Shell** | `make shell` |
+| **Access Database** | `make db` |
+| **Run Tests** | `make test` |
+| **Install Dependencies** | `make install` |
+| **Add Package** | `make add` |
+| **Update Dependencies** | `make update` |
 
 ---
 
@@ -112,19 +142,34 @@ docker compose exec api /bin/bash
 
 ```text
 map-my-friends/
-├── docker-compose.yml       # Orchestrates Django (api) and PostGIS (db)
-├── Makefile                 # Shortcuts for Docker commands
-├── backend/                 # Django Monolith
-│   ├── Dockerfile           # Defines the Python environment (w/ GDAL)
-│   ├── pyproject.toml       # Poetry dependencies
+├── docker-compose.yml          # Orchestrates Django (api) and PostGIS (db)
+├── Makefile                    # Shortcuts for Docker commands
+│
+├── backend/                    # Django Backend
+│   ├── Dockerfile              # Python environment (w/ GDAL)
+│   ├── pyproject.toml          # Poetry dependencies
 │   ├── manage.py
-│   ├── config/              # Core Django settings
-│   └── api/                 # Main application logic
-└── frontend/                # Flutter App
-    ├── lib/
-    ├── pubspec.yaml
-    └── ...
-
+│   ├── config/                 # Core Django settings & URLs
+│   ├── apps/                   # Application modules
+│   │   ├── people/             # Person model, views, serializers
+│   │   └── users/              # User profiles, auth views
+│   └── media/                  # Uploaded files (profile images)
+│
+└── frontend/                   # Flutter App
+    └── lib/
+        ├── main.dart           # App entry point
+        ├── bloc/               # State management
+        │   ├── auth/           # Authentication state
+        │   ├── location/       # Location permissions
+        │   ├── people/         # People list state
+        │   └── profile/        # User profile state
+        ├── models/             # Data models
+        ├── screens/            # UI screens
+        │   ├── auth/           # Login, Register, Forgot Password
+        │   ├── map/            # Map visualization
+        │   ├── people/         # People list, Add/Edit person
+        │   └── profile/        # User profile (Me screen)
+        └── services/           # API services & networking
 ```
 
 ---
@@ -142,9 +187,9 @@ You may see a warning in the Docker logs:
 ### Database Connection
 
 * **Internal (Docker):** The Django app talks to the DB via the hostname `db`.
-* **External (GUI):** You can connect to the database using a tool like DBeaver or TablePlus:
-* **Host:** `localhost`
-* **Port:** `5432`
-* **User:** `mapuser`
-* **Password:** `password`
-* **Database:** `mapfriends_db`
+* **External (GUI):** Connect using DBeaver or TablePlus:
+  * **Host:** `localhost`
+  * **Port:** `5432`
+  * **User:** `mapuser`
+  * **Password:** `password`
+  * **Database:** `mapfriends_db`
