@@ -18,24 +18,85 @@ class PeopleScreen extends StatelessWidget {
             if (state.people.isEmpty) {
               return const Center(child: Text('No people added yet.'));
             }
-            return ListView.builder(
-              itemCount: state.people.length,
-              itemBuilder: (context, index) {
-                final person = state.people[index];
-                return ListTile(
-                  title: Text('${person.firstName} ${person.lastName}'),
-                  subtitle: Text('${person.city}, ${person.state}'),
-                  trailing: Text(person.relationshipTag),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AddEditPersonScreen(person: person),
-                      ),
-                    );
-                  },
-                );
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 600;
+
+                if (isDesktop) {
+                  // Desktop: Grid layout
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: constraints.maxWidth >= 900 ? 3 : 2,
+                      childAspectRatio: 2.5,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: state.people.length,
+                    itemBuilder: (context, index) {
+                      final person = state.people[index];
+                      return Card(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AddEditPersonScreen(person: person),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '${person.firstName} ${person.lastName}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('${person.city}, ${person.state}'),
+                                Text(
+                                  person.relationshipTag,
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                } else {
+                  // Mobile: List layout
+                  return ListView.builder(
+                    itemCount: state.people.length,
+                    itemBuilder: (context, index) {
+                      final person = state.people[index];
+                      return ListTile(
+                        title: Text('${person.firstName} ${person.lastName}'),
+                        subtitle: Text('${person.city}, ${person.state}'),
+                        trailing: Text(person.relationshipTag),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AddEditPersonScreen(person: person),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                }
               },
             );
           } else if (state is PeopleError) {

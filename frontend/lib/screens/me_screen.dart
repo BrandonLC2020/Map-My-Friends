@@ -48,86 +48,109 @@ class _MeScreenState extends State<MeScreen> {
             // Could fill address fields via reverse geocoding here
           }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                BlocBuilder<LocationBloc, LocationState>(
-                  builder: (context, state) {
-                    if (state is LocationLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<LocationBloc>().add(RequestPermission());
-                      },
-                      icon: const Icon(Icons.location_searching),
-                      label: const Text('Use Current Location'),
-                    );
-                  },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 600;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 500 : double.infinity,
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'My Address',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _cityController,
-                  decoration: const InputDecoration(
-                    labelText: 'City (Required)',
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
-                ),
-                TextFormField(
-                  controller: _stateController,
-                  decoration: const InputDecoration(
-                    labelText: 'State (Required)',
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
-                ),
-                TextFormField(
-                  controller: _countryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Country (Required)',
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
-                ),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street Address (Optional)',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      context.read<LocationBloc>().add(
-                        UpdateUserAddress(
-                          city: _cityController.text,
-                          state: _stateController.text,
-                          country: _countryController.text,
-                          street: _streetController.text.isNotEmpty
-                              ? _streetController.text
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      children: [
+                        BlocBuilder<LocationBloc, LocationState>(
+                          builder: (context, state) {
+                            if (state is LocationLoading) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            return ElevatedButton.icon(
+                              onPressed: () {
+                                context.read<LocationBloc>().add(
+                                  RequestPermission(),
+                                );
+                              },
+                              icon: const Icon(Icons.location_searching),
+                              label: const Text('Use Current Location'),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'My Address',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _cityController,
+                          decoration: const InputDecoration(
+                            labelText: 'City (Required)',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Required'
                               : null,
                         ),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Address Saved')),
-                      );
-                    }
-                  },
-                  child: const Text('Save Address'),
+                        TextFormField(
+                          controller: _stateController,
+                          decoration: const InputDecoration(
+                            labelText: 'State (Required)',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Required'
+                              : null,
+                        ),
+                        TextFormField(
+                          controller: _countryController,
+                          decoration: const InputDecoration(
+                            labelText: 'Country (Required)',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Required'
+                              : null,
+                        ),
+                        TextFormField(
+                          controller: _streetController,
+                          decoration: const InputDecoration(
+                            labelText: 'Street Address (Optional)',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              context.read<LocationBloc>().add(
+                                UpdateUserAddress(
+                                  city: _cityController.text,
+                                  state: _stateController.text,
+                                  country: _countryController.text,
+                                  street: _streetController.text.isNotEmpty
+                                      ? _streetController.text
+                                      : null,
+                                ),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Address Saved')),
+                              );
+                            }
+                          },
+                          child: const Text('Save Address'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

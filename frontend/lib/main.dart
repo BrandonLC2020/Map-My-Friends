@@ -51,11 +51,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const MapScreen(),
-    const PeopleScreen(),
-    const MeScreen(),
-  ];
+  Widget _getScreen(int index) {
+    switch (index) {
+      case 0:
+        return const MapScreen();
+      case 1:
+        return const PeopleScreen();
+      case 2:
+        return const MeScreen();
+      default:
+        return const MapScreen();
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -65,18 +72,62 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'People'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Me'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 600;
+
+        if (isDesktop) {
+          // Desktop layout with NavigationRail
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                  labelType: NavigationRailLabelType.all,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.map_outlined),
+                      selectedIcon: Icon(Icons.map),
+                      label: Text('Map'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.people_outline),
+                      selectedIcon: Icon(Icons.people),
+                      label: Text('People'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person),
+                      label: Text('Me'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: _getScreen(_selectedIndex)),
+              ],
+            ),
+          );
+        } else {
+          // Mobile layout with BottomNavigationBar
+          return Scaffold(
+            body: _getScreen(_selectedIndex),
+            bottomNavigationBar: BottomNavigationBar(
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people),
+                  label: 'People',
+                ),
+                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Me'),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Colors.blue,
+              onTap: _onItemTapped,
+            ),
+          );
+        }
+      },
     );
   }
 }

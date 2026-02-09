@@ -115,98 +115,123 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             IconButton(icon: const Icon(Icons.delete), onPressed: _delete),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First Name (Required)',
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 600;
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 500 : double.infinity,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      TextFormField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'First Name (Required)',
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Last Name (Required)',
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: _tagController.text.isNotEmpty
+                            ? _tagController.text
+                            : 'FRIEND',
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'FRIEND',
+                            child: Text('Friend'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'FAMILY',
+                            child: Text('Family'),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _tagController.text = val!),
+                        decoration: const InputDecoration(
+                          labelText: 'Relationship Tag',
+                        ),
+                      ),
+                      TextFormField(
+                        controller: _cityController,
+                        decoration: const InputDecoration(
+                          labelText: 'City (Required)',
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      TextFormField(
+                        controller: _stateController,
+                        decoration: const InputDecoration(
+                          labelText: 'State (Required)',
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      TextFormField(
+                        controller: _countryController,
+                        decoration: const InputDecoration(
+                          labelText: 'Country (Required)',
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      TextFormField(
+                        controller: _streetController,
+                        decoration: const InputDecoration(
+                          labelText: 'Street Address (Optional)',
+                        ),
+                      ),
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number (Optional)',
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      ListTile(
+                        title: Text(
+                          _birthday == null
+                              ? 'Birthday (Optional)'
+                              : 'Birthday: ${_birthday!.toLocal().toString().split(' ')[0]}',
+                        ),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _birthday ?? DateTime.now(),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
+                          if (date != null) setState(() => _birthday = date);
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _save,
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
                 ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
               ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name (Required)',
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              DropdownButtonFormField<String>(
-                initialValue: _tagController.text.isNotEmpty
-                    ? _tagController.text
-                    : 'FRIEND',
-                items: const [
-                  DropdownMenuItem(value: 'FRIEND', child: Text('Friend')),
-                  DropdownMenuItem(value: 'FAMILY', child: Text('Family')),
-                ],
-                onChanged: (val) => setState(() => _tagController.text = val!),
-                decoration: const InputDecoration(
-                  labelText: 'Relationship Tag',
-                ),
-              ),
-              TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(labelText: 'City (Required)'),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _stateController,
-                decoration: const InputDecoration(
-                  labelText: 'State (Required)',
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _countryController,
-                decoration: const InputDecoration(
-                  labelText: 'Country (Required)',
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _streetController,
-                decoration: const InputDecoration(
-                  labelText: 'Street Address (Optional)',
-                ),
-              ),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number (Optional)',
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              ListTile(
-                title: Text(
-                  _birthday == null
-                      ? 'Birthday (Optional)'
-                      : 'Birthday: ${_birthday!.toLocal().toString().split(' ')[0]}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: _birthday ?? DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (date != null) setState(() => _birthday = date);
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(onPressed: _save, child: const Text('Save')),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
