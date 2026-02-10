@@ -26,15 +26,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['username', 'email', 'first_name', 'last_name']
 
-    def get_profile_image(self, obj):
-        """Return full URL for profile image."""
-        if obj.profile_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_image.url)
-            return obj.profile_image.url
-        return None
-
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)

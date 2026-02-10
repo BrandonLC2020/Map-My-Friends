@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/person.dart';
 import 'auth_service.dart';
 
@@ -73,16 +73,17 @@ class ApiService {
     }
   }
 
-  Future<Person> addPerson(Person person, {File? profileImage}) async {
+  Future<Person> addPerson(Person person, {XFile? profileImage}) async {
     try {
       FormData formData;
 
       if (profileImage != null) {
+        final bytes = await profileImage.readAsBytes();
         formData = FormData.fromMap({
           ...person.toJson(),
-          'profile_image': await MultipartFile.fromFile(
-            profileImage.path,
-            filename: profileImage.path.split('/').last,
+          'profile_image': MultipartFile.fromBytes(
+            bytes,
+            filename: profileImage.name,
           ),
         });
       } else {
@@ -100,16 +101,17 @@ class ApiService {
     }
   }
 
-  Future<Person> updatePerson(Person person, {File? profileImage}) async {
+  Future<Person> updatePerson(Person person, {XFile? profileImage}) async {
     try {
       FormData formData;
 
       if (profileImage != null) {
+        final bytes = await profileImage.readAsBytes();
         formData = FormData.fromMap({
           ...person.toJson(),
-          'profile_image': await MultipartFile.fromFile(
-            profileImage.path,
-            filename: profileImage.path.split('/').last,
+          'profile_image': MultipartFile.fromBytes(
+            bytes,
+            filename: profileImage.name,
           ),
         });
       } else {

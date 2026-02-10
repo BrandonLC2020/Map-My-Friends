@@ -12,7 +12,7 @@ import 'screens/map/map_screen.dart';
 import 'screens/people/people_screen.dart';
 import 'screens/profile/me_screen.dart';
 import 'utils/app_theme.dart';
-import 'components/glass_container.dart';
+import 'components/shared/glass_container.dart';
 
 void main() {
   runApp(const MyApp());

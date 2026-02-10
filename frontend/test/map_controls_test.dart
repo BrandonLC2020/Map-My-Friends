@@ -5,10 +5,10 @@ import 'package:frontend/bloc/location/location_bloc.dart';
 import 'package:frontend/bloc/people/people_bloc.dart';
 import 'package:frontend/screens/map/map_screen.dart';
 import 'package:frontend/services/api_service.dart';
-import 'package:frontend/components/person_map_marker.dart';
+import 'package:frontend/components/map/person_map_marker.dart';
 import 'package:frontend/models/person.dart';
 import 'package:geolocator/geolocator.dart';
-// import 'package:frontend/components/map_controls.dart'; // Implicitly tested via MapScreen
+// import 'package:frontend/components/map/map_controls.dart'; // Implicitly tested via MapScreen
 
 // Mock ApiService
 class MockApiService implements ApiService {

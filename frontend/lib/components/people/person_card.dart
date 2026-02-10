@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/person.dart';
+import '../../models/person.dart';
 
 class PersonCard extends StatelessWidget {
   final Person person;

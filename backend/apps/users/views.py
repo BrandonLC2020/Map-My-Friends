@@ -30,7 +30,7 @@ class UserProfileView(APIView):
         except UserProfile.DoesNotExist:
             profile = UserProfile.objects.create(user=request.user)
             
-        serializer = UserProfileSerializer(profile)
+        serializer = UserProfileSerializer(profile, context={'request': request})
         return Response(serializer.data)
 
     def patch(self, request):

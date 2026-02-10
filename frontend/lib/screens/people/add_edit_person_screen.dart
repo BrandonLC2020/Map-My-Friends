@@ -1,9 +1,11 @@
-import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/person.dart';
 import '../../bloc/people/people_bloc.dart';
+import '../../components/shared/image_editor_modal.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -27,7 +29,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   late TextEditingController _streetController;
   late TextEditingController _phoneController;
   DateTime? _birthday;
-  File? _selectedImage;
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   String? _existingImageUrl;
 
   @override
@@ -74,19 +77,42 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
     try {
       final pickedFile = await _imagePicker.pickImage(
         source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 90,
       );
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
+
+      if (pickedFile != null && mounted) {
+        final bytes = await pickedFile.readAsBytes();
+
+        // Open editor
+        // ignore: use_build_context_synchronously
+        final Uint8List? croppedBytes = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ImageEditorModal(imageBytes: bytes, isCircular: true),
+          ),
+        );
+
+        if (croppedBytes != null) {
+          setState(() {
+            _selectedImageBytes = croppedBytes;
+            // Create XFile from bytes for the bloC event later
+            _selectedImage = XFile.fromData(
+              croppedBytes,
+              name: 'person_image.png',
+              mimeType: 'image/png',
+            );
+          });
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
     }
   }
 
@@ -124,6 +150,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                   Navigator.pop(context);
                   setState(() {
                     _selectedImage = null;
+                    _selectedImageBytes = null;
                     _existingImageUrl = null;
                   });
                 },
@@ -185,13 +212,13 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey[300],
-              backgroundImage: _selectedImage != null
-                  ? FileImage(_selectedImage!)
+              backgroundImage: _selectedImageBytes != null
+                  ? MemoryImage(_selectedImageBytes!)
                   : (_existingImageUrl != null
                             ? NetworkImage(_existingImageUrl!)
                             : null)
                         as ImageProvider?,
-              child: (_selectedImage == null && _existingImageUrl == null)
+              child: (_selectedImageBytes == null && _existingImageUrl == null)
                   ? Icon(Icons.person, size: 60, color: Colors.grey[600])
                   : null,
             ),

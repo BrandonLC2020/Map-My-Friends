@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/person.dart';
 import '../../services/api_service.dart';
 

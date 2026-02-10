@@ -28,7 +28,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           email: profile['email'],
           firstName: profile['first_name'],
           lastName: profile['last_name'],
-          profileImageUrl: profile['profile_image'],
+          profileImageUrl: _processImageUrl(profile['profile_image']),
           city: profile['city'],
           state: profile['state'],
           country: profile['country'],
@@ -60,7 +60,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           email: profile['email'],
           firstName: profile['first_name'],
           lastName: profile['last_name'],
-          profileImageUrl: profile['profile_image'],
+          profileImageUrl: _processImageUrl(profile['profile_image']),
           city: profile['city'],
           state: profile['state'],
           country: profile['country'],
@@ -83,14 +83,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(ProfileUpdating());
 
     try {
-      final profile = await _authService.uploadProfileImage(event.imagePath);
+      final profile = await _authService.uploadProfileImage(event.image);
       emit(
         ProfileLoaded(
           username: profile['username'],
           email: profile['email'],
           firstName: profile['first_name'],
           lastName: profile['last_name'],
-          profileImageUrl: profile['profile_image'],
+          profileImageUrl: _processImageUrl(profile['profile_image']),
           city: profile['city'],
           state: profile['state'],
           country: profile['country'],
@@ -103,5 +103,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
       emit(ProfileError(message: e.toString().replaceFirst('Exception: ', '')));
     }
+  }
+
+  String? _processImageUrl(String? url) {
+    if (url == null) return null;
+    // Add timestamp to force cache refresh
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    if (url.contains('?')) {
+      return '$url&t=$timestamp';
+    }
+    return '$url?t=$timestamp';
   }
 }

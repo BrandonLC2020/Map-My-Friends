@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AuthService {
   final Dio _dio = Dio(
@@ -216,15 +217,13 @@ class AuthService {
   }
 
   /// Upload a profile image
-  Future<Map<String, dynamic>> uploadProfileImage(String imagePath) async {
+  Future<Map<String, dynamic>> uploadProfileImage(XFile image) async {
     try {
       final dio = await _getAuthenticatedDio();
+      final bytes = await image.readAsBytes();
 
       final formData = FormData.fromMap({
-        'profile_image': await MultipartFile.fromFile(
-          imagePath,
-          filename: imagePath.split('/').last,
-        ),
+        'profile_image': MultipartFile.fromBytes(bytes, filename: image.name),
       });
 
       final response = await dio.patch(

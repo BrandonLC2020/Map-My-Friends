@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +7,7 @@ import '../../bloc/location/location_bloc.dart';
 import '../../bloc/profile/profile_bloc.dart';
 import '../../bloc/profile/profile_event.dart';
 import '../../bloc/profile/profile_state.dart';
+import '../../components/shared/image_editor_modal.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -22,7 +23,8 @@ class _MeScreenState extends State<MeScreen> {
   final _countryController = TextEditingController();
   final _streetController = TextEditingController();
   final _imagePicker = ImagePicker();
-  String? _localImagePath; // For showing local image immediately after picking
+  Uint8List?
+  _localImageBytes; // For showing local image immediately after picking
 
   @override
   void initState() {
@@ -34,18 +36,43 @@ class _MeScreenState extends State<MeScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _imagePicker.pickImage(
       source: source,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 85,
+      maxWidth: 1024, // Increased to allow better quality potential for zoom
+      maxHeight: 1024,
+      imageQuality: 90,
     );
-    if (pickedFile != null) {
-      setState(() {
-        _localImagePath = pickedFile.path;
-      });
-      // Upload to server
-      context.read<ProfileBloc>().add(
-        UploadProfileImage(imagePath: pickedFile.path),
+
+    if (pickedFile != null && mounted) {
+      final bytes = await pickedFile.readAsBytes();
+
+      // Open editor
+      // ignore: use_build_context_synchronously
+      final Uint8List? croppedBytes = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ImageEditorModal(imageBytes: bytes, isCircular: true),
+        ),
       );
+
+      if (croppedBytes != null) {
+        setState(() {
+          _localImageBytes = croppedBytes;
+        });
+
+        // Upload to server
+        // We need to pass the bytes, or save to a file first.
+        // The UploadProfileImage event takes an XFile.
+        // We can create an XFile from bytes.
+        final tempFile = XFile.fromData(
+          croppedBytes,
+          name: 'profile_image.png',
+          mimeType: 'image/png',
+        );
+
+        if (mounted) {
+          context.read<ProfileBloc>().add(UploadProfileImage(image: tempFile));
+        }
+      }
     }
   }
 
@@ -133,7 +160,7 @@ class _MeScreenState extends State<MeScreen> {
                   // Clear local image path once server image is loaded
                   if (state.profileImageUrl != null) {
                     setState(() {
-                      _localImagePath = null;
+                      _localImageBytes = null;
                     });
                   }
                 } else if (state is ProfileError) {
@@ -321,8 +348,8 @@ class _MeScreenState extends State<MeScreen> {
     ImageProvider? backgroundImage;
 
     // Priority: local image (just picked) > server image
-    if (_localImagePath != null) {
-      backgroundImage = FileImage(File(_localImagePath!));
+    if (_localImageBytes != null) {
+      backgroundImage = MemoryImage(_localImageBytes!);
     } else if (profileState is ProfileLoaded &&
         profileState.profileImageUrl != null) {
       backgroundImage = NetworkImage(profileState.profileImageUrl!);

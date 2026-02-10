@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/map/map_settings_cubit.dart';
-import 'glass_container.dart';
+import '../../bloc/map/map_settings_cubit.dart';
+import '../shared/glass_container.dart';
 
 class MapSettingsModal extends StatelessWidget {
   const MapSettingsModal({super.key});

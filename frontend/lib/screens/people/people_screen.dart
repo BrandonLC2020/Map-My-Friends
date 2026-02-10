@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/people/people_bloc.dart';
 import 'add_edit_person_screen.dart';
-import '../../components/person_card.dart';
+import '../../components/people/person_card.dart';
 
 class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});

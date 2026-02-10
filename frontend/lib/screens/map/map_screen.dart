@@ -5,9 +5,9 @@ import 'package:latlong2/latlong.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../../bloc/people/people_bloc.dart';
 import '../../bloc/map/map_settings_cubit.dart';
-import '../../components/map_controls.dart';
-import '../../components/map_settings_button.dart';
-import '../../components/person_map_marker.dart';
+import '../../components/map/map_controls.dart';
+import '../../components/map/map_settings_button.dart';
+import '../../components/map/person_map_marker.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});

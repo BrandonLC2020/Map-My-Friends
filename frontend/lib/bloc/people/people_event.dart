@@ -11,7 +11,7 @@ class LoadPeople extends PeopleEvent {}
 
 class AddPerson extends PeopleEvent {
   final Person person;
-  final File? profileImage;
+  final XFile? profileImage;
 
   const AddPerson(this.person, {this.profileImage});
 
@@ -21,7 +21,7 @@ class AddPerson extends PeopleEvent {
 
 class UpdatePerson extends PeopleEvent {
   final Person person;
-  final File? profileImage;
+  final XFile? profileImage;
 
   const UpdatePerson(this.person, {this.profileImage});
 
