@@ -24,6 +24,19 @@ A personal geospatial application to track and visualize friends' locations in r
 
 ## 🚀 Tech Stack
 
+```mermaid
+graph TD
+    User([User]) -->|Interacts with| Frontend[Flutter Mobile App]
+    Frontend -->|HTTP / JSON| API[Django REST Framework]
+    API -->|SQL Read/Write| DB[(PostgreSQL + PostGIS)]
+    API -->|File I/O| Media[Media Storage]
+    
+    subgraph Docker Containers
+        API
+        DB
+    end
+```
+
 ### Backend (The Geo-Engine)
 * **Framework:** Django 6.0 + Django REST Framework
 * **Authentication:** Simple JWT (JSON Web Tokens)
@@ -158,6 +171,7 @@ map-my-friends/
 └── frontend/                   # Flutter App
     └── lib/
         ├── main.dart           # App entry point
+        ├── components/         # Reusable UI components
         ├── bloc/               # State management
         │   ├── auth/           # Authentication state
         │   ├── location/       # Location permissions
