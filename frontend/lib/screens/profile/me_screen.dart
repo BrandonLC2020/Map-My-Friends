@@ -9,6 +9,7 @@ import '../../bloc/profile/profile_event.dart';
 import '../../bloc/profile/profile_state.dart';
 import '../../components/shared/image_editor_modal.dart';
 import '../../components/shared/custom_text_form_field.dart';
+import '../../bloc/theme/theme_cubit.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -250,6 +251,41 @@ class _MeScreenState extends State<MeScreen> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 24),
+
+                              // Theme Selector
+                              BlocBuilder<ThemeCubit, ThemeMode>(
+                                builder: (context, themeMode) {
+                                  return SegmentedButton<ThemeMode>(
+                                    segments: const [
+                                      ButtonSegment(
+                                        value: ThemeMode.light,
+                                        icon: Icon(Icons.light_mode),
+                                        label: Text('Light'),
+                                      ),
+                                      ButtonSegment(
+                                        value: ThemeMode.system,
+                                        icon: Icon(Icons.brightness_auto),
+                                        label: Text('System'),
+                                      ),
+                                      ButtonSegment(
+                                        value: ThemeMode.dark,
+                                        icon: Icon(Icons.dark_mode),
+                                        label: Text('Dark'),
+                                      ),
+                                    ],
+                                    selected: {themeMode},
+                                    onSelectionChanged:
+                                        (Set<ThemeMode> newSelection) {
+                                          context.read<ThemeCubit>().setTheme(
+                                            newSelection.first,
+                                          );
+                                        },
+                                    showSelectedIcon: false,
+                                  );
+                                },
+                              ),
+
                               const SizedBox(height: 32),
 
                               // Location Button

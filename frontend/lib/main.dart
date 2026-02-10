@@ -13,6 +13,7 @@ import 'screens/people/people_screen.dart';
 import 'screens/profile/me_screen.dart';
 import 'utils/app_theme.dart';
 import 'components/shared/glass_container.dart';
+import 'bloc/theme/theme_cubit.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,13 +40,18 @@ class MyApp extends StatelessWidget {
               PeopleBloc(apiService: apiService)..add(LoadPeople()),
         ),
         BlocProvider<ProfileBloc>(create: (context) => ProfileBloc()),
+        BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],
-      child: MaterialApp(
-        title: 'Map My Friends',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const AuthWrapper(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp(
+            title: 'Map My Friends',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            home: const AuthWrapper(),
+          );
+        },
       ),
     );
   }

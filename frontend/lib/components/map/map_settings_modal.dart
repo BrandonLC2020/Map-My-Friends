@@ -17,10 +17,9 @@ class MapSettingsModal extends StatelessWidget {
           children: [
             Text(
               'Map Settings',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Ensure visibility on glass
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             BlocBuilder<MapSettingsCubit, MapSettingsState>(
@@ -53,6 +52,44 @@ class MapSettingsModal extends StatelessWidget {
                             child: Text(type.name.toUpperCase()),
                           );
                         }).toList(),
+                      ),
+                    ),
+                    const Divider(),
+                    const ListTile(title: Text('Map Theme')),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SegmentedButton<ThemeMode>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ThemeMode.light,
+                            icon: Icon(Icons.light_mode),
+                            label: Text('Light'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.system,
+                            icon: Icon(Icons.brightness_auto),
+                            label: Text('Match App'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.dark,
+                            icon: Icon(Icons.dark_mode),
+                            label: Text('Dark'),
+                          ),
+                        ],
+                        selected: {state.themeMode},
+                        onSelectionChanged: (Set<ThemeMode> newSelection) {
+                          context.read<MapSettingsCubit>().setMapTheme(
+                            newSelection.first,
+                          );
+                        },
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          side: WidgetStateProperty.all(
+                            BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          ),
+                        ),
                       ),
                     ),
                   ],

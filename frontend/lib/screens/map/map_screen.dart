@@ -19,6 +19,46 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
+  String _getTileUrl(BuildContext context, MapSettingsState settings) {
+    if (settings.mapType == MapType.satellite) {
+      return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    }
+
+    if (settings.mapType == MapType.minimal) {
+      return _getMinimalMapUrl(context, settings);
+    }
+
+    // Standard mode (OpenStreetMap)
+    return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  }
+
+  String _getMinimalMapUrl(BuildContext context, MapSettingsState settings) {
+    ThemeMode mode = settings.themeMode;
+    Brightness brightness;
+
+    if (mode == ThemeMode.system) {
+      // Use Theme.of(context).brightness to catch the app's current effective theme
+      brightness = Theme.of(context).brightness;
+    } else if (mode == ThemeMode.light) {
+      brightness = Brightness.light;
+    } else {
+      brightness = Brightness.dark;
+    }
+
+    if (brightness == Brightness.dark) {
+      return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+    } else {
+      return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+    }
+  }
+
+  bool _isDark(BuildContext context, MapSettingsState settings) {
+    if (settings.themeMode == ThemeMode.system) {
+      return Theme.of(context).brightness == Brightness.dark;
+    }
+    return settings.themeMode == ThemeMode.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -93,17 +133,46 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate:
-                                  settingsState.mapType == MapType.satellite
-                                  ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                                  : settingsState.mapType == MapType.minimal
-                                  ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-                                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              subdomains:
-                                  settingsState.mapType == MapType.minimal
-                                  ? ['a', 'b', 'c']
-                                  : [],
+                              urlTemplate: _getTileUrl(context, settingsState),
+                              subdomains: const ['a', 'b', 'c'],
                               userAgentPackageName: 'com.example.app',
+                              tileBuilder: (context, widget, tile) {
+                                // Check if we are in Standard mode AND Dark mode
+                                bool isStandard =
+                                    settingsState.mapType == MapType.standard;
+                                bool isDark = _isDark(context, settingsState);
+
+                                if (isStandard && isDark) {
+                                  return ColorFiltered(
+                                    colorFilter: const ColorFilter.matrix(
+                                      <double>[
+                                        -1,
+                                        0,
+                                        0,
+                                        0,
+                                        255,
+                                        0,
+                                        -1,
+                                        0,
+                                        0,
+                                        255,
+                                        0,
+                                        0,
+                                        -1,
+                                        0,
+                                        255,
+                                        0,
+                                        0,
+                                        0,
+                                        1,
+                                        0,
+                                      ],
+                                    ),
+                                    child: widget,
+                                  );
+                                }
+                                return widget;
+                              },
                             ),
                             MarkerLayer(markers: markers),
                           ],
