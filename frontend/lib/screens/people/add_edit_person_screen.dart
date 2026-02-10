@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/person.dart';
 import '../../bloc/people/people_bloc.dart';
 import '../../components/shared/image_editor_modal.dart';
+import '../../components/shared/custom_text_form_field.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -84,6 +85,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
       if (pickedFile != null && mounted) {
         final bytes = await pickedFile.readAsBytes();
+
+        if (!mounted) return;
 
         // Open editor
         // ignore: use_build_context_synchronously
@@ -209,27 +212,47 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         onTap: _showImagePickerOptions,
         child: Stack(
           children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey[300],
-              backgroundImage: _selectedImageBytes != null
-                  ? MemoryImage(_selectedImageBytes!)
-                  : (_existingImageUrl != null
-                            ? NetworkImage(_existingImageUrl!)
-                            : null)
-                        as ImageProvider?,
-              child: (_selectedImageBytes == null && _existingImageUrl == null)
-                  ? Icon(Icons.person, size: 60, color: Colors.grey[600])
-                  : null,
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  width: 4,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: CircleAvatar(
+                radius: 64,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+                backgroundImage: _selectedImageBytes != null
+                    ? MemoryImage(_selectedImageBytes!)
+                    : (_existingImageUrl != null
+                              ? NetworkImage(_existingImageUrl!)
+                              : null)
+                          as ImageProvider?,
+                child:
+                    (_selectedImageBytes == null && _existingImageUrl == null)
+                    ? Icon(
+                        Icons.person,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      )
+                    : null,
+              ),
             ),
             Positioned(
               bottom: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    width: 2,
+                  ),
                 ),
                 child: const Icon(
                   Icons.camera_alt,
@@ -251,7 +274,11 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         title: Text(widget.person != null ? 'Edit Person' : 'Add Person'),
         actions: [
           if (widget.person != null)
-            IconButton(icon: const Icon(Icons.delete), onPressed: _delete),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _delete,
+              color: Theme.of(context).colorScheme.error,
+            ),
         ],
       ),
       body: LayoutBuilder(
@@ -261,34 +288,59 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
           return Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 500 : double.infinity,
+                maxWidth: isDesktop ? 600 : double.infinity,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 24.0,
+                ),
                 child: Form(
                   key: _formKey,
-                  child: ListView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildProfileImagePicker(),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _firstNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'First Name (Required)',
-                        ),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
+                      const SizedBox(height: 32),
+
+                      Text(
+                        'Basic Info',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                       ),
-                      TextFormField(
-                        controller: _lastNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Last Name (Required)',
-                        ),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
+                      const SizedBox(height: 16),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _firstNameController,
+                              labelText: 'First Name',
+                              validator: (val) => val == null || val.isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _lastNameController,
+                              labelText: 'Last Name',
+                              validator: (val) => val == null || val.isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 16),
+
                       DropdownButtonFormField<String>(
-                        value: _tagController.text.isNotEmpty
+                        initialValue: _tagController.text.isNotEmpty
                             ? _tagController.text
                             : 'FRIEND',
                         items: const [
@@ -303,54 +355,95 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                         ],
                         onChanged: (val) =>
                             setState(() => _tagController.text = val!),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Relationship Tag',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerLowest,
                         ),
                       ),
-                      TextFormField(
-                        controller: _cityController,
-                        decoration: const InputDecoration(
-                          labelText: 'City (Required)',
-                        ),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
+                      const SizedBox(height: 32),
+
+                      Text(
+                        'Address',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                       ),
-                      TextFormField(
-                        controller: _stateController,
-                        decoration: const InputDecoration(
-                          labelText: 'State (Required)',
-                        ),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      TextFormField(
-                        controller: _countryController,
-                        decoration: const InputDecoration(
-                          labelText: 'Country (Required)',
-                        ),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      TextFormField(
+                      const SizedBox(height: 16),
+
+                      CustomTextFormField(
                         controller: _streetController,
-                        decoration: const InputDecoration(
-                          labelText: 'Street Address (Optional)',
-                        ),
+                        labelText: 'Street Address (Optional)',
+                        prefixIcon: const Icon(Icons.home_outlined),
                       ),
-                      TextFormField(
+                      const SizedBox(height: 16),
+
+                      CustomTextFormField(
+                        controller: _cityController,
+                        labelText: 'City (Required)',
+                        prefixIcon: const Icon(Icons.location_city),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _stateController,
+                              labelText: 'State (Required)',
+                              validator: (val) => val == null || val.isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _countryController,
+                              labelText: 'Country (Required)',
+                              validator: (val) => val == null || val.isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      Text(
+                        'Additional Info',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      CustomTextFormField(
                         controller: _phoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Phone Number (Optional)',
-                        ),
+                        labelText: 'Phone Number (Optional)',
+                        prefixIcon: const Icon(Icons.phone_outlined),
                         keyboardType: TextInputType.phone,
                       ),
-                      ListTile(
-                        title: Text(
-                          _birthday == null
-                              ? 'Birthday (Optional)'
-                              : 'Birthday: ${_birthday!.toLocal().toString().split(' ')[0]}',
-                        ),
-                        trailing: const Icon(Icons.calendar_today),
+                      const SizedBox(height: 16),
+
+                      InkWell(
                         onTap: () async {
                           final date = await showDatePicker(
                             context: context,
@@ -360,12 +453,59 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                           );
                           if (date != null) setState(() => _birthday = date);
                         },
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Birthday (Optional)',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerLowest,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            prefixIcon: const Icon(Icons.cake_outlined),
+                          ),
+                          child: Text(
+                            _birthday != null
+                                ? _birthday!.toLocal().toString().split(' ')[0]
+                                : 'Select Date',
+                            style: _birthday != null
+                                ? Theme.of(context).textTheme.bodyMedium
+                                : Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).hintColor,
+                                  ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _save,
-                        child: const Text('Save'),
+
+                      const SizedBox(height: 40),
+
+                      SizedBox(
+                        height: 50,
+                        child: FilledButton(
+                          onPressed: _save,
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Person',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 24), // Bottom padding
                     ],
                   ),
                 ),

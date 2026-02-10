@@ -8,6 +8,7 @@ import '../../bloc/profile/profile_bloc.dart';
 import '../../bloc/profile/profile_event.dart';
 import '../../bloc/profile/profile_state.dart';
 import '../../components/shared/image_editor_modal.dart';
+import '../../components/shared/custom_text_form_field.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -43,6 +44,8 @@ class _MeScreenState extends State<MeScreen> {
 
     if (pickedFile != null && mounted) {
       final bytes = await pickedFile.readAsBytes();
+
+      if (!mounted) return;
 
       // Open editor
       // ignore: use_build_context_synchronously
@@ -178,15 +181,19 @@ class _MeScreenState extends State<MeScreen> {
               return Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: isDesktop ? 500 : double.infinity,
+                    maxWidth: isDesktop ? 600 : double.infinity,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 32.0,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: BlocBuilder<ProfileBloc, ProfileState>(
                         builder: (context, profileState) {
-                          return ListView(
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Profile Picture Section
                               Center(
@@ -196,139 +203,198 @@ class _MeScreenState extends State<MeScreen> {
                                     Positioned(
                                       bottom: 0,
                                       right: 0,
-                                      child: CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        child: profileState is ProfileUpdating
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Colors.white,
-                                                    ),
-                                              )
-                                            : IconButton(
-                                                icon: Icon(
-                                                  Icons.camera_alt,
-                                                  size: 18,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.onPrimary,
-                                                ),
-                                                onPressed:
-                                                    _showImageSourceDialog,
-                                              ),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Theme.of(
+                                              context,
+                                            ).scaffoldBackgroundColor,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: InkWell(
+                                          onTap: profileState is ProfileUpdating
+                                              ? null
+                                              : _showImageSourceDialog,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child:
+                                                profileState is ProfileUpdating
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                  )
+                                                : Icon(
+                                                    Icons.camera_alt,
+                                                    size: 20,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.onPrimary,
+                                                  ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 32),
+
+                              // Location Button
                               BlocBuilder<LocationBloc, LocationState>(
                                 builder: (context, state) {
                                   if (state is LocationLoading) {
                                     return const Center(
-                                      child: CircularProgressIndicator(),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(),
+                                      ),
                                     );
                                   }
-                                  return ElevatedButton.icon(
+                                  return OutlinedButton.icon(
                                     onPressed: () {
                                       context.read<LocationBloc>().add(
                                         RequestPermission(),
                                       );
                                     },
-                                    icon: const Icon(Icons.location_searching),
+                                    icon: const Icon(Icons.my_location),
                                     label: const Text('Use Current Location'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
-                              const SizedBox(height: 20),
-                              const Text(
+
+                              const SizedBox(height: 32),
+                              Text(
                                 'My Address',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _cityController,
-                                decoration: const InputDecoration(
-                                  labelText: 'City (Required)',
-                                ),
-                                validator: (value) =>
-                                    value == null || value.isEmpty
-                                    ? 'Required'
-                                    : null,
-                              ),
-                              TextFormField(
-                                controller: _stateController,
-                                decoration: const InputDecoration(
-                                  labelText: 'State (Required)',
-                                ),
-                                validator: (value) =>
-                                    value == null || value.isEmpty
-                                    ? 'Required'
-                                    : null,
-                              ),
-                              TextFormField(
-                                controller: _countryController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Country (Required)',
-                                ),
-                                validator: (value) =>
-                                    value == null || value.isEmpty
-                                    ? 'Required'
-                                    : null,
-                              ),
-                              TextFormField(
+                              const SizedBox(height: 16),
+
+                              CustomTextFormField(
                                 controller: _streetController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Street Address (Optional)',
+                                labelText: 'Street Address (Optional)',
+                                prefixIcon: const Icon(Icons.home_outlined),
+                              ),
+                              const SizedBox(height: 16),
+
+                              CustomTextFormField(
+                                controller: _cityController,
+                                labelText: 'City (Required)',
+                                prefixIcon: const Icon(Icons.location_city),
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                    ? 'City is required'
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CustomTextFormField(
+                                      controller: _stateController,
+                                      labelText: 'State (Required)',
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Required'
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: CustomTextFormField(
+                                      controller: _countryController,
+                                      labelText: 'Country (Required)',
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Required'
+                                          : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 32),
+
+                              SizedBox(
+                                height: 50,
+                                child: FilledButton(
+                                  onPressed: profileState is ProfileUpdating
+                                      ? null
+                                      : () {
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            context.read<ProfileBloc>().add(
+                                              UpdateProfile(
+                                                city: _cityController.text,
+                                                state: _stateController.text,
+                                                country:
+                                                    _countryController.text,
+                                                street:
+                                                    _streetController
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _streetController.text
+                                                    : null,
+                                              ),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Address Saved'),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          }
+                                        },
+                                  style: FilledButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: profileState is ProfileUpdating
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Save Address',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: profileState is ProfileUpdating
-                                    ? null
-                                    : () {
-                                        if (_formKey.currentState!.validate()) {
-                                          context.read<ProfileBloc>().add(
-                                            UpdateProfile(
-                                              city: _cityController.text,
-                                              state: _stateController.text,
-                                              country: _countryController.text,
-                                              street:
-                                                  _streetController
-                                                      .text
-                                                      .isNotEmpty
-                                                  ? _streetController.text
-                                                  : null,
-                                            ),
-                                          );
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Address Saved'),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                child: profileState is ProfileUpdating
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Save Address'),
-                              ),
+                              const SizedBox(height: 24), // Bottom padding
                             ],
                           );
                         },
@@ -355,17 +421,26 @@ class _MeScreenState extends State<MeScreen> {
       backgroundImage = NetworkImage(profileState.profileImageUrl!);
     }
 
-    return CircleAvatar(
-      radius: 60,
-      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      backgroundImage: backgroundImage,
-      child: backgroundImage == null
-          ? Icon(
-              Icons.person,
-              size: 60,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-            )
-          : null,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          width: 4,
+        ),
+        shape: BoxShape.circle,
+      ),
+      child: CircleAvatar(
+        radius: 64,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        backgroundImage: backgroundImage,
+        child: backgroundImage == null
+            ? Icon(
+                Icons.person,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              )
+            : null,
+      ),
     );
   }
 }
