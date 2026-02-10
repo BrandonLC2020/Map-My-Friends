@@ -182,10 +182,30 @@ class _MainScreenState extends State<MainScreen> {
                         ),
 
                         const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.logout, color: Colors.indigo),
-                          onPressed: _logout,
-                          tooltip: 'Logout',
+                        InkWell(
+                          onTap: _logout,
+                          child: Container(
+                            width: 60,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.logout,
+                                  color: Colors.indigo,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.normal,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
                       ],

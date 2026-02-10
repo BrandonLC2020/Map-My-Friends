@@ -68,9 +68,9 @@ class MapControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Pan Controls Group (Moved to Right side, above Zoom)
+        // Pan Controls Group
         Positioned(
-          bottom: 140, // Politioned above the zoom controls
+          bottom: 20,
           right: 20,
           child: GlassContainer(
             padding: const EdgeInsets.all(4),
@@ -112,7 +112,7 @@ class MapControls extends StatelessWidget {
         ),
         // Zoom Controls Group
         Positioned(
-          bottom: 20,
+          bottom: 180, // Positioned above the pan controls
           right: 20,
           child: GlassContainer(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -124,7 +124,9 @@ class MapControls extends StatelessWidget {
                   icon: Icons.add,
                   tooltip: 'Zoom In',
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                const Icon(Icons.search, color: Colors.indigo, size: 20),
+                const SizedBox(height: 4),
                 _buildGlassButton(
                   onPressed: _zoomOut,
                   icon: Icons.remove,

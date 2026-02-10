@@ -5,6 +5,8 @@ import 'package:frontend/bloc/location/location_bloc.dart';
 import 'package:frontend/bloc/people/people_bloc.dart';
 import 'package:frontend/screens/map/map_screen.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:frontend/components/person_map_marker.dart';
+import 'package:frontend/models/person.dart';
 import 'package:geolocator/geolocator.dart';
 // import 'package:frontend/components/map_controls.dart'; // Implicitly tested via MapScreen
 
@@ -43,7 +45,22 @@ class FakeLocationBloc extends Bloc<LocationEvent, LocationState>
 // Custom fake PeopleBloc
 class FakePeopleBloc extends Bloc<PeopleEvent, PeopleState>
     implements PeopleBloc {
-  FakePeopleBloc() : super(const PeopleLoaded([])) {
+  FakePeopleBloc()
+    : super(
+        PeopleLoaded([
+          Person(
+            id: '1',
+            firstName: 'John',
+            lastName: 'Doe',
+            city: 'San Francisco',
+            state: 'CA',
+            country: 'USA',
+            relationshipTag: 'Friend',
+            latitude: 37.7749,
+            longitude: -122.4194,
+          ),
+        ]),
+      ) {
     on<PeopleEvent>((event, emit) {});
   }
 }
@@ -81,9 +98,12 @@ void main() {
     expect(find.byIcon(Icons.arrow_left), findsOneWidget);
     expect(find.byIcon(Icons.arrow_right), findsOneWidget);
     // Verify reset button
+    expect(find.byIcon(Icons.my_location), findsAtLeastNWidgets(1));
+
+    // Verify PersonMapMarker (User location pin)
     expect(
-      find.byIcon(Icons.my_location),
-      findsAtLeastNWidgets(1),
+      find.byType(PersonMapMarker),
+      findsOneWidget,
     ); // One on map (marker) maybe, one on button
 
     // Basic interaction check

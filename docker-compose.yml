@@ -7,7 +7,7 @@ services:
       context: ./backend # Points to the backend subdirectory
       dockerfile: Dockerfile # Uses the file we created above
     image: map-my-friends-backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: poetry run python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app # Syncs your local backend folder to the container
       - media_data:/app/media # Persist uploaded media files

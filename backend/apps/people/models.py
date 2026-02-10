@@ -24,5 +24,33 @@ class Person(models.Model):
     
     location = models.PointField()
 
+    def save(self, *args, **kwargs):
+        if not self.location:
+            from geopy.geocoders import Nominatim
+            from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+            from django.contrib.gis.geos import Point
+            from django.core.exceptions import ValidationError
+            import time
+
+            geolocator = Nominatim(user_agent="map_my_friends_global_connect")
+            address = f"{self.street or ''}, {self.city}, {self.state}, {self.country}".strip(", ")
+            
+            for attempt in range(3):
+                try:
+                    location = geolocator.geocode(address)
+                    if location:
+                        self.location = Point(location.longitude, location.latitude)
+                        break
+                except (GeocoderTimedOut, GeocoderServiceError):
+                    if attempt < 2:
+                        time.sleep(1)
+                    else:
+                        raise ValidationError("Geocoding service unavailable. Please try again later.")
+            else:
+                if not self.location:
+                    raise ValidationError(f"Could not geocode address: {address}")
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.tag})"

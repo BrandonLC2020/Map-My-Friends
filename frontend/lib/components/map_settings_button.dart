@@ -1,0 +1,39 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/map/map_settings_cubit.dart';
+import 'glass_container.dart';
+import 'map_settings_modal.dart';
+
+class MapSettingsButton extends StatelessWidget {
+  const MapSettingsButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top:
+          60, // Adjust position as needed, e.g., below a search bar or top-right
+      right: 20,
+      child: GlassContainer(
+        padding: const EdgeInsets.all(8),
+        borderRadius: 30,
+        child: IconButton(
+          icon: const Icon(Icons.settings, color: Colors.indigo),
+          tooltip: 'Map Settings',
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              builder: (_) {
+                // Pass the existing cubit to the modal
+                return BlocProvider.value(
+                  value: context.read<MapSettingsCubit>(),
+                  child: const MapSettingsModal(),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/people/people_bloc.dart';
 import 'add_edit_person_screen.dart';
+import '../../components/person_card.dart';
 
 class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});
@@ -25,7 +26,12 @@ class PeopleScreen extends StatelessWidget {
                   if (isDesktop) {
                     // Desktop: Grid layout
                     return GridView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.fromLTRB(
+                        isDesktop ? 120 : 16,
+                        16,
+                        16,
+                        16,
+                      ),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: constraints.maxWidth >= 900 ? 3 : 2,
                         childAspectRatio: 2.5,
@@ -35,42 +41,17 @@ class PeopleScreen extends StatelessWidget {
                       itemCount: state.people.length,
                       itemBuilder: (context, index) {
                         final person = state.people[index];
-                        return Card(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AddEditPersonScreen(person: person),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '${person.firstName} ${person.lastName}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text('${person.city}, ${person.state}'),
-                                  Text(
-                                    person.relationshipTag,
-                                    style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                ],
+                        return PersonCard(
+                          person: person,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AddEditPersonScreen(person: person),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         );
                       },
                     );

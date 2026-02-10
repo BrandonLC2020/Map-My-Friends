@@ -5,9 +5,6 @@ from .models import Person
 
 
 class PersonSerializer(GeoFeatureModelSerializer):
-    latitude = serializers.FloatField(write_only=True, required=False)
-    longitude = serializers.FloatField(write_only=True, required=False)
-
     class Meta:
         model = Person
         geo_field = "location"
@@ -24,16 +21,5 @@ class PersonSerializer(GeoFeatureModelSerializer):
             'phone_number',
             'profile_image',
             'location',
-            'latitude',
-            'longitude',
         )
         read_only_fields = ('location',)
-
-    def validate(self, attrs):
-        latitude = attrs.pop('latitude', None)
-        longitude = attrs.pop('longitude', None)
-
-        if latitude is not None and longitude is not None:
-            attrs['location'] = Point(longitude, latitude)
-            
-        return attrs
