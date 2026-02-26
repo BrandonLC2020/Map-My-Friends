@@ -23,6 +23,7 @@ class Person(models.Model):
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     
     location = models.PointField()
+    timezone = models.CharField(max_length=50, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.location:
@@ -31,8 +32,10 @@ class Person(models.Model):
             from django.contrib.gis.geos import Point
             from django.core.exceptions import ValidationError
             import time
+            from timezonefinder import TimezoneFinder
 
             geolocator = Nominatim(user_agent="map_my_friends_global_connect")
+            tf = TimezoneFinder()
             address = f"{self.street or ''}, {self.city}, {self.state}, {self.country}".strip(", ")
             
             for attempt in range(3):
@@ -40,6 +43,7 @@ class Person(models.Model):
                     location = geolocator.geocode(address)
                     if location:
                         self.location = Point(location.longitude, location.latitude)
+                        self.timezone = tf.timezone_at(lng=location.longitude, lat=location.latitude)
                         break
                 except (GeocoderTimedOut, GeocoderServiceError):
                     if attempt < 2:

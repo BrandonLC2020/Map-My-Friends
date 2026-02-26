@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/person.dart';
 import '../../bloc/people/people_bloc.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:intl/intl.dart';
 import '../../components/shared/image_editor_modal.dart';
 import '../../components/shared/custom_text_form_field.dart';
 
@@ -285,6 +287,16 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 600;
 
+          String? timeString;
+          if (widget.person?.timezone != null &&
+              widget.person!.timezone!.isNotEmpty) {
+            try {
+              final location = tz.getLocation(widget.person!.timezone!);
+              final now = tz.TZDateTime.now(location);
+              timeString = DateFormat.jm().format(now);
+            } catch (_) {}
+          }
+
           return Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -301,7 +313,48 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildProfileImagePicker(),
-                      const SizedBox(height: 32),
+                      if (timeString != null) ...[
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Local Time: $timeString',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        const SizedBox(height: 32),
+                      ],
 
                       Text(
                         'Basic Info',

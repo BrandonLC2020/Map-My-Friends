@@ -21,5 +21,6 @@ class PersonSerializer(GeoFeatureModelSerializer):
             'phone_number',
             'profile_image',
             'location',
+            'timezone',
         )
-        read_only_fields = ('location',)
+        read_only_fields = ('location', 'timezone')

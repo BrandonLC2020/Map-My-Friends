@@ -12,6 +12,7 @@ class Person {
   final double? latitude;
   final double? longitude;
   final String? profileImageUrl;
+  final String? timezone;
 
   Person({
     required this.id,
@@ -27,6 +28,7 @@ class Person {
     this.latitude,
     this.longitude,
     this.profileImageUrl,
+    this.timezone,
   });
 
   factory Person.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,7 @@ class Person {
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       profileImageUrl: json['profile_image'] as String?,
+      timezone: json['timezone'] as String?,
     );
   }
 
@@ -73,6 +76,7 @@ class Person {
           ? (coordinates[0] as num).toDouble()
           : null,
       profileImageUrl: properties['profile_image'] as String?,
+      timezone: properties['timezone'] as String?,
     );
   }
 
@@ -89,6 +93,7 @@ class Person {
       'phone_number': phoneNumber,
       'latitude': latitude,
       'longitude': longitude,
+      'timezone': timezone,
     };
     if (id.isNotEmpty) {
       data['id'] = id;
@@ -110,6 +115,7 @@ class Person {
     double? latitude,
     double? longitude,
     String? profileImageUrl,
+    String? timezone,
   }) {
     return Person(
       id: id ?? this.id,
@@ -125,6 +131,7 @@ class Person {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      timezone: timezone ?? this.timezone,
     );
   }
 }

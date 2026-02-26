@@ -15,7 +15,10 @@ import 'utils/app_theme.dart';
 import 'components/shared/glass_container.dart';
 import 'bloc/theme/theme_cubit.dart';
 
+import 'package:timezone/data/latest.dart' as tz;
+
 void main() {
+  tz.initializeTimeZones();
   runApp(const MyApp());
 }
 
