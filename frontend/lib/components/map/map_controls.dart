@@ -66,77 +66,84 @@ class MapControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Pan Controls Group
-        Positioned(
-          bottom: 20,
-          right: 20,
-          child: GlassContainer(
-            padding: const EdgeInsets.all(4),
-            borderRadius: 30, // Rounded for D-pad feel
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildGlassButton(
-                  onPressed: () => _pan(0.01, 0),
-                  icon: Icons.arrow_drop_up,
-                ),
-                Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 600;
+        return Stack(
+          children: [
+            // Pan Controls Group
+            Positioned(
+              bottom: isDesktop ? 20 : 120, // Float above bottom nav on mobile
+              right: 20,
+              child: GlassContainer(
+                padding: const EdgeInsets.all(4),
+                borderRadius: 30, // Rounded for D-pad feel
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildGlassButton(
-                      onPressed: () => _pan(0, -0.01),
-                      icon: Icons.arrow_left,
+                      onPressed: () => _pan(0.01, 0),
+                      icon: Icons.arrow_drop_up,
                     ),
-                    const SizedBox(width: 4),
-                    _buildGlassButton(
-                      onPressed: () => _resetView(context),
-                      icon: Icons.my_location,
-                      tooltip: 'My Location',
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildGlassButton(
+                          onPressed: () => _pan(0, -0.01),
+                          icon: Icons.arrow_left,
+                        ),
+                        const SizedBox(width: 4),
+                        _buildGlassButton(
+                          onPressed: () => _resetView(context),
+                          icon: Icons.my_location,
+                          tooltip: 'My Location',
+                        ),
+                        const SizedBox(width: 4),
+                        _buildGlassButton(
+                          onPressed: () => _pan(0, 0.01),
+                          icon: Icons.arrow_right,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
                     _buildGlassButton(
-                      onPressed: () => _pan(0, 0.01),
-                      icon: Icons.arrow_right,
+                      onPressed: () => _pan(-0.01, 0),
+                      icon: Icons.arrow_drop_down,
                     ),
                   ],
                 ),
-                _buildGlassButton(
-                  onPressed: () => _pan(-0.01, 0),
-                  icon: Icons.arrow_drop_down,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        // Zoom Controls Group
-        Positioned(
-          bottom: 180, // Positioned above the pan controls
-          right: 20,
-          child: GlassContainer(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildGlassButton(
-                  onPressed: _zoomIn,
-                  icon: Icons.add,
-                  tooltip: 'Zoom In',
+            // Zoom Controls Group
+            Positioned(
+              bottom: isDesktop
+                  ? 180
+                  : 280, // Positioned above the pan controls
+              right: 20,
+              child: GlassContainer(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildGlassButton(
+                      onPressed: _zoomIn,
+                      icon: Icons.add,
+                      tooltip: 'Zoom In',
+                    ),
+                    const SizedBox(height: 4),
+                    const Icon(Icons.search, color: Colors.indigo, size: 20),
+                    const SizedBox(height: 4),
+                    _buildGlassButton(
+                      onPressed: _zoomOut,
+                      icon: Icons.remove,
+                      tooltip: 'Zoom Out',
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                const Icon(Icons.search, color: Colors.indigo, size: 20),
-                const SizedBox(height: 4),
-                _buildGlassButton(
-                  onPressed: _zoomOut,
-                  icon: Icons.remove,
-                  tooltip: 'Zoom Out',
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

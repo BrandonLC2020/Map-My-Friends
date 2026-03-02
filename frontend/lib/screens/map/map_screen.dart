@@ -135,7 +135,7 @@ class _MapScreenState extends State<MapScreen> {
                             TileLayer(
                               urlTemplate: _getTileUrl(context, settingsState),
                               subdomains: const ['a', 'b', 'c'],
-                              userAgentPackageName: 'com.example.app',
+                              userAgentPackageName: 'com.mapmyfriends.app',
                               tileBuilder: (context, widget, tile) {
                                 // Check if we are in Standard mode AND Dark mode
                                 bool isStandard =

@@ -430,7 +430,9 @@ class _MeScreenState extends State<MeScreen> {
                                         ),
                                 ),
                               ),
-                              const SizedBox(height: 24), // Bottom padding
+                              const SizedBox(
+                                height: 120,
+                              ), // Bottom padding for navigation bar
                             ],
                           );
                         },

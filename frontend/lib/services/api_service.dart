@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/person.dart';
+import 'api_config.dart';
 import 'auth_service.dart';
 
 class ApiService {
@@ -17,7 +18,7 @@ class ApiService {
   ApiService._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8000/api/',
+        baseUrl: ApiConfig.baseUrl,
         connectTimeout: const Duration(seconds: 5),
         receiveTimeout: const Duration(seconds: 3),
       ),

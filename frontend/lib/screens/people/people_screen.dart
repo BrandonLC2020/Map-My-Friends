@@ -58,6 +58,9 @@ class PeopleScreen extends StatelessWidget {
                   } else {
                     // Mobile: List layout
                     return ListView.builder(
+                      padding: const EdgeInsets.only(
+                        bottom: 120,
+                      ), // Bottom nav padding
                       itemCount: state.people.length,
                       itemBuilder: (context, index) {
                         final person = state.people[index];
@@ -87,16 +90,24 @@ class PeopleScreen extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddEditPersonScreen(),
+      floatingActionButton: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 600;
+          return Padding(
+            padding: EdgeInsets.only(bottom: isDesktop ? 0 : 90),
+            child: FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddEditPersonScreen(),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
             ),
           );
         },
-        child: const Icon(Icons.add),
       ),
     );
   }

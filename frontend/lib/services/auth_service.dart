@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'api_config.dart';
 
 class AuthService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:8000/api/',
+      baseUrl: ApiConfig.baseUrl,
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 3),
     ),
@@ -34,7 +35,7 @@ class AuthService {
     }
     return Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8000/api/',
+        baseUrl: ApiConfig.baseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {'Authorization': 'Bearer $token'},
