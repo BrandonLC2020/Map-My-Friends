@@ -22,7 +22,7 @@ db:
 	docker compose exec db psql -U mapuser -d mapfriends_db
 
 test:
-	docker compose exec api poetry run python manage.py test
+	docker compose exec api poetry run python manage.py test 2>&1 | tee .gemini/last_test_results.txt
 
 # Poetry helpers
 install:
