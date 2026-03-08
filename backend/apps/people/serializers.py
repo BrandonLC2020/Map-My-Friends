@@ -22,5 +22,9 @@ class PersonSerializer(GeoFeatureModelSerializer):
             'profile_image',
             'location',
             'timezone',
+            'pin_color',
+            'pin_style',
+            'pin_icon_type',
+            'pin_emoji',
         )
         read_only_fields = ('location', 'timezone')

@@ -35,6 +35,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           street: profile['street'],
           birthDate: profile['birth_date'],
           phoneNumber: profile['phone_number'],
+          pinColor: profile['pin_color'],
+          pinStyle: profile['pin_style'],
+          pinIconType: profile['pin_icon_type'],
+          pinEmoji: profile['pin_emoji'],
         ),
       );
     } catch (e) {
@@ -59,6 +63,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         street: event.street,
         birthDate: event.birthDate,
         phoneNumber: event.phoneNumber,
+        pinColor: event.pinColor,
+        pinStyle: event.pinStyle,
+        pinIconType: event.pinIconType,
+        pinEmoji: event.pinEmoji,
       );
       emit(
         ProfileLoaded(
@@ -73,6 +81,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           street: profile['street'],
           birthDate: profile['birth_date'],
           phoneNumber: profile['phone_number'],
+          pinColor: profile['pin_color'],
+          pinStyle: profile['pin_style'],
+          pinIconType: profile['pin_icon_type'],
+          pinEmoji: profile['pin_emoji'],
         ),
       );
     } catch (e) {
@@ -105,6 +117,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           street: profile['street'],
           birthDate: profile['birth_date'],
           phoneNumber: profile['phone_number'],
+          pinColor: profile['pin_color'],
+          pinStyle: profile['pin_style'],
+          pinIconType: profile['pin_icon_type'],
+          pinEmoji: profile['pin_emoji'],
         ),
       );
     } catch (e) {

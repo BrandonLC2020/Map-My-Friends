@@ -2,12 +2,15 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../bloc/profile/profile_bloc.dart';
 import '../../bloc/profile/profile_event.dart';
 import '../../bloc/profile/profile_state.dart';
 import '../../components/shared/image_editor_modal.dart';
 import '../../components/shared/custom_text_form_field.dart';
+import '../../components/map/custom_map_marker.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../settings/settings_screen.dart';
@@ -32,6 +35,13 @@ class _MeScreenState extends State<MeScreen> {
   final _imagePicker = ImagePicker();
   Uint8List?
   _localImageBytes; // For showing local image immediately after picking
+
+  // Pin customization state
+  String _pinColor = '#2196F3';
+  String _pinStyle = 'teardrop';
+  String _pinIconType = 'none';
+  String? _pinEmoji;
+  bool _pinFieldsPopulated = false;
 
   @override
   void initState() {
@@ -113,6 +123,54 @@ class _MeScreenState extends State<MeScreen> {
     );
   }
 
+  void _showColorPicker() {
+    Color pickerColor = Color(int.parse(_pinColor.replaceFirst('#', '0xFF')));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pick a Pin Color'),
+        content: SingleChildScrollView(
+          child: BlockPicker(
+            pickerColor: pickerColor,
+            onColorChanged: (color) {
+              setState(() {
+                _pinColor =
+                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+              });
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Got it'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: SizedBox(
+            height: 300,
+            child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                setState(() {
+                  _pinEmoji = emoji.emoji;
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _populateFieldsFromProfile(ProfileLoaded state) {
     if (_cityController.text.isEmpty && state.city != null) {
       _cityController.text = state.city!;
@@ -137,6 +195,14 @@ class _MeScreenState extends State<MeScreen> {
     }
     if (_birthDateController.text.isEmpty && state.birthDate != null) {
       _birthDateController.text = state.birthDate!;
+    }
+    // Populate pin fields only once from server
+    if (!_pinFieldsPopulated) {
+      if (state.pinColor != null) _pinColor = state.pinColor!;
+      if (state.pinStyle != null) _pinStyle = state.pinStyle!;
+      if (state.pinIconType != null) _pinIconType = state.pinIconType!;
+      _pinEmoji = state.pinEmoji ?? '😀';
+      _pinFieldsPopulated = true;
     }
   }
 
@@ -385,6 +451,169 @@ class _MeScreenState extends State<MeScreen> {
 
                               const SizedBox(height: 32),
 
+                              // --- Map Pin Customization ---
+                              Text(
+                                'Map Pin Customization',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Pin Preview
+                              Center(
+                                child: Column(
+                                  children: [
+                                    CustomMapMarker(
+                                      pinColorHex: _pinColor,
+                                      pinStyle: _pinStyle,
+                                      pinIconType: _pinIconType,
+                                      pinEmoji: _pinEmoji,
+                                      initials: _getInitials(),
+                                      profileImageUrl:
+                                          profileState is ProfileLoaded
+                                          ? profileState.profileImageUrl
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Preview',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text('Pin Color'),
+                                trailing: GestureDetector(
+                                  onTap: _showColorPicker,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Color(
+                                        int.parse(
+                                          _pinColor.replaceFirst('#', '0xFF'),
+                                        ),
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              DropdownButtonFormField<String>(
+                                value: _pinStyle,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'teardrop',
+                                    child: Text('Teardrop'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'circle',
+                                    child: Text('Circle'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'square',
+                                    child: Text('Square'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'triangle',
+                                    child: Text('Triangle'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'diamond',
+                                    child: Text('Diamond'),
+                                  ),
+                                ],
+                                onChanged: (val) =>
+                                    setState(() => _pinStyle = val!),
+                                decoration: InputDecoration(
+                                  labelText: 'Pin Shape',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerLowest,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              DropdownButtonFormField<String>(
+                                value: _pinIconType,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'none',
+                                    child: Text('None'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'emoji',
+                                    child: Text('Emoji'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'initials',
+                                    child: Text('Initials'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'picture',
+                                    child: Text('Profile Picture'),
+                                  ),
+                                ],
+                                onChanged: (val) =>
+                                    setState(() => _pinIconType = val!),
+                                decoration: InputDecoration(
+                                  labelText: 'Inner Icon',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerLowest,
+                                ),
+                              ),
+
+                              if (_pinIconType == 'emoji') ...[
+                                const SizedBox(height: 16),
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('Selected Emoji'),
+                                  trailing: GestureDetector(
+                                    onTap: _showEmojiPicker,
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        _pinEmoji ?? '😀',
+                                        style: const TextStyle(fontSize: 24),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 32),
+
                               SizedBox(
                                 height: 50,
                                 child: FilledButton(
@@ -430,6 +659,10 @@ class _MeScreenState extends State<MeScreen> {
                                                         .isNotEmpty
                                                     ? _streetController.text
                                                     : null,
+                                                pinColor: _pinColor,
+                                                pinStyle: _pinStyle,
+                                                pinIconType: _pinIconType,
+                                                pinEmoji: _pinEmoji,
                                               ),
                                             );
                                             ScaffoldMessenger.of(
@@ -548,5 +781,16 @@ class _MeScreenState extends State<MeScreen> {
             : null,
       ),
     );
+  }
+
+  String _getInitials() {
+    String initials = '';
+    if (_firstNameController.text.isNotEmpty) {
+      initials += _firstNameController.text[0];
+    }
+    if (_lastNameController.text.isNotEmpty) {
+      initials += _lastNameController.text[0];
+    }
+    return initials;
   }
 }

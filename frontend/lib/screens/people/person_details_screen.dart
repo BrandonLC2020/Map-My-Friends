@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/person.dart';
 import '../../bloc/people/people_bloc.dart';
+import '../../components/map/custom_map_marker.dart';
 import 'add_edit_person_screen.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
@@ -219,8 +220,35 @@ class PersonDetailsScreen extends StatelessWidget {
               content: DateFormat.yMMMMd().format(person.birthday!),
             ),
         ],
+
+        const SizedBox(height: 24),
+        _buildSectionTitle(context, 'Map Pin'),
+        const SizedBox(height: 12),
+        Center(
+          child: Column(
+            children: [
+              CustomMapMarker(
+                pinColorHex: person.pinColor,
+                pinStyle: person.pinStyle,
+                pinIconType: person.pinIconType,
+                pinEmoji: person.pinEmoji,
+                initials: _getInitials(person),
+                profileImageUrl: person.profileImageUrl,
+              ),
+              const SizedBox(height: 8),
+              Text('Preview', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  String _getInitials(Person person) {
+    String initials = '';
+    if (person.firstName.isNotEmpty) initials += person.firstName[0];
+    if (person.lastName.isNotEmpty) initials += person.lastName[0];
+    return initials;
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {

@@ -23,6 +23,10 @@ class ProfileLoaded extends ProfileState {
   final String? street;
   final String? birthDate;
   final String? phoneNumber;
+  final String? pinColor;
+  final String? pinStyle;
+  final String? pinIconType;
+  final String? pinEmoji;
 
   const ProfileLoaded({
     this.username,
@@ -36,6 +40,10 @@ class ProfileLoaded extends ProfileState {
     this.street,
     this.birthDate,
     this.phoneNumber,
+    this.pinColor,
+    this.pinStyle,
+    this.pinIconType,
+    this.pinEmoji,
   });
 
   @override
@@ -51,6 +59,10 @@ class ProfileLoaded extends ProfileState {
     street,
     birthDate,
     phoneNumber,
+    pinColor,
+    pinStyle,
+    pinIconType,
+    pinEmoji,
   ];
 
   ProfileLoaded copyWith({
@@ -65,6 +77,10 @@ class ProfileLoaded extends ProfileState {
     String? street,
     String? birthDate,
     String? phoneNumber,
+    String? pinColor,
+    String? pinStyle,
+    String? pinIconType,
+    String? pinEmoji,
   }) {
     return ProfileLoaded(
       username: username ?? this.username,
@@ -78,6 +94,10 @@ class ProfileLoaded extends ProfileState {
       street: street ?? this.street,
       birthDate: birthDate ?? this.birthDate,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      pinColor: pinColor ?? this.pinColor,
+      pinStyle: pinStyle ?? this.pinStyle,
+      pinIconType: pinIconType ?? this.pinIconType,
+      pinEmoji: pinEmoji ?? this.pinEmoji,
     );
   }
 }

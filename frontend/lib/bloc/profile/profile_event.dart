@@ -21,6 +21,10 @@ class UpdateProfile extends ProfileEvent {
   final String? street;
   final String? birthDate;
   final String? phoneNumber;
+  final String? pinColor;
+  final String? pinStyle;
+  final String? pinIconType;
+  final String? pinEmoji;
 
   const UpdateProfile({
     this.firstName,
@@ -31,6 +35,10 @@ class UpdateProfile extends ProfileEvent {
     this.street,
     this.birthDate,
     this.phoneNumber,
+    this.pinColor,
+    this.pinStyle,
+    this.pinIconType,
+    this.pinEmoji,
   });
 
   @override
@@ -43,6 +51,10 @@ class UpdateProfile extends ProfileEvent {
     street,
     birthDate,
     phoneNumber,
+    pinColor,
+    pinStyle,
+    pinIconType,
+    pinEmoji,
   ];
 }
 

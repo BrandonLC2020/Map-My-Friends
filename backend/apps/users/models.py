@@ -15,6 +15,27 @@ class UserProfile(models.Model):
     birth_date = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, default='')
 
+    # Map Pin Customization
+    PIN_STYLE_CHOICES = [
+        ('teardrop', 'Teardrop'),
+        ('circle', 'Circle'),
+        ('square', 'Square'),
+        ('triangle', 'Triangle'),
+        ('diamond', 'Diamond'),
+    ]
+    
+    PIN_ICON_TYPE_CHOICES = [
+        ('none', 'None'),
+        ('emoji', 'Emoji'),
+        ('initials', 'Initials'),
+        ('picture', 'Profile Picture'),
+    ]
+
+    pin_color = models.CharField(max_length=7, default='#2196F3', help_text="Hex color code for the map pin")
+    pin_style = models.CharField(max_length=20, choices=PIN_STYLE_CHOICES, default='teardrop', help_text="Shape of the map pin")
+    pin_icon_type = models.CharField(max_length=20, choices=PIN_ICON_TYPE_CHOICES, default='none', help_text="What to display inside the pin")
+    pin_emoji = models.CharField(max_length=10, blank=True, null=True, help_text="Emoji to display if icon_type is 'emoji'")
+
     def __str__(self):
         return f"Profile for {self.user.username}"
 

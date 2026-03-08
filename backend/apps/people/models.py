@@ -25,6 +25,27 @@ class Person(models.Model):
     location = models.PointField()
     timezone = models.CharField(max_length=50, blank=True, null=True)
 
+    pin_color = models.CharField(max_length=20, default='#F44336')
+    
+    PIN_STYLE_CHOICES = [
+        ('teardrop', 'Teardrop'),
+        ('circle', 'Circle'),
+        ('square', 'Square'),
+        ('triangle', 'Triangle'),
+        ('diamond', 'Diamond'),
+    ]
+    pin_style = models.CharField(max_length=20, choices=PIN_STYLE_CHOICES, default='teardrop')
+    
+    PIN_ICON_TYPE_CHOICES = [
+        ('none', 'None'),
+        ('emoji', 'Emoji'),
+        ('initials', 'Initials'),
+        ('picture', 'Picture'),
+    ]
+    pin_icon_type = models.CharField(max_length=20, choices=PIN_ICON_TYPE_CHOICES, default='none')
+    
+    pin_emoji = models.CharField(max_length=10, blank=True, null=True)
+
     def save(self, *args, **kwargs):
         if not self.location:
             from geopy.geocoders import Nominatim

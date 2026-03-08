@@ -25,6 +25,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'street',
             'birth_date',
             'phone_number',
+            'pin_color',
+            'pin_style',
+            'pin_icon_type',
+            'pin_emoji',
         ]
         read_only_fields = ['username', 'email']
 

@@ -13,6 +13,10 @@ class Person {
   final double? longitude;
   final String? profileImageUrl;
   final String? timezone;
+  final String pinColor;
+  final String pinStyle;
+  final String pinIconType;
+  final String? pinEmoji;
 
   Person({
     required this.id,
@@ -29,6 +33,10 @@ class Person {
     this.longitude,
     this.profileImageUrl,
     this.timezone,
+    this.pinColor = '#F44336',
+    this.pinStyle = 'teardrop',
+    this.pinIconType = 'none',
+    this.pinEmoji,
   });
 
   factory Person.fromJson(Map<String, dynamic> json) {
@@ -49,6 +57,10 @@ class Person {
       longitude: (json['longitude'] as num?)?.toDouble(),
       profileImageUrl: json['profile_image'] as String?,
       timezone: json['timezone'] as String?,
+      pinColor: json['pin_color'] as String? ?? '#F44336',
+      pinStyle: json['pin_style'] as String? ?? 'teardrop',
+      pinIconType: json['pin_icon_type'] as String? ?? 'none',
+      pinEmoji: json['pin_emoji'] as String?,
     );
   }
 
@@ -77,6 +89,10 @@ class Person {
           : null,
       profileImageUrl: properties['profile_image'] as String?,
       timezone: properties['timezone'] as String?,
+      pinColor: properties['pin_color'] as String? ?? '#F44336',
+      pinStyle: properties['pin_style'] as String? ?? 'teardrop',
+      pinIconType: properties['pin_icon_type'] as String? ?? 'none',
+      pinEmoji: properties['pin_emoji'] as String?,
     );
   }
 
@@ -94,6 +110,10 @@ class Person {
       'latitude': latitude,
       'longitude': longitude,
       'timezone': timezone,
+      'pin_color': pinColor,
+      'pin_style': pinStyle,
+      'pin_icon_type': pinIconType,
+      'pin_emoji': pinEmoji,
     };
     if (id.isNotEmpty) {
       data['id'] = id;
@@ -116,6 +136,10 @@ class Person {
     double? longitude,
     String? profileImageUrl,
     String? timezone,
+    String? pinColor,
+    String? pinStyle,
+    String? pinIconType,
+    String? pinEmoji,
   }) {
     return Person(
       id: id ?? this.id,
@@ -132,6 +156,10 @@ class Person {
       longitude: longitude ?? this.longitude,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       timezone: timezone ?? this.timezone,
+      pinColor: pinColor ?? this.pinColor,
+      pinStyle: pinStyle ?? this.pinStyle,
+      pinIconType: pinIconType ?? this.pinIconType,
+      pinEmoji: pinEmoji ?? this.pinEmoji,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../bloc/location/location_bloc.dart';
@@ -10,6 +11,11 @@ import '../../bloc/map/local_map_settings_cubit.dart';
 import '../../components/map/map_controls.dart';
 import '../../components/map/map_settings_button.dart';
 import '../../components/map/person_map_marker.dart';
+import '../../components/map/custom_map_marker.dart';
+import '../../components/map/cluster_people_modal.dart';
+import '../../models/person.dart';
+import '../../bloc/profile/profile_bloc.dart';
+import '../../bloc/profile/profile_state.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -96,18 +102,51 @@ class _MapScreenState extends State<MapScreen> {
                 List<Marker> markers = [];
                 if (locationState is LocationLoaded &&
                     locationState.position != null) {
-                  markers.add(
-                    Marker(
-                      point: center,
-                      width: 40,
-                      height: 40,
-                      child: const Icon(
-                        Icons.my_location,
-                        color: Colors.blue,
-                        size: 40,
+                  final profileState = context.watch<ProfileBloc>().state;
+
+                  if (profileState is ProfileLoaded &&
+                      (profileState.pinColor != null ||
+                          profileState.pinStyle != null ||
+                          profileState.pinIconType != null)) {
+                    String initials = '';
+                    if (profileState.firstName != null &&
+                        profileState.firstName!.isNotEmpty) {
+                      initials += profileState.firstName![0];
+                    }
+                    if (profileState.lastName != null &&
+                        profileState.lastName!.isNotEmpty) {
+                      initials += profileState.lastName![0];
+                    }
+
+                    markers.add(
+                      Marker(
+                        point: center,
+                        width: 40,
+                        height: 40,
+                        child: CustomMapMarker(
+                          pinColorHex: profileState.pinColor ?? '#2196F3',
+                          pinStyle: profileState.pinStyle ?? 'teardrop',
+                          pinIconType: profileState.pinIconType ?? 'none',
+                          pinEmoji: profileState.pinEmoji,
+                          initials: initials,
+                          profileImageUrl: profileState.profileImageUrl,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    markers.add(
+                      Marker(
+                        point: center,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.my_location,
+                          color: Colors.blue,
+                          size: 40,
+                        ),
+                      ),
+                    );
+                  }
                 }
 
                 if (peopleState is PeopleLoaded) {
@@ -116,10 +155,23 @@ class _MapScreenState extends State<MapScreen> {
                         .where((p) => p.latitude != null && p.longitude != null)
                         .map(
                           (p) => Marker(
+                            key: ValueKey(p.id),
                             point: LatLng(p.latitude!, p.longitude!),
                             width: 40,
                             height: 40,
-                            child: PersonMapMarker(person: p),
+                            child: PersonMapMarker(
+                              person: p,
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) =>
+                                      ClusterPeopleModal.withPeople(
+                                        people: [p],
+                                      ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                   );
@@ -178,7 +230,181 @@ class _MapScreenState extends State<MapScreen> {
                                 return widget;
                               },
                             ),
-                            MarkerLayer(markers: markers),
+                            MarkerClusterLayerWidget(
+                              options: MarkerClusterLayerOptions(
+                                maxClusterRadius: 45,
+                                size: const Size(120, 48),
+                                markers: markers,
+                                disableClusteringAtZoom: 19,
+                                spiderfyCluster:
+                                    false, // Turn off exploding pins out
+                                onMarkerTap: (marker) {
+                                  // Fallback tap handler if single marker tapped
+                                  if (marker.key is ValueKey<String> &&
+                                      peopleState is PeopleLoaded) {
+                                    final id =
+                                        (marker.key as ValueKey<String>).value;
+                                    final person = peopleState.people
+                                        .firstWhere((p) => p.id == id);
+                                    showModalBottomSheet(
+                                      context: context,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) =>
+                                          ClusterPeopleModal.withPeople(
+                                            people: [person],
+                                          ),
+                                    );
+                                  }
+                                },
+                                onClusterTap: (clusterNode) {
+                                  if (peopleState is PeopleLoaded) {
+                                    // Extract all Person objects belonging to the cluster
+                                    List<Person> clusterPeople = [];
+                                    for (var marker in clusterNode.markers) {
+                                      if (marker.key is ValueKey<String>) {
+                                        final id =
+                                            (marker.key as ValueKey<String>)
+                                                .value;
+                                        try {
+                                          clusterPeople.add(
+                                            peopleState.people.firstWhere(
+                                              (p) => p.id == id,
+                                            ),
+                                          );
+                                        } catch (_) {}
+                                      }
+                                    }
+
+                                    if (clusterPeople.isNotEmpty) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) =>
+                                            ClusterPeopleModal.withPeople(
+                                              people: clusterPeople,
+                                            ),
+                                      );
+                                    }
+                                  }
+                                },
+                                builder: (context, clusterMarkers) {
+                                  List<Widget> children = [];
+
+                                  int displayCount = clusterMarkers.length > 4
+                                      ? 3
+                                      : clusterMarkers.length;
+                                  bool hasExtra = clusterMarkers.length > 4;
+
+                                  double itemSize = 36.0;
+                                  double overlap = 20.0; // Tightly overlap pins
+
+                                  // Calculate total width of the overlapping group
+                                  double totalWidth = 0;
+                                  if (displayCount > 0) {
+                                    totalWidth =
+                                        (displayCount - 1) * overlap + itemSize;
+                                    if (hasExtra) totalWidth += overlap;
+                                  }
+
+                                  for (int i = 0; i < displayCount; i++) {
+                                    children.add(
+                                      Positioned(
+                                        left: i * overlap,
+                                        child: SizedBox(
+                                          width: itemSize,
+                                          height: itemSize,
+                                          child: clusterMarkers[i].child,
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  if (hasExtra) {
+                                    int extraCount = clusterMarkers.length - 3;
+                                    children.add(
+                                      Positioned(
+                                        left: displayCount * overlap,
+                                        child: Container(
+                                          width: itemSize,
+                                          height: itemSize,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primaryContainer,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                              width: 2,
+                                            ),
+                                            boxShadow: const [
+                                              BoxShadow(
+                                                color: Colors.black26,
+                                                blurRadius: 4,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            '+$extraCount',
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimaryContainer,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return Center(
+                                    child: Container(
+                                      width:
+                                          totalWidth +
+                                          8, // 4px padding on each side
+                                      height:
+                                          itemSize +
+                                          8, // 4px padding top/bottom
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).cardColor.withOpacity(0.8),
+                                        borderRadius: BorderRadius.circular(24),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Positioned(
+                                            left: 4,
+                                            top: 4,
+                                            width: totalWidth,
+                                            height: itemSize,
+                                            child: IgnorePointer(
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: children,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                             RichAttributionWidget(
                               alignment: AttributionAlignment.bottomLeft,
                               attributions: [

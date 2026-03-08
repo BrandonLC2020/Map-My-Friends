@@ -196,6 +196,10 @@ class AuthService {
     String? street,
     String? birthDate,
     String? phoneNumber,
+    String? pinColor,
+    String? pinStyle,
+    String? pinIconType,
+    String? pinEmoji,
   }) async {
     try {
       final dio = await _getAuthenticatedDio();
@@ -209,6 +213,10 @@ class AuthService {
       if (street != null) data['street'] = street;
       if (birthDate != null) data['birth_date'] = birthDate;
       if (phoneNumber != null) data['phone_number'] = phoneNumber;
+      if (pinColor != null) data['pin_color'] = pinColor;
+      if (pinStyle != null) data['pin_style'] = pinStyle;
+      if (pinIconType != null) data['pin_icon_type'] = pinIconType;
+      if (pinEmoji != null) data['pin_emoji'] = pinEmoji;
 
       final response = await dio.patch('user/profile/', data: data);
 
