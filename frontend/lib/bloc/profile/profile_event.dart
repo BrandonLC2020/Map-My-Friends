@@ -13,15 +13,37 @@ class LoadProfile extends ProfileEvent {}
 
 /// Update profile fields (address)
 class UpdateProfile extends ProfileEvent {
+  final String? firstName;
+  final String? lastName;
   final String? city;
   final String? state;
   final String? country;
   final String? street;
+  final String? birthDate;
+  final String? phoneNumber;
 
-  const UpdateProfile({this.city, this.state, this.country, this.street});
+  const UpdateProfile({
+    this.firstName,
+    this.lastName,
+    this.city,
+    this.state,
+    this.country,
+    this.street,
+    this.birthDate,
+    this.phoneNumber,
+  });
 
   @override
-  List<Object?> get props => [city, state, country, street];
+  List<Object?> get props => [
+    firstName,
+    lastName,
+    city,
+    state,
+    country,
+    street,
+    birthDate,
+    phoneNumber,
+  ];
 }
 
 /// Upload a new profile image

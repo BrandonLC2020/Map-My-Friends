@@ -188,19 +188,27 @@ class AuthService {
 
   /// Update the current user's profile
   Future<Map<String, dynamic>> updateProfile({
+    String? firstName,
+    String? lastName,
     String? city,
     String? state,
     String? country,
     String? street,
+    String? birthDate,
+    String? phoneNumber,
   }) async {
     try {
       final dio = await _getAuthenticatedDio();
       final data = <String, dynamic>{};
 
+      if (firstName != null) data['first_name'] = firstName;
+      if (lastName != null) data['last_name'] = lastName;
       if (city != null) data['city'] = city;
       if (state != null) data['state'] = state;
       if (country != null) data['country'] = country;
       if (street != null) data['street'] = street;
+      if (birthDate != null) data['birth_date'] = birthDate;
+      if (phoneNumber != null) data['phone_number'] = phoneNumber;
 
       final response = await dio.patch('user/profile/', data: data);
 

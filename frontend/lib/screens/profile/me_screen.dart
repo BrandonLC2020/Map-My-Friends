@@ -3,15 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../bloc/location/location_bloc.dart';
 import '../../bloc/profile/profile_bloc.dart';
 import '../../bloc/profile/profile_event.dart';
 import '../../bloc/profile/profile_state.dart';
 import '../../components/shared/image_editor_modal.dart';
 import '../../components/shared/custom_text_form_field.dart';
-import '../../bloc/theme/theme_cubit.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
+import '../settings/settings_screen.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -26,6 +25,10 @@ class _MeScreenState extends State<MeScreen> {
   final _stateController = TextEditingController();
   final _countryController = TextEditingController();
   final _streetController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
+  final _birthDateController = TextEditingController();
   final _imagePicker = ImagePicker();
   Uint8List?
   _localImageBytes; // For showing local image immediately after picking
@@ -123,6 +126,18 @@ class _MeScreenState extends State<MeScreen> {
     if (_streetController.text.isEmpty && state.street != null) {
       _streetController.text = state.street!;
     }
+    if (_firstNameController.text.isEmpty && state.firstName != null) {
+      _firstNameController.text = state.firstName!;
+    }
+    if (_lastNameController.text.isEmpty && state.lastName != null) {
+      _lastNameController.text = state.lastName!;
+    }
+    if (_phoneNumberController.text.isEmpty && state.phoneNumber != null) {
+      _phoneNumberController.text = state.phoneNumber!;
+    }
+    if (_birthDateController.text.isEmpty && state.birthDate != null) {
+      _birthDateController.text = state.birthDate!;
+    }
   }
 
   @override
@@ -131,34 +146,34 @@ class _MeScreenState extends State<MeScreen> {
     _stateController.dispose();
     _countryController.dispose();
     _streetController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneNumberController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: MultiBlocListener(
           listeners: [
-            BlocListener<LocationBloc, LocationState>(
-              listener: (context, state) {
-                if (state is LocationPermissionDenied) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Location permission denied')),
-                  );
-                } else if (state is LocationPermissionDeniedForever) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Location permission denied forever'),
-                    ),
-                  );
-                } else if (state is LocationLoaded) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Location loaded')),
-                  );
-                }
-              },
-            ),
             BlocListener<ProfileBloc, ProfileState>(
               listener: (context, state) {
                 if (state is ProfileLoaded) {
@@ -253,74 +268,68 @@ class _MeScreenState extends State<MeScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 24),
-
-                              // Theme Selector
-                              BlocBuilder<ThemeCubit, ThemeMode>(
-                                builder: (context, themeMode) {
-                                  return SegmentedButton<ThemeMode>(
-                                    segments: const [
-                                      ButtonSegment(
-                                        value: ThemeMode.light,
-                                        icon: Icon(Icons.light_mode),
-                                        label: Text('Light'),
-                                      ),
-                                      ButtonSegment(
-                                        value: ThemeMode.system,
-                                        icon: Icon(Icons.brightness_auto),
-                                        label: Text('System'),
-                                      ),
-                                      ButtonSegment(
-                                        value: ThemeMode.dark,
-                                        icon: Icon(Icons.dark_mode),
-                                        label: Text('Dark'),
-                                      ),
-                                    ],
-                                    selected: {themeMode},
-                                    onSelectionChanged:
-                                        (Set<ThemeMode> newSelection) {
-                                          context.read<ThemeCubit>().setTheme(
-                                            newSelection.first,
-                                          );
-                                        },
-                                    showSelectedIcon: false,
-                                  );
-                                },
-                              ),
-
                               const SizedBox(height: 32),
-
-                              // Location Button
-                              BlocBuilder<LocationBloc, LocationState>(
-                                builder: (context, state) {
-                                  if (state is LocationLoading) {
-                                    return const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    );
-                                  }
-                                  return OutlinedButton.icon(
-                                    onPressed: () {
-                                      context.read<LocationBloc>().add(
-                                        RequestPermission(),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.my_location),
-                                    label: const Text('Use Current Location'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                              Text(
+                                'Personal Info',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CustomTextFormField(
+                                      controller: _firstNameController,
+                                      labelText: 'First Name',
+                                      prefixIcon: const Icon(
+                                        Icons.person_outline,
                                       ),
                                     ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: CustomTextFormField(
+                                      controller: _lastNameController,
+                                      labelText: 'Last Name',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              CustomTextFormField(
+                                controller: _phoneNumberController,
+                                labelText: 'Phone Number',
+                                prefixIcon: const Icon(Icons.phone_outlined),
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 16),
+                              CustomTextFormField(
+                                controller: _birthDateController,
+                                labelText: 'Birth Date (YYYY-MM-DD)',
+                                prefixIcon: const Icon(Icons.cake_outlined),
+                                keyboardType: TextInputType.datetime,
+                                readOnly: true,
+                                onTap: () async {
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(FocusNode());
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate:
+                                        DateTime.tryParse(
+                                          _birthDateController.text,
+                                        ) ??
+                                        DateTime.now(),
+                                    firstDate: DateTime(1900),
+                                    lastDate: DateTime.now(),
                                   );
+                                  if (date != null) {
+                                    _birthDateController.text =
+                                        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+                                  }
                                 },
                               ),
-
                               const SizedBox(height: 32),
                               Text(
                                 'My Address',
@@ -386,6 +395,31 @@ class _MeScreenState extends State<MeScreen> {
                                               .validate()) {
                                             context.read<ProfileBloc>().add(
                                               UpdateProfile(
+                                                firstName:
+                                                    _firstNameController
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _firstNameController.text
+                                                    : null,
+                                                lastName:
+                                                    _lastNameController
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _lastNameController.text
+                                                    : null,
+                                                phoneNumber:
+                                                    _phoneNumberController
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _phoneNumberController
+                                                          .text
+                                                    : null,
+                                                birthDate:
+                                                    _birthDateController
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _birthDateController.text
+                                                    : null,
                                                 city: _cityController.text,
                                                 state: _stateController.text,
                                                 country:
@@ -402,7 +436,7 @@ class _MeScreenState extends State<MeScreen> {
                                               context,
                                             ).showSnackBar(
                                               const SnackBar(
-                                                content: Text('Address Saved'),
+                                                content: Text('Profile Saved'),
                                                 behavior:
                                                     SnackBarBehavior.floating,
                                               ),
@@ -424,7 +458,7 @@ class _MeScreenState extends State<MeScreen> {
                                           ),
                                         )
                                       : const Text(
-                                          'Save Address',
+                                          'Save Profile',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,

@@ -12,6 +12,8 @@ class UserProfile(models.Model):
     state = models.CharField(max_length=100, blank=True, default='')
     country = models.CharField(max_length=100, blank=True, default='')
     street = models.CharField(max_length=255, blank=True, default='')
+    birth_date = models.DateField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, default='')
 
     def __str__(self):
         return f"Profile for {self.user.username}"

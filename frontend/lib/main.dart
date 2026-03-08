@@ -232,34 +232,38 @@ class _MainScreenState extends State<MainScreen> {
     final selectedColor = isDark ? Colors.indigoAccent : Colors.indigo;
     final unselectedColor = isDark ? Colors.white70 : Colors.grey[700];
 
-    return InkWell(
-      onTap: () => _onItemTapped(index),
-      child: Container(
-        width: 60,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: isSelected
-            ? BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              )
-            : null,
-        child: Column(
-          children: [
-            Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? selectedColor : unselectedColor,
-              size: 28,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onItemTapped(index),
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          width: 60,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: isSelected
+              ? BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                )
+              : null,
+          child: Column(
+            children: [
+              Icon(
+                isSelected ? selectedIcon : icon,
                 color: isSelected ? selectedColor : unselectedColor,
+                size: 28,
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? selectedColor : unselectedColor,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -275,25 +279,32 @@ class _MainScreenState extends State<MainScreen> {
     final selectedColor = isDark ? Colors.indigoAccent : Colors.indigo;
     final unselectedColor = isDark ? Colors.white70 : Colors.grey[700];
 
-    return InkWell(
-      onTap: () => _onItemTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? selectedColor : unselectedColor,
-            size: 28,
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onItemTapped(index),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? selectedColor : unselectedColor,
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? selectedColor : unselectedColor,
+                ),
+              ),
+            ],
           ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? selectedColor : unselectedColor,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

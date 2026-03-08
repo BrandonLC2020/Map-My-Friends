@@ -8,8 +8,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile with image upload support."""
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
-    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', required=False, allow_blank=True)
+    last_name = serializers.CharField(source='user.last_name', required=False, allow_blank=True)
 
     class Meta:
         model = UserProfile
@@ -23,8 +23,25 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'street',
+            'birth_date',
+            'phone_number',
         ]
-        read_only_fields = ['username', 'email', 'first_name', 'last_name']
+        read_only_fields = ['username', 'email']
+
+    def update(self, instance, validated_data):
+        # Extract user data if present
+        user_data = validated_data.pop('user', {})
+        if 'first_name' in user_data:
+            instance.user.first_name = user_data['first_name']
+        if 'last_name' in user_data:
+            instance.user.last_name = user_data['last_name']
+        
+        # Save user model if changes were made
+        if user_data:
+            instance.user.save()
+
+        # Update remaining profile fields
+        return super().update(instance, validated_data)
 
 
 class RegisterSerializer(serializers.ModelSerializer):

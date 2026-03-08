@@ -11,6 +11,7 @@ class PeopleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('People'), centerTitle: true),
       body: SafeArea(
         child: BlocBuilder<PeopleBloc, PeopleState>(
           builder: (context, state) {

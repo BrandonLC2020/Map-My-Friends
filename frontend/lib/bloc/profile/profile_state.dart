@@ -21,6 +21,8 @@ class ProfileLoaded extends ProfileState {
   final String? state;
   final String? country;
   final String? street;
+  final String? birthDate;
+  final String? phoneNumber;
 
   const ProfileLoaded({
     this.username,
@@ -32,6 +34,8 @@ class ProfileLoaded extends ProfileState {
     this.state,
     this.country,
     this.street,
+    this.birthDate,
+    this.phoneNumber,
   });
 
   @override
@@ -45,6 +49,8 @@ class ProfileLoaded extends ProfileState {
     state,
     country,
     street,
+    birthDate,
+    phoneNumber,
   ];
 
   ProfileLoaded copyWith({
@@ -57,6 +63,8 @@ class ProfileLoaded extends ProfileState {
     String? state,
     String? country,
     String? street,
+    String? birthDate,
+    String? phoneNumber,
   }) {
     return ProfileLoaded(
       username: username ?? this.username,
@@ -68,6 +76,8 @@ class ProfileLoaded extends ProfileState {
       state: state ?? this.state,
       country: country ?? this.country,
       street: street ?? this.street,
+      birthDate: birthDate ?? this.birthDate,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
     );
   }
 }

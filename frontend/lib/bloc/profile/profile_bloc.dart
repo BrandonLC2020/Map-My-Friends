@@ -33,6 +33,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           state: profile['state'],
           country: profile['country'],
           street: profile['street'],
+          birthDate: profile['birth_date'],
+          phoneNumber: profile['phone_number'],
         ),
       );
     } catch (e) {
@@ -49,10 +51,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     try {
       final profile = await _authService.updateProfile(
+        firstName: event.firstName,
+        lastName: event.lastName,
         city: event.city,
         state: event.state,
         country: event.country,
         street: event.street,
+        birthDate: event.birthDate,
+        phoneNumber: event.phoneNumber,
       );
       emit(
         ProfileLoaded(
@@ -65,6 +71,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           state: profile['state'],
           country: profile['country'],
           street: profile['street'],
+          birthDate: profile['birth_date'],
+          phoneNumber: profile['phone_number'],
         ),
       );
     } catch (e) {
@@ -95,6 +103,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           state: profile['state'],
           country: profile['country'],
           street: profile['street'],
+          birthDate: profile['birth_date'],
+          phoneNumber: profile['phone_number'],
         ),
       );
     } catch (e) {
