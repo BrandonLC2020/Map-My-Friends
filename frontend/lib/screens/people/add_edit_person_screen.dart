@@ -201,13 +201,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
     }
   }
 
-  void _delete() {
-    if (widget.person != null) {
-      context.read<PeopleBloc>().add(DeletePerson(widget.person!.id));
-      Navigator.pop(context);
-    }
-  }
-
   Widget _buildProfileImagePicker() {
     return Center(
       child: GestureDetector(
@@ -274,14 +267,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.person != null ? 'Edit Person' : 'Add Person'),
-        actions: [
-          if (widget.person != null)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _delete,
-              color: Theme.of(context).colorScheme.error,
-            ),
-        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

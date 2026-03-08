@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/people/people_bloc.dart';
 import 'add_edit_person_screen.dart';
+import 'person_details_screen.dart';
 import '../../components/people/person_card.dart';
 
 class PeopleScreen extends StatelessWidget {
@@ -48,7 +49,7 @@ class PeopleScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AddEditPersonScreen(person: person),
+                                    PersonDetailsScreen(personId: person.id),
                               ),
                             );
                           },
@@ -73,7 +74,7 @@ class PeopleScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AddEditPersonScreen(person: person),
+                                    PersonDetailsScreen(personId: person.id),
                               ),
                             );
                           },
