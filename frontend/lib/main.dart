@@ -138,11 +138,14 @@ class _MainScreenState extends State<MainScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 20),
-                        // App Logo or Icon could go here
-                        const Icon(
-                          Icons.map_outlined,
-                          size: 32,
-                          color: Colors.indigo,
+                        // App Logo
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/Map-My-Friends-Default-1024x1024@1x.png',
+                            width: 48,
+                            height: 48,
+                          ),
                         ),
                         const SizedBox(height: 40),
 

@@ -62,10 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // App Logo/Title
-                    Icon(
-                      Icons.map,
-                      size: 80,
-                      color: Theme.of(context).colorScheme.primary,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/Map-My-Friends-Default-1024x1024@1x.png',
+                        width: 100,
+                        height: 100,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
