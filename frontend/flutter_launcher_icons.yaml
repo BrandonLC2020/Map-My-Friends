@@ -1,0 +1,12 @@
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: false
+  image_path: "assets/Map-My-Friends-Default-1024x1024@1x.png"
+  web:
+    generate: true
+    image_path: "assets/Map-My-Friends-Default-1024x1024@1x.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
+  macos:
+    generate: true
+    image_path: "assets/Map-My-Friends-Default-1024x1024@1x.png"
