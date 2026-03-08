@@ -8,5 +8,5 @@ flutter_launcher_icons:
     background_color: "#ffffff"
     theme_color: "#ffffff"
   macos:
-    generate: true
+    generate: false
     image_path: "assets/Map-My-Friends-Default-1024x1024@1x.png"
