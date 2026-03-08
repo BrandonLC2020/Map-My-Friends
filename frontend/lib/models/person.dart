@@ -104,20 +104,16 @@ class Person {
       'city': city,
       'state': state,
       'country': country,
-      'street': street,
-      'birthday': birthday?.toIso8601String(),
-      'phone_number': phoneNumber,
-      'latitude': latitude,
-      'longitude': longitude,
-      'timezone': timezone,
       'pin_color': pinColor,
       'pin_style': pinStyle,
       'pin_icon_type': pinIconType,
-      'pin_emoji': pinEmoji,
     };
-    if (id.isNotEmpty) {
-      data['id'] = id;
-    }
+    // Only include optional fields if they have values to avoid
+    // FormData sending the string "null" for null values.
+    if (street != null) data['street'] = street;
+    if (birthday != null) data['birthday'] = birthday!.toIso8601String();
+    if (phoneNumber != null) data['phone_number'] = phoneNumber;
+    if (pinEmoji != null) data['pin_emoji'] = pinEmoji;
     return data;
   }
 

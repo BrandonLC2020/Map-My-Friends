@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:image_picker/image_picker.dart';
@@ -39,6 +40,7 @@ class PeopleBloc extends Bloc<PeopleEvent, PeopleState> {
         final newPerson = await _apiService.addPerson(
           event.person,
           profileImage: event.profileImage,
+          imageBytes: event.imageBytes,
         );
         final updatedList = List<Person>.from(currentState.people)
           ..add(newPerson);
@@ -66,6 +68,7 @@ class PeopleBloc extends Bloc<PeopleEvent, PeopleState> {
         final updatedPerson = await _apiService.updatePerson(
           event.person,
           profileImage: event.profileImage,
+          imageBytes: event.imageBytes,
         );
         final updatedList = currentState.people.map((p) {
           return p.id == updatedPerson.id ? updatedPerson : p;

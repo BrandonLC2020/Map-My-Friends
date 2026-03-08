@@ -116,12 +116,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         if (croppedBytes != null) {
           setState(() {
             _selectedImageBytes = croppedBytes;
-            // Create XFile from bytes for the bloC event later
-            _selectedImage = XFile.fromData(
-              croppedBytes,
-              name: 'person_image.png',
-              mimeType: 'image/png',
-            );
+            _selectedImage = null; // clear any previous XFile
           });
         }
       }
@@ -257,11 +252,19 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
       if (widget.person != null) {
         context.read<PeopleBloc>().add(
-          UpdatePerson(person, profileImage: _selectedImage),
+          UpdatePerson(
+            person,
+            profileImage: _selectedImage,
+            imageBytes: _selectedImageBytes,
+          ),
         );
       } else {
         context.read<PeopleBloc>().add(
-          AddPerson(person, profileImage: _selectedImage),
+          AddPerson(
+            person,
+            profileImage: _selectedImage,
+            imageBytes: _selectedImageBytes,
+          ),
         );
       }
       Navigator.pop(context);

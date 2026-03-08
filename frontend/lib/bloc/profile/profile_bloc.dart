@@ -103,7 +103,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(ProfileUpdating());
 
     try {
-      final profile = await _authService.uploadProfileImage(event.image);
+      final profile = await _authService.uploadProfileImage(
+        event.imageBytes,
+        event.imageName,
+      );
       emit(
         ProfileLoaded(
           username: profile['username'],

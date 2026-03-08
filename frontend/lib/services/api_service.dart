@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/person.dart';
@@ -74,22 +75,53 @@ class ApiService {
     }
   }
 
-  Future<Person> addPerson(Person person, {XFile? profileImage}) async {
-    try {
-      FormData formData;
+  FormData _buildFormData(
+    Person person, {
+    Uint8List? imageBytes,
+    String? imageName,
+  }) {
+    final formData = FormData();
 
-      if (profileImage != null) {
-        final bytes = await profileImage.readAsBytes();
-        formData = FormData.fromMap({
-          ...person.toJson(),
-          'profile_image': MultipartFile.fromBytes(
-            bytes,
-            filename: profileImage.name,
-          ),
-        });
-      } else {
-        formData = FormData.fromMap(person.toJson());
+    // Add all text fields one by one
+    person.toJson().forEach((key, value) {
+      if (value != null) {
+        formData.fields.add(MapEntry(key, value.toString()));
       }
+    });
+
+    // Add image file separately so it's properly encoded as a file upload
+    if (imageBytes != null) {
+      formData.files.add(
+        MapEntry(
+          'profile_image',
+          MultipartFile.fromBytes(
+            imageBytes,
+            filename: imageName ?? 'person_image.png',
+            contentType: DioMediaType('image', 'png'),
+          ),
+        ),
+      );
+    }
+
+    return formData;
+  }
+
+  Future<Person> addPerson(
+    Person person, {
+    XFile? profileImage,
+    Uint8List? imageBytes,
+  }) async {
+    try {
+      Uint8List? bytes = imageBytes;
+      if (bytes == null && profileImage != null) {
+        bytes = await profileImage.readAsBytes();
+      }
+
+      final formData = _buildFormData(
+        person,
+        imageBytes: bytes,
+        imageName: profileImage?.name,
+      );
 
       final response = await _dio.post('people/', data: formData);
       if (response.statusCode == 201) {
@@ -102,24 +134,24 @@ class ApiService {
     }
   }
 
-  Future<Person> updatePerson(Person person, {XFile? profileImage}) async {
+  Future<Person> updatePerson(
+    Person person, {
+    XFile? profileImage,
+    Uint8List? imageBytes,
+  }) async {
     try {
-      FormData formData;
-
-      if (profileImage != null) {
-        final bytes = await profileImage.readAsBytes();
-        formData = FormData.fromMap({
-          ...person.toJson(),
-          'profile_image': MultipartFile.fromBytes(
-            bytes,
-            filename: profileImage.name,
-          ),
-        });
-      } else {
-        formData = FormData.fromMap(person.toJson());
+      Uint8List? bytes = imageBytes;
+      if (bytes == null && profileImage != null) {
+        bytes = await profileImage.readAsBytes();
       }
 
-      final response = await _dio.put('people/${person.id}/', data: formData);
+      final formData = _buildFormData(
+        person,
+        imageBytes: bytes,
+        imageName: profileImage?.name,
+      );
+
+      final response = await _dio.patch('people/${person.id}/', data: formData);
       if (response.statusCode == 200) {
         return Person.fromGeoJson(response.data);
       } else {

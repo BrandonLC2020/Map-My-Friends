@@ -78,18 +78,10 @@ class _MeScreenState extends State<MeScreen> {
           _localImageBytes = croppedBytes;
         });
 
-        // Upload to server
-        // We need to pass the bytes, or save to a file first.
-        // The UploadProfileImage event takes an XFile.
-        // We can create an XFile from bytes.
-        final tempFile = XFile.fromData(
-          croppedBytes,
-          name: 'profile_image.png',
-          mimeType: 'image/png',
-        );
-
         if (mounted) {
-          context.read<ProfileBloc>().add(UploadProfileImage(image: tempFile));
+          context.read<ProfileBloc>().add(
+            UploadProfileImage(imageBytes: croppedBytes),
+          );
         }
       }
     }

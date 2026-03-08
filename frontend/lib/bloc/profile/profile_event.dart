@@ -1,5 +1,5 @@
+import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
-import 'package:image_picker/image_picker.dart';
 
 abstract class ProfileEvent extends Equatable {
   const ProfileEvent();
@@ -60,10 +60,14 @@ class UpdateProfile extends ProfileEvent {
 
 /// Upload a new profile image
 class UploadProfileImage extends ProfileEvent {
-  final XFile image;
+  final Uint8List imageBytes;
+  final String imageName;
 
-  const UploadProfileImage({required this.image});
+  const UploadProfileImage({
+    required this.imageBytes,
+    this.imageName = 'profile_image.png',
+  });
 
   @override
-  List<Object?> get props => [image];
+  List<Object?> get props => [imageBytes, imageName];
 }
