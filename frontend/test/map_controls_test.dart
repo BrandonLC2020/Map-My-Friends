@@ -11,7 +11,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:map_my_friends/bloc/map/map_settings_cubit.dart';
 import 'package:map_my_friends/bloc/airport/airport_bloc.dart';
 import 'package:map_my_friends/bloc/station/station_bloc.dart';
-import 'package:map_my_friends/bloc/station/station_event.dart';
 import 'package:map_my_friends/bloc/profile/profile_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:map_my_friends/components/map/map_controls.dart'; // Implicitly tested via MapScreen
