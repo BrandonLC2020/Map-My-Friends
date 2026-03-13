@@ -9,6 +9,7 @@ import 'package:map_my_friends/components/map/person_map_marker.dart';
 import 'package:map_my_friends/models/person.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_my_friends/bloc/map/map_settings_cubit.dart';
+import 'package:map_my_friends/bloc/map/local_map_settings_cubit.dart';
 import 'package:map_my_friends/bloc/airport/airport_bloc.dart';
 import 'package:map_my_friends/bloc/station/station_bloc.dart';
 import 'package:map_my_friends/bloc/profile/profile_bloc.dart';
@@ -94,6 +95,12 @@ class FakeMapSettingsCubit extends Cubit<MapSettingsState>
 
   @override
   void setAirportFilter(AirportFilter filter) {}
+
+  @override
+  void setStationFilter(StationFilter filter) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -105,6 +112,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final mapSettingsCubit = FakeMapSettingsCubit(prefs);
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(
@@ -112,8 +120,12 @@ void main() {
         providers: [
           BlocProvider<LocationBloc>(create: (context) => FakeLocationBloc()),
           BlocProvider<PeopleBloc>(create: (context) => FakePeopleBloc()),
-          BlocProvider<MapSettingsCubit>(
-            create: (context) => FakeMapSettingsCubit(prefs),
+          BlocProvider<MapSettingsCubit>(create: (context) => mapSettingsCubit),
+          BlocProvider<LocalMapSettingsCubit>(
+            create:
+                (context) => LocalMapSettingsCubit(
+                  initialState: mapSettingsCubit.state,
+                ),
           ),
           BlocProvider<AirportBloc>(create: (context) => AirportBloc()),
           BlocProvider<StationBloc>(create: (context) => StationBloc()),
