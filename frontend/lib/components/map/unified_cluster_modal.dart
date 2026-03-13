@@ -145,18 +145,47 @@ class UnifiedClusterModal extends StatelessWidget {
   }
 
   Widget _buildStationTile(BuildContext context, Station s) {
+    IconData iconData = Icons.train;
+    Color color = const Color(0xFFE65100);
+    String label = 'Station';
+
+    switch (s.stationType) {
+      case 'major_station':
+        iconData = Icons.train;
+        color = const Color(0xFFE65100);
+        label = 'Major Station';
+        break;
+      case 'commuter_rail_station':
+        iconData = Icons.directions_railway;
+        color = const Color(0xFF00695C);
+        label = 'Commuter Rail';
+        break;
+      case 'subway_station':
+        iconData = Icons.subway;
+        color = const Color(0xFF2E7D32);
+        label = 'Subway Station';
+        break;
+      case 'regional_station':
+        iconData = Icons.train;
+        color = const Color(0xFF607D8B);
+        label = 'Regional Station';
+        break;
+      default:
+        label = s.stationType ?? 'Station';
+    }
+
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFE65100).withOpacity(0.1),
+          color: color.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.train, color: Color(0xFFE65100), size: 24),
+        child: Icon(iconData, color: color, size: 24),
       ),
       title: Text(s.name),
       subtitle: Text(
-        '${s.stationType ?? "Train Station"} • ${s.city ?? "Unknown City"}',
+        '$label • ${s.city ?? "Unknown City"}',
         style: const TextStyle(fontSize: 12),
       ),
       trailing: const Icon(Icons.chevron_right),

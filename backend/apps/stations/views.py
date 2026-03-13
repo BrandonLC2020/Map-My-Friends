@@ -17,6 +17,7 @@ class NearestStationsView(APIView):
         lat (float): Latitude
         lon (float): Longitude
         count (int): Number of stations to return (default 3, max 10)
+        station_type (str): Optional filter by 'major_station' or 'regional_station'
     """
     permission_classes = [IsAuthenticated]
 
@@ -36,10 +37,16 @@ class NearestStationsView(APIView):
         except (TypeError, ValueError):
             count = 3
 
+        station_type = request.query_params.get('station_type')
+
         user_location = Point(lon, lat, srid=4326)
 
+        queryset = Station.objects.all()
+        if station_type in ['major_station', 'regional_station', 'commuter_rail_station', 'subway_station']:
+            queryset = queryset.filter(station_type=station_type)
+
         stations = (
-            Station.objects
+            queryset
             .annotate(distance=Distance('location', user_location))
             .order_by('distance')[:count]
         )

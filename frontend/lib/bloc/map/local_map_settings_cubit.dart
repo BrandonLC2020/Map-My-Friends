@@ -32,4 +32,8 @@ class LocalMapSettingsCubit extends Cubit<MapSettingsState> {
   void setAirportFilter(AirportFilter filter) {
     emit(state.copyWith(airportFilter: filter));
   }
+
+  void setStationFilter(StationFilter filter) {
+    emit(state.copyWith(stationFilter: filter));
+  }
 }

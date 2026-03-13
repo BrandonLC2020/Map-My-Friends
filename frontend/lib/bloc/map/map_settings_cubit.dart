@@ -7,6 +7,8 @@ enum MapType { standard, satellite, minimal }
 
 enum AirportFilter { all, international, regional }
 
+enum StationFilter { all, major, commuter, subway, regional }
+
 class MapSettingsState extends Equatable {
   final bool showControls;
   final MapType mapType;
@@ -14,6 +16,7 @@ class MapSettingsState extends Equatable {
   final bool showAirports;
   final bool showStations;
   final AirportFilter airportFilter;
+  final StationFilter stationFilter;
 
   const MapSettingsState({
     this.showControls = true,
@@ -22,6 +25,7 @@ class MapSettingsState extends Equatable {
     this.showAirports = false,
     this.showStations = false,
     this.airportFilter = AirportFilter.all,
+    this.stationFilter = StationFilter.all,
   });
 
   MapSettingsState copyWith({
@@ -31,6 +35,7 @@ class MapSettingsState extends Equatable {
     bool? showAirports,
     bool? showStations,
     AirportFilter? airportFilter,
+    StationFilter? stationFilter,
   }) {
     return MapSettingsState(
       showControls: showControls ?? this.showControls,
@@ -39,6 +44,7 @@ class MapSettingsState extends Equatable {
       showAirports: showAirports ?? this.showAirports,
       showStations: showStations ?? this.showStations,
       airportFilter: airportFilter ?? this.airportFilter,
+      stationFilter: stationFilter ?? this.stationFilter,
     );
   }
 
@@ -50,6 +56,7 @@ class MapSettingsState extends Equatable {
         showAirports,
         showStations,
         airportFilter,
+        stationFilter,
       ];
 }
 
@@ -69,6 +76,8 @@ class MapSettingsCubit extends Cubit<MapSettingsState> {
     final showStations = prefs.getBool('map_show_stations') ?? false;
     final airportFilterIndex =
         prefs.getInt('map_airport_filter') ?? AirportFilter.all.index;
+    final stationFilterIndex =
+        prefs.getInt('map_station_filter') ?? StationFilter.all.index;
 
     emit(
       state.copyWith(
@@ -78,6 +87,7 @@ class MapSettingsCubit extends Cubit<MapSettingsState> {
         showAirports: showAirports,
         showStations: showStations,
         airportFilter: AirportFilter.values[airportFilterIndex],
+        stationFilter: StationFilter.values[stationFilterIndex],
       ),
     );
   }
@@ -113,5 +123,10 @@ class MapSettingsCubit extends Cubit<MapSettingsState> {
   void setAirportFilter(AirportFilter filter) {
     prefs.setInt('map_airport_filter', filter.index);
     emit(state.copyWith(airportFilter: filter));
+  }
+
+  void setStationFilter(StationFilter filter) {
+    prefs.setInt('map_station_filter', filter.index);
+    emit(state.copyWith(stationFilter: filter));
   }
 }

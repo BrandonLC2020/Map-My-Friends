@@ -28,7 +28,7 @@ class Station {
       id: json['id'],
       name: json['name'],
       osmId: json['osm_id'],
-      stationType: json['station_type'],
+      stationType: json['station_type'] ?? 'regional_station',
       uicRef: json['uic_ref'],
       city: json['city'],
       country: json['country'],

@@ -20,11 +20,45 @@ class StationBottomSheet extends StatelessWidget {
   const StationBottomSheet({super.key, required this.station});
   @override
   Widget build(BuildContext context) {
+    IconData iconData = Icons.train;
+    Color color = const Color(0xFFE65100);
+    String label = 'Station';
+
+    switch (station.stationType) {
+      case 'major_station':
+        iconData = Icons.train;
+        color = const Color(0xFFE65100);
+        label = 'Major Station';
+        break;
+      case 'commuter_rail_station':
+        iconData = Icons.directions_railway;
+        color = const Color(0xFF00695C);
+        label = 'Commuter Rail';
+        break;
+      case 'subway_station':
+        iconData = Icons.subway;
+        color = const Color(0xFF2E7D32);
+        label = 'Subway Station';
+        break;
+      case 'regional_station':
+        iconData = Icons.train;
+        color = const Color(0xFF607D8B);
+        label = 'Regional Station';
+        break;
+      default:
+        label = station.stationType ?? 'Station';
+    }
+
     return BaseBottomSheet(
-      icon: Icons.train, color: const Color(0xFFE65100), title: station.name,
-      subtitle: station.uicRef != null && station.uicRef!.isNotEmpty ? 'Ref: ${station.uicRef}' : null,
-      location: '${station.city ?? "Unknown City"}, ${station.country ?? "Unknown Country"}',
-      label: station.stationType ?? 'Train Station',
+      icon: iconData,
+      color: color,
+      title: station.name,
+      subtitle: station.uicRef != null && station.uicRef!.isNotEmpty
+          ? 'Ref: ${station.uicRef}'
+          : null,
+      location:
+          '${station.city ?? "Unknown City"}, ${station.country ?? "Unknown Country"}',
+      label: label,
     );
   }
 }

@@ -227,19 +227,61 @@ class _MapScreenState extends State<MapScreen> {
                         stationState is MapStationsLoaded) {
                       markers.addAll(
                         stationState.stations
-                            .map(
-                              (station) => Marker(
+                            .where((station) {
+                              switch (settingsState.stationFilter) {
+                                case StationFilter.major:
+                                  return station.stationType == 'major_station';
+                                case StationFilter.commuter:
+                                  return station.stationType ==
+                                      'commuter_rail_station';
+                                case StationFilter.subway:
+                                  return station.stationType ==
+                                      'subway_station';
+                                case StationFilter.regional:
+                                  return station.stationType ==
+                                      'regional_station';
+                                case StationFilter.all:
+                                  return true;
+                              }
+                            })
+                            .map((station) {
+                              IconData iconData = Icons.train;
+                              Color color = const Color(0xFFE65100); // Orange
+
+                              switch (station.stationType) {
+                                case 'major_station':
+                                  iconData = Icons.train;
+                                  color = const Color(0xFFE65100);
+                                  break;
+                                case 'commuter_rail_station':
+                                  iconData = Icons.directions_railway;
+                                  color = const Color(0xFF00695C); // Teal 800
+                                  break;
+                                case 'subway_station':
+                                  iconData = Icons.subway;
+                                  color = const Color(0xFF2E7D32); // Green 800
+                                  break;
+                                case 'regional_station':
+                                  iconData = Icons.train;
+                                  color = const Color(0xFF607D8B); // Blue Grey
+                                  break;
+                                default:
+                                  iconData = Icons.train;
+                                  color = const Color(0xFFE65100);
+                              }
+
+                              return Marker(
                                 key: ValueKey('station_${station.osmId}'),
                                 point:
                                     LatLng(station.latitude, station.longitude),
                                 width: 28,
                                 height: 28,
                                 child: _MarkerIcon(
-                                  icon: Icons.train,
-                                  color: const Color(0xFFE65100),
+                                  icon: iconData,
+                                  color: color,
                                 ),
-                              ),
-                            )
+                              );
+                            })
                             .toList(),
                       );
                     }

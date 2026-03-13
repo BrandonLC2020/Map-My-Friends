@@ -32,6 +32,23 @@ class Command(BaseCommand):
             self.stderr.write(f"Error reading file: {e}")
             return
 
+        MAJOR_NAMES = {
+            "New York Penn Station", "Washington Union Station", "Boston South Station",
+            "Philadelphia 30th Street Station", "Baltimore Penn Station", "Chicago Union Station",
+            "St. Louis Gateway Center", "Kansas City Union Station", "Denver Union Station",
+            "Salt Lake City Central Station", "Seattle King Street Station", "Portland Union Station",
+            "Los Angeles Union Station", "Atlanta Peachtree Station", "New Orleans Union Passenger Terminal",
+            "Miami Central Station", "Dallas Union Station", "Houston Amtrak Station",
+            "Charlotte Amtrak Station", "St. Paul Union Depot", "Milwaukee Intermodal Station",
+            "Detroit Amtrak Station", "Cleveland Amtrak Station", "Indianapolis Union Station",
+            "Albuquerque Alvarado Center", "Flagstaff Amtrak Station", "San Diego Santa Fe Depot",
+            "San Jose Diridon Station", "Sacramento Valley Station", "Stamford Station",
+            "New Haven Union Station", "Providence Station", "Newark Penn Station",
+            "Orlando Amtrak Station", "Richmond Staples Mill Road", "Raleigh Union Station",
+            "Pittsburgh Union Station", "Cincinnati Union Terminal", "Vancouver Amtrak Station",
+            "Oakland Jack London Square", "Union Station", "South Station", "Penn Station"
+        }
+
         elements = data.get('elements', [])
         stations_to_create = []
         stations_to_update = []
@@ -57,13 +74,53 @@ class Command(BaseCommand):
             if osm_id is None or lat is None or lon is None:
                 continue
 
+            # Categorization logic
+            operator = tags.get('operator', '')
+            network = tags.get('network', '')
+            st_type = 'regional_station'
+            
+            # 1. Identify Amtrak / Intercity (Major)
+            is_amtrak = (
+                'Amtrak' in name or 
+                'Amtrak' in operator or 
+                'Amtrak' in network or
+                'amtrak:code' in tags
+            )
+            
+            if name in MAJOR_NAMES or is_amtrak or 'uic_ref' in tags:
+                st_type = 'major_station'
+            # 2. Identify Subway / Metro
+            elif (
+                'Subway' in name or 
+                'Metro' in name or 
+                'BART' in name or
+                'Path Station' in name or
+                tags.get('railway') == 'subway' or
+                tags.get('station') == 'subway'
+            ):
+                st_type = 'subway_station'
+            # 3. Identify Commuter Rail
+            elif (
+                'LIRR' in network or 
+                'Metro-North' in network or 
+                'NJ Transit' in network or
+                'MBTA' in network or
+                'Caltrain' in network or
+                'Metra' in network or
+                'SEPTA' in network or
+                'Metrolink' in network or
+                'commuter' in tags.get('railway', '') or
+                'commuter' in network.lower()
+            ):
+                st_type = 'commuter_rail_station'
+
             station_data = {
                 'name': name,
                 'osm_id': osm_id,
-                'station_type': tags.get('railway', 'station'),
-                'uic_ref': tags.get('uic_ref', ''),
+                'station_type': st_type,
+                'uic_ref': tags.get('uic_ref', tags.get('amtrak:code', '')),
                 'city': tags.get('addr:city', ''),
-                'country': tags.get('addr:country', ''),
+                'country': tags.get('addr:country', 'USA'),
                 'location': Point(lon, lat, srid=4326),
             }
 

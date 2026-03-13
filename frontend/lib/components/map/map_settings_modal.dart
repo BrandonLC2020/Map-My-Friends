@@ -43,14 +43,6 @@ class MapSettingsModal extends StatelessWidget {
                       },
                       secondary: const Icon(Icons.flight),
                     ),
-                    SwitchListTile(
-                      title: const Text('Show Train Stations'),
-                      value: state.showStations,
-                      onChanged: (value) {
-                        context.read<LocalMapSettingsCubit>().toggleStations();
-                      },
-                      secondary: const Icon(Icons.train),
-                    ),
                     if (state.showAirports) ...[
                       Padding(
                         padding: const EdgeInsets.only(
@@ -80,6 +72,64 @@ class MapSettingsModal extends StatelessWidget {
                             context
                                 .read<LocalMapSettingsCubit>()
                                 .setAirportFilter(selection.first);
+                          },
+                          showSelectedIcon: false,
+                          style: ButtonStyle(
+                            visualDensity: VisualDensity.compact,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            side: WidgetStateProperty.all(
+                              BorderSide(color: Colors.grey.withOpacity(0.5)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    SwitchListTile(
+                      title: const Text('Show Train Stations'),
+                      value: state.showStations,
+                      onChanged: (value) {
+                        context.read<LocalMapSettingsCubit>().toggleStations();
+                      },
+                      secondary: const Icon(Icons.train),
+                    ),
+                    if (state.showStations) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                          bottom: 8.0,
+                        ),
+                        child: SegmentedButton<StationFilter>(
+                          segments: const [
+                            ButtonSegment(
+                              value: StationFilter.all,
+                              label: Text('All'),
+                            ),
+                            ButtonSegment(
+                              value: StationFilter.major,
+                              label: Text('Amtrak'),
+                              icon: Icon(Icons.train, size: 14),
+                            ),
+                            ButtonSegment(
+                              value: StationFilter.commuter,
+                              label: Text('Rail'),
+                              icon: Icon(Icons.directions_railway, size: 14),
+                            ),
+                            ButtonSegment(
+                              value: StationFilter.subway,
+                              label: Text('Subway'),
+                              icon: Icon(Icons.subway, size: 14),
+                            ),
+                            ButtonSegment(
+                              value: StationFilter.regional,
+                              label: Text('Other'),
+                            ),
+                          ],
+                          selected: {state.stationFilter},
+                          onSelectionChanged: (Set<StationFilter> selection) {
+                            context
+                                .read<LocalMapSettingsCubit>()
+                                .setStationFilter(selection.first);
                           },
                           showSelectedIcon: false,
                           style: ButtonStyle(
