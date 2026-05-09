@@ -20,5 +20,17 @@ class Airport(models.Model):
     class Meta:
         ordering = ['name']
 
+    @classmethod
+    def get_nearby(cls, point, radius_km=None, count=10):
+        """Returns airports ordered by distance from a given point."""
+        from django.contrib.gis.db.models.functions import Distance
+        from django.contrib.gis.measure import D
+        
+        queryset = cls.objects.annotate(distance=Distance('location', point))
+        if radius_km:
+            queryset = queryset.filter(location__distance_lte=(point, D(km=radius_km)))
+        
+        return queryset.order_by('distance')[:count]
+
     def __str__(self):
         return f"{self.name} ({self.iata_code})"

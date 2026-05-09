@@ -10,6 +10,7 @@ services:
     command: poetry run python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app # Syncs your local backend folder to the container
+      - /app/.venv # Anonymous volume to hide host's .venv from container
       - media_data:/app/media # Persist uploaded media files
     ports:
       - "8000:8000"

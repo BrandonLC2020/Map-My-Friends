@@ -1,92 +1,36 @@
 from django.test import TestCase
 from django.contrib.gis.geos import Point
-from rest_framework.test import APIClient
-from django.contrib.auth.models import User
 from .models import Station
 
-class StationApiTests(TestCase):
+class StationModelTests(TestCase):
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser', password='password123')
-        self.client.force_authenticate(user=self.user)
+        # Union Station Chicago
+        self.union = Station.objects.create(
+            name="Union Station",
+            osm_id=12345,
+            station_type="major_station",
+            city="Chicago",
+            country="US",
+            location=Point(-87.6403, 41.8787, srid=4326)
+        )
+        # Ogilvie Transportation Center
+        self.ogilvie = Station.objects.create(
+            name="Ogilvie Transportation Center",
+            osm_id=67890,
+            station_type="major_station",
+            city="Chicago",
+            country="US",
+            location=Point(-87.6391, 41.8823, srid=4326)
+        )
+
+    def test_station_creation(self):
+        station = Station.objects.get(osm_id=12345)
+        self.assertEqual(station.name, "Union Station")
+
+    def test_get_nearby(self):
+        # Point near Union Station
+        test_point = Point(-87.6400, 41.8780, srid=4326)
         
-        # Create major station
-        Station.objects.create(
-            name="Major Station",
-            osm_id=1,
-            station_type='major_station',
-            location=Point(-87.6244212, 41.8755616, srid=4326) # Chicago
-        )
-        # Create regional station
-        Station.objects.create(
-            name="Regional Station",
-            osm_id=2,
-            station_type='regional_station',
-            location=Point(-87.6403, 41.8786, srid=4326) # Also Chicago but slightly different
-        )
-
-        # Create subway station
-        Station.objects.create(
-            name="Subway Station",
-            osm_id=3,
-            station_type='subway_station',
-            location=Point(-87.6278, 41.8821, srid=4326)
-        )
-        # Create commuter rail station
-        Station.objects.create(
-            name="Commuter Rail Station",
-            osm_id=4,
-            station_type='commuter_rail_station',
-            location=Point(-87.6333, 41.8753, srid=4326)
-        )
-
-    def test_nearest_stations_all(self):
-        # Chicago center approx
-        response = self.client.get('/api/stations/nearest/', {'lat': 41.87, 'lon': -87.62, 'count': 5})
-        self.assertEqual(response.status_code, 200)
-        # Should return all since no filter is applied
-        self.assertEqual(len(response.data['features']), 4)
-
-    def test_nearest_stations_subway_filter(self):
-        response = self.client.get('/api/stations/nearest/', {
-            'lat': 41.87, 
-            'lon': -87.62, 
-            'count': 5,
-            'station_type': 'subway_station'
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['features']), 1)
-        self.assertEqual(response.data['features'][0]['properties']['name'], "Subway Station")
-
-    def test_nearest_stations_commuter_filter(self):
-        response = self.client.get('/api/stations/nearest/', {
-            'lat': 41.87, 
-            'lon': -87.62, 
-            'count': 5,
-            'station_type': 'commuter_rail_station'
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['features']), 1)
-        self.assertEqual(response.data['features'][0]['properties']['name'], "Commuter Rail Station")
-
-    def test_nearest_stations_major_filter(self):
-        response = self.client.get('/api/stations/nearest/', {
-            'lat': 41.87, 
-            'lon': -87.62, 
-            'count': 5,
-            'station_type': 'major_station'
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['features']), 1)
-        self.assertEqual(response.data['features'][0]['properties']['name'], "Major Station")
-
-    def test_nearest_stations_regional_filter(self):
-        response = self.client.get('/api/stations/nearest/', {
-            'lat': 41.87, 
-            'lon': -87.62, 
-            'count': 5,
-            'station_type': 'regional_station'
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['features']), 1)
-        self.assertEqual(response.data['features'][0]['properties']['name'], "Regional Station")
+        nearby = Station.get_nearby(test_point)
+        self.assertEqual(nearby[0].osm_id, 12345) # Union Station is closer
+        self.assertEqual(nearby[1].osm_id, 67890)

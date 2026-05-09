@@ -1,4 +1,10 @@
 {
-    "makefile.configureOnOpen": false,
-    "cmake.ignoreCMakeListsMissing": true
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/backend/apps"
+    ],
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.importFormat": "absolute"
 }

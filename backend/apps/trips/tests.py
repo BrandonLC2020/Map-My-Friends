@@ -129,6 +129,48 @@ class TripModelTests(TestCase):
         self.assertIn('Jane Doe', stop.snapshot_address)
         self.assertIn('Chicago', stop.snapshot_address)
 
+    def test_trip_date_sync(self):
+        """Test that start_date and end_date sync with date on save if not set."""
+        trip = Trip.objects.create(
+            name='Sync Trip',
+            date=datetime.date(2026, 12, 25),
+            user=self.user
+        )
+        self.assertEqual(trip.start_date, datetime.date(2026, 12, 25))
+        self.assertEqual(trip.end_date, datetime.date(2026, 12, 25))
+
+    def test_tripstop_hub_snapshot(self):
+        """Test snapshotting with an airport as a hub."""
+        from apps.airports.models import Airport
+        airport = Airport.objects.create(
+            name="Test Airport",
+            iata_code="TST",
+            location=Point(0, 0, srid=4326)
+        )
+        trip = Trip.objects.create(
+            name='Hub Trip',
+            date=datetime.date(2026, 7, 4),
+            user=self.user,
+            status=Trip.Status.DRAFT
+        )
+        stop = TripStop.objects.create(
+            trip=trip,
+            sequence_order=1,
+            location=Point(0, 0, srid=4326),
+            airport=airport
+        )
+        
+        # Transition to BOOKED
+        trip.status = Trip.Status.BOOKED
+        trip.save()
+        
+        stop.refresh_from_db()
+        self.assertIn('Test Airport', stop.snapshot_address)
+        self.assertIn('TST', stop.snapshot_address)
+        self.assertEqual(stop.snapshot_metadata['hub']['name'], 'Test Airport')
+        self.assertEqual(stop.snapshot_metadata['hub']['code'], 'TST')
+        self.assertEqual(stop.snapshot_metadata['hub']['type'], 'AIRPORT')
+
 
 class TripSerializerTests(TestCase):
     def setUp(self):
