@@ -343,11 +343,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     String address = stop.snapshotAddress ?? '';
 
     if (stop.snapshotMetadata != null) {
-      if (stop.snapshotMetadata!['people'] != null &&
-          (stop.snapshotMetadata!['people'] as List).isNotEmpty) {
-        name = (stop.snapshotMetadata!['people'] as List)
-            .map((p) => p['name'])
-            .join(', ');
+      final peopleData = stop.snapshotMetadata!['people'];
+      if (peopleData != null) {
+        if (peopleData is List) {
+          name = peopleData.map((p) => p is Map ? p['name'] : p.toString()).join(', ');
+        } else {
+          name = peopleData.toString();
+        }
       } else if (stop.snapshotMetadata!['hub'] != null) {
         name = stop.snapshotMetadata!['hub']['name'];
       }
