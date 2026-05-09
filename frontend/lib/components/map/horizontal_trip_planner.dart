@@ -59,6 +59,7 @@ class HorizontalTripPlanner extends StatelessWidget {
                         width: 100,
                         margin: const EdgeInsets.only(right: 8),
                         child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Stack(
@@ -159,22 +160,25 @@ class HorizontalTripPlanner extends StatelessWidget {
                   thickness: 1,
                   color: Colors.white24,
                 ),
-                _ActionGroup(
-                  onSave: () {
-                    final now = DateTime.now();
-                    final dateStr = DateFormat('yyyy-MM-dd').format(now);
-                    context.read<TripBloc>().add(
-                      SaveTrip(
-                        name: "Draft Trip $dateStr",
-                        startDate: now,
-                        endDate: now,
-                        status: TripStatus.draft,
-                      ),
-                    );
-                  },
-                  onClear: () {
-                    context.read<TripBloc>().add(const ClearTrip());
-                  },
+                SizedBox(
+                  height: 140,
+                  child: _ActionGroup(
+                    onSave: () {
+                      final now = DateTime.now();
+                      final dateStr = DateFormat('yyyy-MM-dd').format(now);
+                      context.read<TripBloc>().add(
+                        SaveTrip(
+                          name: "Draft Trip $dateStr",
+                          startDate: now,
+                          endDate: now,
+                          status: TripStatus.draft,
+                        ),
+                      );
+                    },
+                    onClear: () {
+                      context.read<TripBloc>().add(const ClearTrip());
+                    },
+                  ),
                 ),
               ],
             ),
@@ -194,7 +198,8 @@ class _ActionGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
           icon: const Icon(Icons.check_circle, color: Colors.greenAccent),

@@ -28,6 +28,8 @@ import '../../bloc/station/station_state.dart';
 import '../../bloc/trip/trip_bloc.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../components/map/horizontal_trip_planner.dart';
+import '../../models/airport.dart';
+import '../../models/station.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -104,15 +106,19 @@ class _MapScreenState extends State<MapScreen> {
                   current.stops.isNotEmpty &&
                   !current.isOptimizing,
               listener: (context, state) {
-                final bounds = LatLngBounds.fromPoints(
-                  state.stops.map((s) => s.location).toList(),
-                );
-                _mapController.fitCamera(
-                  CameraFit.bounds(
-                    bounds: bounds,
-                    padding: const EdgeInsets.all(50),
-                  ),
-                );
+                if (state.stops.length == 1) {
+                  _mapController.move(state.stops.first.location, 13.0);
+                } else {
+                  final bounds = LatLngBounds.fromPoints(
+                    state.stops.map((s) => s.location).toList(),
+                  );
+                  _mapController.fitCamera(
+                    CameraFit.bounds(
+                      bounds: bounds,
+                      padding: const EdgeInsets.all(50),
+                    ),
+                  );
+                }
               },
             ),
           ],
