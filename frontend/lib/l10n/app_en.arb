@@ -17,5 +17,9 @@
   "street": "Street Address",
   "profile": "Profile",
   "settings": "Settings",
-  "logout": "Logout"
+  "logout": "Logout",
+  "mapFindingYou": "Finding you on the map…",
+  "@mapFindingYou": {
+    "description": "Calm, non-blocking status shown in a glass pill while the user's location is being acquired. The map is already visible behind it."
+  }
 }

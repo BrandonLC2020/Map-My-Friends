@@ -8,6 +8,7 @@ import '../../bloc/trip/trip_bloc.dart';
 import '../../bloc/trip/trip_event.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../bloc/people/people_bloc.dart';
+import '../../utils/app_theme.dart';
 
 import '../../components/map/map_bottom_sheets.dart';
 
@@ -35,7 +36,7 @@ class UnifiedClusterModal extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[400],
+              color: Theme.of(context).dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -120,9 +121,9 @@ class UnifiedClusterModal extends StatelessWidget {
             children: [
               if (existingStopIndex == -1)
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.add_location_alt_outlined,
-                    color: Colors.indigo,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   tooltip: 'Add as New Stop',
                   onPressed: () {
@@ -140,7 +141,10 @@ class UnifiedClusterModal extends StatelessWidget {
                 (s) => s.airport != null || s.station != null,
               ))
                 PopupMenuButton<int>(
-                  icon: const Icon(Icons.link, color: Colors.amber),
+                  icon: Icon(
+                    Icons.link,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   tooltip: 'Link to Stop',
                   onSelected: (index) {
                     final stop = state.stops[index];
@@ -215,10 +219,10 @@ class UnifiedClusterModal extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.1),
+          color: MapPalette.airport.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.flight, color: Color(0xFF1565C0), size: 24),
+        child: const Icon(Icons.flight, color: MapPalette.airport, size: 24),
       ),
       title: Text(a.name),
       subtitle: Text(
@@ -229,9 +233,9 @@ class UnifiedClusterModal extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.add_location_alt_outlined,
-              color: Colors.indigo,
+              color: Theme.of(context).colorScheme.primary,
             ),
             tooltip: 'Add to Trip',
             onPressed: () {
@@ -260,28 +264,28 @@ class UnifiedClusterModal extends StatelessWidget {
 
   Widget _buildStationTile(BuildContext context, Station s) {
     IconData iconData = Icons.train;
-    Color color = const Color(0xFFE65100);
+    Color color = MapPalette.majorStation;
     String label = 'Station';
 
     switch (s.stationType) {
       case 'major_station':
         iconData = Icons.train;
-        color = const Color(0xFFE65100);
+        color = MapPalette.majorStation;
         label = 'Major Station';
         break;
       case 'commuter_rail_station':
         iconData = Icons.directions_railway;
-        color = const Color(0xFF00695C);
+        color = MapPalette.commuterRail;
         label = 'Commuter Rail';
         break;
       case 'subway_station':
         iconData = Icons.subway;
-        color = const Color(0xFF2E7D32);
+        color = MapPalette.subway;
         label = 'Subway Station';
         break;
       case 'regional_station':
         iconData = Icons.train;
-        color = const Color(0xFF607D8B);
+        color = MapPalette.regionalStation;
         label = 'Regional Station';
         break;
       default:
@@ -306,9 +310,9 @@ class UnifiedClusterModal extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.add_location_alt_outlined,
-              color: Colors.indigo,
+              color: Theme.of(context).colorScheme.primary,
             ),
             tooltip: 'Add to Trip',
             onPressed: () {

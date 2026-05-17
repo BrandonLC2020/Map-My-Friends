@@ -54,18 +54,20 @@ class MapControls extends StatelessWidget {
   }
 
   Widget _buildGlassButton({
+    required BuildContext context,
     required VoidCallback onPressed,
     required IconData icon,
     String? tooltip,
     Color? color,
   }) {
+    final accent = color ?? Theme.of(context).colorScheme.primary;
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, color: color ?? Colors.indigo),
+      icon: Icon(icon, color: accent),
       tooltip: tooltip,
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       style: IconButton.styleFrom(
-        hoverColor: (color ?? Colors.indigo).withValues(alpha: 0.1),
+        hoverColor: accent.withValues(alpha: 0.1),
       ),
     );
   }
@@ -75,12 +77,16 @@ class MapControls extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 600;
+        final reduceMotion = MediaQuery.disableAnimationsOf(context);
+        final positionDuration = reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 300);
         return Stack(
           children: [
             // Pan Controls Group
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
+              duration: positionDuration,
+              curve: Curves.easeOutQuart,
               bottom: isBottomModalVisible
                   ? (isDesktop ? 160 : 260)
                   : (isDesktop ? 20 : 120),
@@ -92,6 +98,7 @@ class MapControls extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildGlassButton(
+                      context: context,
                       onPressed: () => _pan(0.01, 0),
                       icon: Icons.arrow_drop_up,
                     ),
@@ -99,23 +106,27 @@ class MapControls extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildGlassButton(
+                          context: context,
                           onPressed: () => _pan(0, -0.01),
                           icon: Icons.arrow_left,
                         ),
                         const SizedBox(width: 4),
                         _buildGlassButton(
+                          context: context,
                           onPressed: () => _resetView(context),
                           icon: Icons.my_location,
                           tooltip: 'My Location',
                         ),
                         const SizedBox(width: 4),
                         _buildGlassButton(
+                          context: context,
                           onPressed: () => _pan(0, 0.01),
                           icon: Icons.arrow_right,
                         ),
                       ],
                     ),
                     _buildGlassButton(
+                      context: context,
                       onPressed: () => _pan(-0.01, 0),
                       icon: Icons.arrow_drop_down,
                     ),
@@ -125,8 +136,8 @@ class MapControls extends StatelessWidget {
             ),
             // Zoom Controls Group
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
+              duration: positionDuration,
+              curve: Curves.easeOutQuart,
               bottom: isBottomModalVisible
                   ? (isDesktop ? 320 : 420)
                   : (isDesktop ? 180 : 280),
@@ -137,14 +148,20 @@ class MapControls extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildGlassButton(
+                      context: context,
                       onPressed: _zoomIn,
                       icon: Icons.add,
                       tooltip: 'Zoom In',
                     ),
                     const SizedBox(height: 4),
-                    const Icon(Icons.search, color: Colors.indigo, size: 20),
+                    Icon(
+                      Icons.search,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
                     const SizedBox(height: 4),
                     _buildGlassButton(
+                      context: context,
                       onPressed: _zoomOut,
                       icon: Icons.remove,
                       tooltip: 'Zoom Out',

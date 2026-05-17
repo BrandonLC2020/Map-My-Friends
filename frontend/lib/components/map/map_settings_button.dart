@@ -18,7 +18,10 @@ class MapSettingsButton extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         borderRadius: 30,
         child: IconButton(
-          icon: const Icon(Icons.settings, color: Colors.indigo),
+          icon: Icon(
+            Icons.settings,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           tooltip: 'Map Settings',
           onPressed: () {
             showModalBottomSheet(

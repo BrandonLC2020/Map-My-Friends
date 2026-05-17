@@ -1,6 +1,29 @@
 import 'package:flutter/material.dart';
 import 'a11y_constants.dart';
 
+/// Named accent colors for map overlays. See DESIGN.md §2.
+///
+/// These category accents (airport, station types) live deliberately outside
+/// the natural OSM tile palette so map-overlay UI reads as distinct from
+/// terrain, per the Outside-the-Tile-Palette Rule.
+class MapPalette {
+  const MapPalette._();
+
+  static const Color airport = Color(0xFF1565C0);
+  static const Color majorStation = Color(0xFFE65100);
+  static const Color commuterRail = Color(0xFF00695C);
+  static const Color subway = Color(0xFF2E7D32);
+  static const Color regionalStation = Color(0xFF607D8B);
+
+  // Compass north arrow. Red is the universally-read north convention;
+  // tokenized here as a deliberate Evening Palette exception, not a leak.
+  static const Color compassNorth = Color(0xFFC62828);
+
+  // Default home-pin fallback when a profile has no custom pin color set.
+  // Evening Indigo from the brand palette.
+  static const Color defaultPin = Color(0xFF3F51B5);
+}
+
 class AppTheme {
   // Brand Colors
   static const Color _brandColor = Colors.indigo;

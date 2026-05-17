@@ -14,5 +14,6 @@
   "street": "Dirección",
   "profile": "Perfil",
   "settings": "Ajustes",
-  "logout": "Cerrar Sesión"
+  "logout": "Cerrar Sesión",
+  "mapFindingYou": "Buscándote en el mapa…"
 }

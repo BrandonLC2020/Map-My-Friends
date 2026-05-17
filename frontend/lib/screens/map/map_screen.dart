@@ -28,8 +28,18 @@ import '../../bloc/station/station_state.dart';
 import '../../bloc/trip/trip_bloc.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../components/map/horizontal_trip_planner.dart';
-import '../../models/airport.dart';
-import '../../models/station.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/app_theme.dart';
+
+// Spatial tokens per DESIGN.md §5: floating chrome lives at 20px inset; the
+// compass clears the settings button (~75px tall plus its inset) with a
+// spacing.lg gap.
+const double _kChromeInset = 20.0;
+const double _kCompassTopOffset = 95.0;
+const double _kCameraFitPadding = 50.0;
+const double _kFallbackLat = 37.7749;
+const double _kFallbackLon = -122.4194;
+const double _kInitialZoom = 13.0;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -107,7 +117,7 @@ class _MapScreenState extends State<MapScreen> {
                   !current.isOptimizing,
               listener: (context, state) {
                 if (state.stops.length == 1) {
-                  _mapController.move(state.stops.first.location, 13.0);
+                  _mapController.move(state.stops.first.location, _kInitialZoom);
                 } else {
                   final bounds = LatLngBounds.fromPoints(
                     state.stops.map((s) => s.location).toList(),
@@ -115,7 +125,7 @@ class _MapScreenState extends State<MapScreen> {
                   _mapController.fitCamera(
                     CameraFit.bounds(
                       bounds: bounds,
-                      padding: const EdgeInsets.all(50),
+                      padding: const EdgeInsets.all(_kCameraFitPadding),
                     ),
                   );
                 }
@@ -124,11 +134,13 @@ class _MapScreenState extends State<MapScreen> {
           ],
           child: BlocBuilder<LocationBloc, LocationState>(
             builder: (context, locationState) {
-              if (locationState is LocationLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              LatLng center = const LatLng(37.7749, -122.4194); // Default SF
+              // The map always renders — even while we're acquiring location.
+              // A blank scaffold with a centered spinner would say "this is a
+              // dashboard"; the Lit Window posture is that the map IS the
+              // canvas. We just nudge it to a default coordinate and overlay
+              // a calm pill telling the user what's happening.
+              final isLocating = locationState is LocationLoading;
+              LatLng center = const LatLng(_kFallbackLat, _kFallbackLon);
               if (locationState is LocationLoaded &&
                   locationState.position != null) {
                 center = LatLng(
@@ -169,7 +181,8 @@ class _MapScreenState extends State<MapScreen> {
                               width: 40,
                               height: 40,
                               child: CustomMapMarker(
-                                pinColorHex: profileState.pinColor ?? '#2196F3',
+                                pinColorHex:
+                                    profileState.pinColor ?? '#3F51B5',
                                 pinStyle: profileState.pinStyle ?? 'teardrop',
                                 pinIconType: profileState.pinIconType ?? 'none',
                                 pinEmoji: profileState.pinEmoji,
@@ -186,7 +199,7 @@ class _MapScreenState extends State<MapScreen> {
                               height: 40,
                               child: const Icon(
                                 Icons.my_location,
-                                color: Colors.blue,
+                                color: MapPalette.defaultPin,
                                 size: 40,
                               ),
                             ),
@@ -252,9 +265,9 @@ class _MapScreenState extends State<MapScreen> {
                                     label:
                                         'Airport: ${airport.name} (${airport.iataCode})',
                                     button: true,
-                                    child: _MarkerIcon(
+                                    child: const _MarkerIcon(
                                       icon: Icons.flight,
-                                      color: const Color(0xFF1565C0),
+                                      color: MapPalette.airport,
                                     ),
                                   ),
                                 ),
@@ -287,32 +300,28 @@ class _MapScreenState extends State<MapScreen> {
                               })
                               .map((station) {
                                 IconData iconData = Icons.train;
-                                Color color = const Color(0xFFE65100); // Orange
+                                Color color = MapPalette.majorStation;
 
                                 switch (station.stationType) {
                                   case 'major_station':
                                     iconData = Icons.train;
-                                    color = const Color(0xFFE65100);
+                                    color = MapPalette.majorStation;
                                     break;
                                   case 'commuter_rail_station':
                                     iconData = Icons.directions_railway;
-                                    color = const Color(0xFF00695C); // Teal 800
+                                    color = MapPalette.commuterRail;
                                     break;
                                   case 'subway_station':
                                     iconData = Icons.subway;
-                                    color = const Color(
-                                      0xFF2E7D32,
-                                    ); // Green 800
+                                    color = MapPalette.subway;
                                     break;
                                   case 'regional_station':
                                     iconData = Icons.train;
-                                    color = const Color(
-                                      0xFF607D8B,
-                                    ); // Blue Grey
+                                    color = MapPalette.regionalStation;
                                     break;
                                   default:
                                     iconData = Icons.train;
-                                    color = const Color(0xFFE65100);
+                                    color = MapPalette.majorStation;
                                 }
 
                                 return Marker(
@@ -340,6 +349,9 @@ class _MapScreenState extends State<MapScreen> {
                       return BlocBuilder<TripBloc, TripState>(
                         builder: (context, tripState) {
                           final isTripPlanning = tripState.stops.isNotEmpty;
+                          final reduceMotion =
+                              MediaQuery.disableAnimationsOf(context);
+                          final routeColor = Theme.of(context).colorScheme.primary;
 
                           return Stack(
                             children: [
@@ -347,7 +359,7 @@ class _MapScreenState extends State<MapScreen> {
                                 mapController: _mapController,
                                 options: MapOptions(
                                   initialCenter: center,
-                                  initialZoom: 13.0,
+                                  initialZoom: _kInitialZoom,
                                 ),
                                 children: [
                                   TileLayer(
@@ -376,7 +388,7 @@ class _MapScreenState extends State<MapScreen> {
                                         polylines: [
                                           Polyline(
                                             points: state.routePoints,
-                                            color: Colors.indigo.withValues(
+                                            color: routeColor.withValues(
                                               alpha: 0.7,
                                             ),
                                             strokeWidth: 5,
@@ -393,6 +405,14 @@ class _MapScreenState extends State<MapScreen> {
                                       disableClusteringAtZoom: 19,
                                       spiderfyCluster: false,
                                       zoomToBoundsOnClick: false,
+                                      animationsOptions: reduceMotion
+                                          ? const AnimationsOptions(
+                                              zoom: Duration.zero,
+                                              fitBound: Duration.zero,
+                                              centerMarker: Duration.zero,
+                                              spiderfy: Duration.zero,
+                                            )
+                                          : const AnimationsOptions(),
                                       onMarkerTap: (marker) {
                                         final key = marker.key;
                                         if (key is ValueKey<String>) {
@@ -555,15 +575,24 @@ class _MapScreenState extends State<MapScreen> {
                                         }
                                       },
                                       builder: (context, clusterMarkers) {
-                                        List<Widget> children = [];
-                                        int displayCount =
+                                        // Lit Window cluster preview: a glass
+                                        // pill (high-contrast-aware via
+                                        // GlassContainer) wrapping an overlapping
+                                        // avatar stack, with a "+N" tile in
+                                        // Evening Indigo Tint for overflow.
+                                        // Flat-By-Default: no resting shadow on
+                                        // either the pill or the +N tile.
+                                        final scheme =
+                                            Theme.of(context).colorScheme;
+                                        final List<Widget> children = [];
+                                        final int displayCount =
                                             clusterMarkers.length > 4
                                             ? 3
                                             : clusterMarkers.length;
-                                        bool hasExtra =
+                                        final bool hasExtra =
                                             clusterMarkers.length > 4;
-                                        double itemSize = 36.0;
-                                        double overlap = 20.0;
+                                        const double itemSize = 36.0;
+                                        const double overlap = 20.0;
                                         double totalWidth = 0;
                                         if (displayCount > 0) {
                                           totalWidth =
@@ -584,7 +613,7 @@ class _MapScreenState extends State<MapScreen> {
                                           );
                                         }
                                         if (hasExtra) {
-                                          int extraCount =
+                                          final extraCount =
                                               clusterMarkers.length - 3;
                                           children.add(
                                             Positioned(
@@ -593,33 +622,25 @@ class _MapScreenState extends State<MapScreen> {
                                                 width: itemSize,
                                                 height: itemSize,
                                                 decoration: BoxDecoration(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .primaryContainer,
+                                                  color: scheme.primaryContainer,
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
-                                                    width: 2,
+                                                    color: scheme.primary,
+                                                    width: 1.5,
                                                   ),
-                                                  boxShadow: const [
-                                                    BoxShadow(
-                                                      color: Colors.black26,
-                                                      blurRadius: 4,
-                                                      offset: Offset(0, 2),
-                                                    ),
-                                                  ],
                                                 ),
                                                 alignment: Alignment.center,
                                                 child: Text(
                                                   '+$extraCount',
                                                   style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
+                                                    color: scheme
                                                         .onPrimaryContainer,
-                                                    fontWeight: FontWeight.bold,
+                                                    fontWeight: FontWeight.w600,
                                                     fontSize: 12,
+                                                    fontFeatures: const [
+                                                      FontFeature
+                                                          .tabularFigures(),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
@@ -627,38 +648,18 @@ class _MapScreenState extends State<MapScreen> {
                                           );
                                         }
                                         return Center(
-                                          child: Container(
-                                            width: totalWidth + 8,
-                                            height: itemSize + 8,
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(context).cardColor
-                                                  .withValues(alpha: 0.8),
-                                              borderRadius:
-                                                  BorderRadius.circular(24),
-                                              boxShadow: const [
-                                                BoxShadow(
-                                                  color: Colors.black26,
-                                                  blurRadius: 4,
-                                                  offset: Offset(0, 2),
+                                          child: GlassContainer(
+                                            borderRadius: 30, // pill
+                                            padding: const EdgeInsets.all(4),
+                                            child: SizedBox(
+                                              width: totalWidth,
+                                              height: itemSize,
+                                              child: IgnorePointer(
+                                                child: Stack(
+                                                  clipBehavior: Clip.none,
+                                                  children: children,
                                                 ),
-                                              ],
-                                            ),
-                                            child: Stack(
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                Positioned(
-                                                  left: 4,
-                                                  top: 4,
-                                                  width: totalWidth,
-                                                  height: itemSize,
-                                                  child: IgnorePointer(
-                                                    child: Stack(
-                                                      clipBehavior: Clip.none,
-                                                      children: children,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                              ),
                                             ),
                                           ),
                                         );
@@ -667,6 +668,16 @@ class _MapScreenState extends State<MapScreen> {
                                   ),
                                   BlocBuilder<TripBloc, TripState>(
                                     builder: (context, state) {
+                                      // Trip stops live in the rare Aurora
+                                      // Pink slot per DESIGN.md §2: pink is
+                                      // reserved for "a trip happening this
+                                      // week" — these markers literally ARE
+                                      // that surface. Airport/station stops
+                                      // keep their category accents so a
+                                      // trip with mixed stops still reads as
+                                      // a sequence at a glance.
+                                      final scheme =
+                                          Theme.of(context).colorScheme;
                                       return MarkerLayer(
                                         markers: state.stops.asMap().entries.map((
                                           entry,
@@ -684,13 +695,15 @@ class _MapScreenState extends State<MapScreen> {
                                               !isAirport &&
                                               !isStation;
 
-                                          Color color = Colors.indigo;
+                                          Color color = scheme.primary;
+                                          Color onColor = Colors.white;
                                           if (isPersonOnly) {
-                                            color = Colors.amber;
+                                            color = scheme.secondary;
+                                            onColor = scheme.onSecondary;
                                           } else if (isAirport) {
-                                            color = const Color(0xFF1565C0);
+                                            color = MapPalette.airport;
                                           } else if (isStation) {
-                                            color = const Color(0xFFE65100);
+                                            color = MapPalette.majorStation;
                                           }
 
                                           return Marker(
@@ -739,12 +752,7 @@ class _MapScreenState extends State<MapScreen> {
                                                               65 + idx,
                                                             ),
                                                             style: TextStyle(
-                                                              color:
-                                                                  isPersonOnly
-                                                                  ? Colors
-                                                                        .black87
-                                                                  : Colors
-                                                                        .white,
+                                                              color: onColor,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .bold,
@@ -766,20 +774,23 @@ class _MapScreenState extends State<MapScreen> {
                                                           const EdgeInsets.all(
                                                             4,
                                                           ),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                            color: Colors.amber,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: scheme.secondary,
+                                                        shape: BoxShape.circle,
+                                                      ),
                                                       child: Text(
                                                         stop.people.length
                                                             .toString(),
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                           fontSize: 10,
                                                           fontWeight:
                                                               FontWeight.bold,
-                                                          color: Colors.black87,
+                                                          color: scheme
+                                                              .onSecondary,
+                                                          fontFeatures: const [
+                                                            FontFeature
+                                                                .tabularFigures(),
+                                                          ],
                                                         ),
                                                       ),
                                                     ),
@@ -825,14 +836,16 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               const MapSettingsButton(),
                               Positioned(
-                                top: MediaQuery.of(context).padding.top + 95,
-                                right: 20,
+                                top: MediaQuery.of(context).padding.top +
+                                    _kCompassTopOffset,
+                                right: _kChromeInset,
                                 child: _CompassIndicator(
                                   mapController: _mapController,
                                   onReset: _resetNorth,
                                 ),
                               ),
                               const HorizontalTripPlanner(),
+                              if (isLocating) const _LocatingPill(),
                             ],
                           );
                         },
@@ -849,15 +862,69 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
+/// Calm, non-blocking status pill shown while we acquire the user's location.
+/// Per DESIGN.md §1: the map stays the canvas; chrome defers to it. A full-
+/// screen blocker would shift the register toward "dashboard waiting" —
+/// exactly the SaaS-template energy PRODUCT.md anti-references.
+class _LocatingPill extends StatelessWidget {
+  const _LocatingPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + _kChromeInset,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: GlassContainer(
+          borderRadius: 30, // pill
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          semanticLabel: AppLocalizations.of(context)!.mapFindingYou,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppLocalizations.of(context)!.mapFindingYou,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact overlay marker (airport / station). Uses the theme surface as the
+/// fill — never pure white, per the No-Pure-White-Surfaces Rule. The
+/// category accent acts as the 1.5px border and icon color so the marker
+/// shape (circle) plus the icon (flight / train / subway / directions_railway)
+/// together carry meaning, satisfying the airport/station distinct-shape
+/// requirement for colorblind readers. Resting shadow is intentional: these
+/// genuinely float over the map (DESIGN.md §4 marker exception).
 class _MarkerIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
   const _MarkerIcon({required this.icon, required this.color});
+
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         shape: BoxShape.circle,
         boxShadow: const [
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
@@ -873,52 +940,66 @@ class _CompassIndicator extends StatelessWidget {
   final MapController mapController;
   final VoidCallback onReset;
   const _CompassIndicator({required this.mapController, required this.onReset});
+
   @override
   Widget build(BuildContext context) {
+    // North-arrow red is a deliberate exception to the Evening Palette: red
+    // is the universally-read "north" convention on compasses, so it carries
+    // more meaning than brand discipline here. Tokenized as
+    // MapPalette.compassNorth so it's a named exception rather than a leak.
+    final scheme = Theme.of(context).colorScheme;
+    final southColor = scheme.onSurface.withValues(alpha: 0.5);
+
     return StreamBuilder<MapEvent>(
       stream: mapController.mapEventStream,
       builder: (context, snapshot) {
         final rotation = mapController.camera.rotation;
         if (rotation == 0) return const SizedBox.shrink();
-        return GestureDetector(
-          onTap: onReset,
-          child: GlassContainer(
-            width: 44,
-            height: 44,
-            padding: EdgeInsets.zero,
-            borderRadius: 22,
-            child: Transform.rotate(
-              angle: -rotation * (math.pi / 180),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    top: 6,
-                    child: CustomPaint(
-                      size: const Size(10, 10),
-                      painter: _NorthTrianglePainter(color: Colors.red),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 6,
-                    child: Transform.rotate(
-                      angle: math.pi,
+        return Semantics(
+          button: true,
+          label: 'Reset compass to north',
+          child: GestureDetector(
+            onTap: onReset,
+            child: GlassContainer(
+              width: 44,
+              height: 44,
+              padding: EdgeInsets.zero,
+              borderRadius: 22,
+              child: Transform.rotate(
+                angle: -rotation * (math.pi / 180),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Positioned(
+                      top: 6,
                       child: CustomPaint(
-                        size: const Size(10, 10),
-                        painter: _NorthTrianglePainter(color: Colors.white70),
+                        size: Size(10, 10),
+                        painter: _NorthTrianglePainter(
+                          color: MapPalette.compassNorth,
+                        ),
                       ),
                     ),
-                  ),
-                  const Text(
-                    'N',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                      height: 1,
+                    Positioned(
+                      bottom: 6,
+                      child: Transform.rotate(
+                        angle: math.pi,
+                        child: CustomPaint(
+                          size: const Size(10, 10),
+                          painter: _NorthTrianglePainter(color: southColor),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const Text(
+                      'N',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: MapPalette.compassNorth,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -930,7 +1011,7 @@ class _CompassIndicator extends StatelessWidget {
 
 class _NorthTrianglePainter extends CustomPainter {
   final Color color;
-  _NorthTrianglePainter({required this.color});
+  const _NorthTrianglePainter({required this.color});
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()

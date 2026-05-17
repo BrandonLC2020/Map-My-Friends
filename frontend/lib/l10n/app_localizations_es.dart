@@ -52,4 +52,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get logout => 'Cerrar Sesión';
+
+  @override
+  String get mapFindingYou => 'Buscándote en el mapa…';
 }

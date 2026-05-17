@@ -5,6 +5,7 @@ import '../../bloc/trip/trip_bloc.dart';
 import '../../bloc/trip/trip_event.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../models/trip.dart';
+import '../../utils/app_theme.dart';
 import '../shared/glass_container.dart';
 
 class HorizontalTripPlanner extends StatelessWidget {
@@ -17,6 +18,9 @@ class HorizontalTripPlanner extends StatelessWidget {
         if (state.stops.isEmpty) {
           return const SizedBox.shrink();
         }
+
+        final theme = Theme.of(context);
+        final scheme = theme.colorScheme;
 
         return Positioned(
           bottom: 20,
@@ -35,22 +39,26 @@ class HorizontalTripPlanner extends StatelessWidget {
                       final stop = state.stops[index];
                       String name = 'Stop';
                       IconData? icon;
-                      Color color = Colors.indigo;
+                      // Default is "person-only" — the rare Aurora Pink slot,
+                      // reserved by DESIGN.md for trip-this-week markers.
+                      Color color = scheme.secondary;
+                      Color onColor = scheme.onSecondary;
 
                       if (stop.airport != null) {
                         name = stop.airport!.iataCode;
                         icon = Icons.flight;
-                        color = const Color(0xFF1565C0);
+                        color = MapPalette.airport;
+                        onColor = Colors.white;
                       } else if (stop.station != null) {
                         name = stop.station!.name;
                         icon = Icons.train;
-                        color = const Color(0xFFE65100);
+                        color = MapPalette.majorStation;
+                        onColor = Colors.white;
                       } else if (stop.people.isNotEmpty) {
                         name = stop.people.first.firstName;
                         if (stop.people.length > 1) {
                           name += ' +${stop.people.length - 1}';
                         }
-                        color = Colors.amber;
                       }
 
                       final letter = String.fromCharCode(65 + index);
@@ -67,9 +75,7 @@ class HorizontalTripPlanner extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   backgroundColor: color,
-                                  foregroundColor: color == Colors.amber
-                                      ? Colors.black87
-                                      : Colors.white,
+                                  foregroundColor: onColor,
                                   child: icon != null
                                       ? Icon(icon, size: 20)
                                       : Text(
@@ -87,16 +93,19 @@ class HorizontalTripPlanner extends StatelessWidget {
                                     top: -4,
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.amber,
+                                      decoration: BoxDecoration(
+                                        color: scheme.secondary,
                                         shape: BoxShape.circle,
                                       ),
                                       child: Text(
                                         stop.people.length.toString(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
+                                          color: scheme.onSecondary,
+                                          fontFeatures: const [
+                                            FontFeature.tabularFigures(),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -109,10 +118,10 @@ class HorizontalTripPlanner extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                                color: scheme.onSurface,
                               ),
                             ),
                             if (stop.people.isNotEmpty &&
@@ -126,7 +135,7 @@ class HorizontalTripPlanner extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white24,
+                                          color: theme.dividerColor,
                                           width: 1,
                                         ),
                                       ),
@@ -155,10 +164,10 @@ class HorizontalTripPlanner extends StatelessWidget {
                     },
                   ),
                 ),
-                const VerticalDivider(
+                VerticalDivider(
                   width: 24,
                   thickness: 1,
-                  color: Colors.white24,
+                  color: theme.dividerColor,
                 ),
                 SizedBox(
                   height: 140,
@@ -197,18 +206,19 @@ class _ActionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          icon: const Icon(Icons.check_circle, color: Colors.greenAccent),
+          icon: Icon(Icons.check_circle, color: scheme.primary),
           onPressed: onSave,
           tooltip: 'Save Trip',
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         ),
         IconButton(
-          icon: const Icon(Icons.layers_clear, color: Colors.redAccent),
+          icon: Icon(Icons.layers_clear, color: scheme.error),
           onPressed: onClear,
           tooltip: 'Clear Trip',
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),

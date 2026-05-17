@@ -187,6 +187,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logout'**
   String get logout;
+
+  /// Calm, non-blocking status shown in a glass pill while the user's location is being acquired. The map is already visible behind it.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding you on the map…'**
+  String get mapFindingYou;
 }
 
 class _AppLocalizationsDelegate
