@@ -190,3 +190,8 @@ CLAUDE.md
 GEMINI.md
 .agent/
 agent.md
+
+# Design context (private — local only)
+frontend/PRODUCT.md
+frontend/DESIGN.md
+frontend/.impeccable/
