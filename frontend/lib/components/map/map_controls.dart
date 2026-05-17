@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../shared/glass_container.dart';
+import '../shared/thermal_response.dart';
 
 class MapControls extends StatelessWidget {
   final MapController mapController;
@@ -61,13 +62,18 @@ class MapControls extends StatelessWidget {
     Color? color,
   }) {
     final accent = color ?? Theme.of(context).colorScheme.primary;
-    return IconButton(
-      onPressed: onPressed,
-      icon: Icon(icon, color: accent),
-      tooltip: tooltip,
-      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-      style: IconButton.styleFrom(
-        hoverColor: accent.withValues(alpha: 0.1),
+    return ThermalResponse(
+      onTap: onPressed,
+      borderRadius: 24,
+      child: Semantics(
+        label: tooltip,
+        button: true,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Icon(icon, color: accent),
+        ),
       ),
     );
   }

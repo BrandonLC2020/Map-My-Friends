@@ -75,13 +75,6 @@ class CustomMapMarker extends StatelessWidget {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
           alignment: Alignment.center,
           child: innerContent,
@@ -94,13 +87,6 @@ class CustomMapMarker extends StatelessWidget {
             color: color,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
           alignment: Alignment.center,
           child: innerContent,
@@ -115,13 +101,6 @@ class CustomMapMarker extends StatelessWidget {
               color: color,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
             ),
             alignment: Alignment.center,
             child: Transform.rotate(angle: -pi / 4, child: innerContent),
@@ -158,13 +137,6 @@ class CustomMapMarker extends StatelessWidget {
                 bottomRight: Radius.circular(4),
               ),
               border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(2, 2),
-                ),
-              ],
             ),
             alignment: Alignment.center,
             child: Transform.rotate(angle: -pi / 4, child: innerContent),
@@ -211,7 +183,6 @@ class TrianglePainter extends CustomPainter {
       ..lineTo(0, size.height)
       ..close();
 
-    canvas.drawShadow(path, Colors.black, 4, false);
     canvas.drawPath(path, paint);
     canvas.drawPath(path, borderPaint);
   }

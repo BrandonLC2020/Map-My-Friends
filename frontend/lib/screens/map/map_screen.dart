@@ -28,6 +28,7 @@ import '../../bloc/station/station_state.dart';
 import '../../bloc/trip/trip_bloc.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../components/map/horizontal_trip_planner.dart';
+import '../../components/shared/thermal_response.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/app_theme.dart';
 
@@ -388,10 +389,8 @@ class _MapScreenState extends State<MapScreen> {
                                         polylines: [
                                           Polyline(
                                             points: state.routePoints,
-                                            color: routeColor.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                            strokeWidth: 5,
+                                            color: routeColor,
+                                            strokeWidth: 3,
                                           ),
                                         ],
                                       );
@@ -648,16 +647,19 @@ class _MapScreenState extends State<MapScreen> {
                                           );
                                         }
                                         return Center(
-                                          child: GlassContainer(
-                                            borderRadius: 30, // pill
-                                            padding: const EdgeInsets.all(4),
-                                            child: SizedBox(
-                                              width: totalWidth,
-                                              height: itemSize,
-                                              child: IgnorePointer(
-                                                child: Stack(
-                                                  clipBehavior: Clip.none,
-                                                  children: children,
+                                          child: ThermalResponse(
+                                            borderRadius: 30,
+                                            child: GlassContainer(
+                                              borderRadius: 30, // pill
+                                              padding: const EdgeInsets.all(4),
+                                              child: SizedBox(
+                                                width: totalWidth,
+                                                height: itemSize,
+                                                child: IgnorePointer(
+                                                  child: Stack(
+                                                    clipBehavior: Clip.none,
+                                                    children: children,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -924,14 +926,11 @@ class _MarkerIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
         shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
-        ],
         border: Border.all(color: color, width: 1.5),
       ),
-      child: Center(child: Icon(icon, color: color, size: 16)),
+      child: Center(child: Icon(icon, color: color, size: 14)),
     );
   }
 }
@@ -958,8 +957,9 @@ class _CompassIndicator extends StatelessWidget {
         return Semantics(
           button: true,
           label: 'Reset compass to north',
-          child: GestureDetector(
+          child: ThermalResponse(
             onTap: onReset,
+            borderRadius: 22,
             child: GlassContainer(
               width: 44,
               height: 44,

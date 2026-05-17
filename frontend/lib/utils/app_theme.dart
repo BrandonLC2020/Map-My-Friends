@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'a11y_constants.dart';
 
 /// Named accent colors for map overlays. See DESIGN.md §2.
@@ -22,95 +23,101 @@ class MapPalette {
   // Default home-pin fallback when a profile has no custom pin color set.
   // Evening Indigo from the brand palette.
   static const Color defaultPin = Color(0xFF3F51B5);
+
+  // Thermal energy tokens
+  static const Color thermalCore = Color(0xFFFF3B30);
+  static const Color thermalCorona = Color(0xFFFF9500);
 }
 
 class AppTheme {
   // Brand Colors
-  static const Color _brandColor = Colors.indigo;
-  static const Color _secondaryColor = Colors.pinkAccent;
+  static const Color _brandColor = Color(0xFF3F51B5);
+  static const Color _secondaryColor = Color(0xFFFF4081);
 
   // Standardized Text Theme
   static TextTheme _buildTextTheme(Color color) {
     return TextTheme(
-      displayLarge: TextStyle(
+      displayLarge: GoogleFonts.montserrat(
         fontSize: 57,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
         color: color,
         letterSpacing: -0.25,
+        height: 1.1,
       ),
-      displayMedium: TextStyle(
+      displayMedium: GoogleFonts.montserrat(
         fontSize: 45,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
         color: color,
       ),
-      displaySmall: TextStyle(
+      displaySmall: GoogleFonts.montserrat(
         fontSize: 36,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
         color: color,
       ),
-      headlineLarge: TextStyle(
+      headlineLarge: GoogleFonts.montserrat(
         fontSize: 32,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
         color: color,
       ),
-      headlineMedium: TextStyle(
+      headlineMedium: GoogleFonts.montserrat(
         fontSize: 28,
         fontWeight: FontWeight.w600,
         color: color,
       ),
-      headlineSmall: TextStyle(
+      headlineSmall: GoogleFonts.montserrat(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: color,
       ),
-      titleLarge: TextStyle(
+      titleLarge: GoogleFonts.montserrat(
         fontSize: 22,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
         color: color,
       ),
-      titleMedium: TextStyle(
+      titleMedium: GoogleFonts.openSans(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: color,
         letterSpacing: 0.15,
       ),
-      titleSmall: TextStyle(
+      titleSmall: GoogleFonts.openSans(
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: color,
         letterSpacing: 0.1,
       ),
-      bodyLarge: TextStyle(
+      bodyLarge: GoogleFonts.openSans(
         fontSize: 16,
-        fontWeight: FontWeight.normal,
+        fontWeight: FontWeight.w300,
         color: color,
         letterSpacing: 0.5,
+        height: 1.5,
       ),
-      bodyMedium: TextStyle(
+      bodyMedium: GoogleFonts.openSans(
         fontSize: 14,
-        fontWeight: FontWeight.normal,
+        fontWeight: FontWeight.w300,
         color: color,
         letterSpacing: 0.25,
       ),
-      bodySmall: TextStyle(
+      bodySmall: GoogleFonts.openSans(
         fontSize: 12,
-        fontWeight: FontWeight.normal,
+        fontWeight: FontWeight.w300,
         color: color,
         letterSpacing: 0.4,
       ),
-      labelLarge: TextStyle(
+      labelLarge: GoogleFonts.montserrat(
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: color,
         letterSpacing: 0.1,
       ),
-      labelMedium: TextStyle(
+      labelMedium: GoogleFonts.montserrat(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: color,
         letterSpacing: 0.5,
       ),
-      labelSmall: TextStyle(
+      labelSmall: GoogleFonts.montserrat(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         color: color,

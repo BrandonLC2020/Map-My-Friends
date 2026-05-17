@@ -15,9 +15,9 @@ class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
-    this.borderRadius = 16.0,
-    this.blur = 10.0,
-    this.opacity = 0.4,
+    this.borderRadius = 30.0,
+    this.blur = 20.0,
+    this.opacity = 0.1,
     this.padding = const EdgeInsets.all(16.0),
     this.color,
     this.width,
@@ -35,7 +35,7 @@ class GlassContainer extends StatelessWidget {
     // In dark mode, ensure slightly higher base opacity to maintain visibility against varied backgrounds.
     final double effectiveOpacity = highContrast
         ? 1.0
-        : (isDark ? opacity + 0.15 : opacity).clamp(0.0, 1.0);
+        : (isDark ? opacity + 0.1 : opacity).clamp(0.0, 1.0);
     final double effectiveBlur = highContrast ? 0.0 : blur;
 
     Widget container;
@@ -71,15 +71,15 @@ class GlassContainer extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.4),
-                width: 2.0,
+                    : Colors.white.withValues(alpha: 0.2),
+                width: 0.5,
               ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
                   baseColor.withValues(
-                    alpha: (effectiveOpacity + 0.1).clamp(0.0, 1.0),
+                    alpha: (effectiveOpacity + 0.05).clamp(0.0, 1.0),
                   ),
                   baseColor.withValues(alpha: effectiveOpacity),
                 ],

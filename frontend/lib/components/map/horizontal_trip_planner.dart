@@ -7,6 +7,7 @@ import '../../bloc/trip/trip_state.dart';
 import '../../models/trip.dart';
 import '../../utils/app_theme.dart';
 import '../shared/glass_container.dart';
+import '../shared/thermal_response.dart';
 
 class HorizontalTripPlanner extends StatelessWidget {
   const HorizontalTripPlanner({super.key});
@@ -73,15 +74,25 @@ class HorizontalTripPlanner extends StatelessWidget {
                             Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                CircleAvatar(
-                                  backgroundColor: color,
-                                  foregroundColor: onColor,
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: icon != null
-                                      ? Icon(icon, size: 20)
+                                      ? Icon(icon, size: 20, color: onColor)
                                       : Text(
                                           letter,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
+                                            color: onColor,
                                           ),
                                         ),
                                 ),
@@ -118,10 +129,9 @@ class HorizontalTripPlanner extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                              style: theme.textTheme.labelSmall?.copyWith(
                                 color: scheme.onSurface,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             if (stop.people.isNotEmpty &&
@@ -135,8 +145,8 @@ class HorizontalTripPlanner extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: theme.dividerColor,
-                                          width: 1,
+                                          color: Colors.white.withValues(alpha: 0.2),
+                                          width: 0.5,
                                         ),
                                       ),
                                       child: CircleAvatar(
@@ -211,17 +221,34 @@ class _ActionGroup extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(
-          icon: Icon(Icons.check_circle, color: scheme.primary),
-          onPressed: onSave,
-          tooltip: 'Save Trip',
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        ThermalResponse(
+          onTap: onSave,
+          borderRadius: 24,
+          child: Semantics(
+            label: 'Save Trip',
+            button: true,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              child: Icon(Icons.check_circle, color: scheme.primary),
+            ),
+          ),
         ),
-        IconButton(
-          icon: Icon(Icons.layers_clear, color: scheme.error),
-          onPressed: onClear,
-          tooltip: 'Clear Trip',
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        const SizedBox(height: 8),
+        ThermalResponse(
+          onTap: onClear,
+          borderRadius: 24,
+          child: Semantics(
+            label: 'Clear Trip',
+            button: true,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              child: Icon(Icons.layers_clear, color: scheme.error),
+            ),
+          ),
         ),
       ],
     );

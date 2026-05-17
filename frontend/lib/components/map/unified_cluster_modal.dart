@@ -148,9 +148,13 @@ class UnifiedClusterModal extends StatelessWidget {
                   tooltip: 'Link to Stop',
                   onSelected: (index) {
                     final stop = state.stops[index];
-                    context.read<TripBloc>().add(LinkPersonToStop(p, index));
+                    final tripBloc = context.read<TripBloc>();
+                    final peopleBloc = context.read<PeopleBloc>();
+                    final messenger = ScaffoldMessenger.of(context);
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    tripBloc.add(LinkPersonToStop(p, index));
+
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text(
                           'Linked ${p.firstName} to stop ${String.fromCharCode(65 + index)}',
@@ -165,7 +169,7 @@ class UnifiedClusterModal extends StatelessWidget {
                               preferredAirport: stop.airport,
                               preferredStation: stop.station,
                             );
-                            context.read<PeopleBloc>().add(
+                            peopleBloc.add(
                               UpdatePerson(updatedPerson),
                             );
                           },

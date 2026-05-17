@@ -55,6 +55,7 @@ dependencies:
   intl_phone_field: ^3.2.0
   flutter_localizations:
     sdk: flutter
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:

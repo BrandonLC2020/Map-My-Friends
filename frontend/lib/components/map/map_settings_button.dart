@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/map/local_map_settings_cubit.dart';
 import '../shared/glass_container.dart';
+import '../shared/thermal_response.dart';
 import 'map_settings_modal.dart';
 
 class MapSettingsButton extends StatelessWidget {
@@ -17,13 +18,9 @@ class MapSettingsButton extends StatelessWidget {
       child: GlassContainer(
         padding: const EdgeInsets.all(8),
         borderRadius: 30,
-        child: IconButton(
-          icon: Icon(
-            Icons.settings,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          tooltip: 'Map Settings',
-          onPressed: () {
+        child: ThermalResponse(
+          borderRadius: 30,
+          onTap: () {
             showModalBottomSheet(
               context: context,
               backgroundColor: Colors.transparent,
@@ -36,6 +33,11 @@ class MapSettingsButton extends StatelessWidget {
               },
             );
           },
+          child: Icon(
+            Icons.settings,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24, // Consistent with IconButton default size
+          ),
         ),
       ),
     );
