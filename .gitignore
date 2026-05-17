@@ -183,3 +183,10 @@ override.tf.json
 
 .gemini/
 gha-creds-*.json
+
+# b1CodingTool Generated
+CLAUDE.md
+.claude/
+GEMINI.md
+.agent/
+agent.md
