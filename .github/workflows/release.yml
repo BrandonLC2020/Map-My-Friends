@@ -1,0 +1,79 @@
+name: Production Release Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # -----------------------------------------------------------------
+  # BACKEND DEPLOYMENT (EC2)
+  # -----------------------------------------------------------------
+  deploy-backend:
+    name: Deploy Django Backend to EC2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # ratchet:actions/checkout@v4
+
+      - name: Execute Deploy Command via SSH
+        uses: appleboy/ssh-action@40e104166b5e9057c5a939f727c0f1882d2f738e # ratchet:appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/Map-My-Friends
+            git pull origin main
+            chmod +x deploy.sh
+            ./deploy.sh
+
+  # -----------------------------------------------------------------
+  # FRONTEND DEPLOYMENT (S3 + CloudFront)
+  # -----------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Flutter Frontend to S3 & CloudFront
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # ratchet:actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ef37599044d62c05007421453 # ratchet:actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@389658ec876356784534ef0cd06e987c4f420e6f # ratchet:subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Web App
+        run: flutter build web --release
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d44e03b00a1 # ratchet:aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Sync built files to S3
+        run: |
+          aws s3 sync build/web/ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
