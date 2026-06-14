@@ -158,6 +158,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'apps.users.auth.Auth0JSONWebTokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -205,4 +206,10 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+
+# Auth0 Configuration
+AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN', 'map-my-friends.us.auth0.com')
+AUTH0_AUDIENCE = os.environ.get('AUTH0_AUDIENCE', 'https://mapmyfriends.com/api')
+
 

@@ -25,4 +25,8 @@ class ApiConfig {
     // Fallback
     return 'http://localhost:8000/api/';
   }
+
+  static const String auth0Domain = String.fromEnvironment('AUTH0_DOMAIN', defaultValue: 'map-my-friends.us.auth0.com');
+  static const String auth0ClientId = String.fromEnvironment('AUTH0_CLIENT_ID', defaultValue: 'YOUR_AUTH0_CLIENT_ID');
+  static const String auth0Audience = String.fromEnvironment('AUTH0_AUDIENCE', defaultValue: 'https://mapmyfriends.com/api');
 }

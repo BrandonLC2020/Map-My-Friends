@@ -14,6 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterRequested>(_onRegisterRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<Auth0LoginRequested>(_onAuth0LoginRequested);
   }
 
   Future<void> _onCheckAuthStatus(
@@ -108,4 +109,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await _authService.logout();
     emit(const Unauthenticated(message: 'You have been logged out.'));
   }
+
+  Future<void> _onAuth0LoginRequested(
+    Auth0LoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      final tokens = await _authService.loginWithAuth0(connection: event.connection);
+      emit(
+        Authenticated(
+          accessToken: tokens['access']!,
+          refreshToken: tokens['refresh']!,
+          username: tokens['username'],
+        ),
+      );
+    } catch (e) {
+      emit(AuthError(message: e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
 }
+

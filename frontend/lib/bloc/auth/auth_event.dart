@@ -60,3 +60,13 @@ class PasswordResetRequested extends AuthEvent {
 }
 
 class LogoutRequested extends AuthEvent {}
+
+class Auth0LoginRequested extends AuthEvent {
+  final String? connection;
+
+  const Auth0LoginRequested({this.connection});
+
+  @override
+  List<Object?> get props => [connection];
+}
+

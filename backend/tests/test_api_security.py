@@ -201,3 +201,31 @@ class PeoplePermissionTests(APITestCase):
         with patch('geopy.geocoders.Nominatim.geocode', return_value=mock_location):
             response = self.client.post(self.people_url, payload)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class Auth0AuthTests(APITestCase):
+    def setUp(self):
+        self.profile_url = reverse('user_profile')
+
+    def test_mock_token_authentication(self):
+        """Test authentication using mock Auth0 token."""
+        mock_token = 'mock_auth0_jwt_token_googleuser_123456789'
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {mock_token}')
+        
+        # Access profile - should succeed and create user 'googleuser'
+        response = self.client.get(self.profile_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'googleuser')
+        
+        # Confirm user profile was created
+        from django.contrib.auth.models import User
+        user = User.objects.get(username='googleuser')
+        self.assertEqual(user.email, 'googleuser@example.com')
+        self.assertIsNotNone(user.profile)
+
+    def test_invalid_jwt_token_type(self):
+        """Test that non-JWT and malformed tokens return 401."""
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer invalid_token_structure')
+        response = self.client.get(self.profile_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:auth0_flutter/auth0_flutter.dart';
 import 'api_config.dart';
 
 class AuthService {
@@ -13,6 +14,7 @@ class AuthService {
   );
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  late final Auth0 _auth0;
 
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
@@ -25,7 +27,9 @@ class AuthService {
     return _instance;
   }
 
-  AuthService._internal();
+  AuthService._internal() {
+    _auth0 = Auth0(ApiConfig.auth0Domain, ApiConfig.auth0ClientId);
+  }
 
   /// Get authenticated Dio instance with JWT token
   Future<Dio> _getAuthenticatedDio() async {
@@ -73,6 +77,55 @@ class AuthService {
       throw Exception('Login failed: ${e.message}');
     }
   }
+
+  Future<Map<String, String>> loginWithAuth0({String? connection}) async {
+    // If we're using the placeholder Client ID, run in mock mode
+    if (ApiConfig.auth0ClientId == 'YOUR_AUTH0_CLIENT_ID') {
+      await Future.delayed(const Duration(milliseconds: 800));
+      final mockUsername = connection == 'google-oauth2'
+          ? 'google_user'
+          : (connection == 'apple' ? 'apple_user' : 'auth0_user');
+      final mockToken = 'mock_auth0_jwt_token_${mockUsername}_${DateTime.now().millisecondsSinceEpoch}';
+
+      await _storage.write(key: _accessTokenKey, value: mockToken);
+      await _storage.write(key: _refreshTokenKey, value: 'mock_refresh_token');
+      await _storage.write(key: _usernameKey, value: mockUsername);
+
+      return {
+        'access': mockToken,
+        'refresh': 'mock_refresh_token',
+        'username': mockUsername,
+      };
+    }
+
+    try {
+      final credentials = await _auth0.webAuthentication(scheme: 'demo').login(
+        audience: ApiConfig.auth0Audience,
+        scopes: {'openid', 'profile', 'email', 'offline_access'},
+        parameters: connection != null ? {'connection': connection} : {},
+      );
+
+      final accessToken = credentials.accessToken;
+      final refreshToken = credentials.refreshToken ?? '';
+
+      // Extract username/nickname from user claims
+      final userProfile = credentials.user;
+      final username = userProfile.nickname ?? userProfile.name ?? userProfile.email ?? '';
+
+      await _storage.write(key: _accessTokenKey, value: accessToken);
+      await _storage.write(key: _refreshTokenKey, value: refreshToken);
+      await _storage.write(key: _usernameKey, value: username);
+
+      return {
+        'access': accessToken,
+        'refresh': refreshToken,
+        'username': username,
+      };
+    } catch (e) {
+      throw Exception('Auth0 Login failed: $e');
+    }
+  }
+
 
   Future<void> register({
     required String username,
