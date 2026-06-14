@@ -209,7 +209,8 @@ if not DEBUG:
 
 
 # Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN', 'map-my-friends.us.auth0.com')
-AUTH0_AUDIENCE = os.environ.get('AUTH0_AUDIENCE', 'https://mapmyfriends.com/api')
+AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN', 'b1codes.us.auth0.com')
+AUTH0_AUDIENCE = os.environ.get('AUTH0_AUDIENCE', 'https://api.mapmyfriends.com/')
+
 
 
