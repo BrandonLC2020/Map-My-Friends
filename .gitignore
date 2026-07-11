@@ -188,8 +188,9 @@ gha-creds-*.json
 CLAUDE.md
 .claude/
 GEMINI.md
-.agent/
-agent.md
+.agents/
+agents.md
+skills-lock.json
 
 # Design context (private — local only)
 frontend/PRODUCT.md
