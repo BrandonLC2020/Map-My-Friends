@@ -23,6 +23,13 @@ dependencies = [
     "django-phonenumber-field[phonenumbers] (>=8.4.0,<9.0.0)"
 ]
 
+[project.optional-dependencies]
+dev = [
+    # Remote debugger – used by VS Code's debugpy attach launch config.
+    # Installed in the image; activated via docker-compose.debug.yml.
+    "debugpy>=1.8.0,<2.0.0"
+]
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -2,6 +2,11 @@
 up:
 	docker compose up
 
+# Debug mode: starts the stack with debugpy on port 5678 for VS Code attach.
+# Use "Django: Attach (Docker)" in VS Code after running this.
+debug:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build
+
 build:
 	docker compose build
 

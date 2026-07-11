@@ -1,0 +1,214 @@
+{
+  // VS Code task definitions for Map My Friends.
+  //
+  // These tasks complement the launch configurations in launch.json and
+  // surface common Makefile / Docker operations directly in the VS Code UI
+  // (Terminal → Run Task…  or via keyboard shortcut).
+  "version": "2.0.0",
+  "tasks": [
+    // ------------------------------------------------------------------ //
+    //  DOCKER COMPOSE                                                      //
+    // ------------------------------------------------------------------ //
+    {
+      "label": "Docker: Compose Up",
+      "type": "shell",
+      "command": "docker compose up",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting",
+          "endsPattern": "Attaching to"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "docker"
+      }
+    },
+    {
+      "label": "Docker: Compose Up (debug)",
+      // Starts all services using the debug overlay, which runs the api
+      // under debugpy on port 5678. VS Code attach configs use this as a
+      // preLaunchTask so the server is ready before the debugger connects.
+      "type": "shell",
+      "command": "docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Waiting for client"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "docker"
+      }
+    },
+    {
+      "label": "Docker: Compose Down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Docker: Compose Build",
+      "type": "shell",
+      "command": "docker compose build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+
+    // ------------------------------------------------------------------ //
+    //  DJANGO (via Docker exec)                                            //
+    // ------------------------------------------------------------------ //
+    {
+      "label": "Django: Make & Run Migrations",
+      "type": "shell",
+      "command": "docker compose exec api poetry run python manage.py makemigrations && docker compose exec api poetry run python manage.py migrate",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Django: Run Tests",
+      "type": "shell",
+      "command": "docker compose exec api poetry run python manage.py test 2>&1 | tee .gemini/last_test_results.txt",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "tests"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: Create Superuser",
+      "type": "shell",
+      "command": "docker compose exec -it api poetry run python manage.py createsuperuser",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Django: Open Shell",
+      "type": "shell",
+      "command": "docker compose exec api poetry run python manage.py shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Django: Import Airports",
+      "type": "shell",
+      "command": "docker compose exec api poetry run python manage.py import_airports",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+
+    // ------------------------------------------------------------------ //
+    //  FLUTTER                                                             //
+    // ------------------------------------------------------------------ //
+    {
+      "label": "Flutter: pub get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Flutter: Run Tests",
+      "type": "shell",
+      "command": "flutter test",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "tests"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Clean",
+      "type": "shell",
+      "command": "flutter clean",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    }
+  ]
+}

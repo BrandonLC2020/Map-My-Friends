@@ -1,0 +1,126 @@
+{
+  // VS Code Run & Debug configurations for Map My Friends.
+  //
+  // Flutter configs target the `frontend/` directory.
+  // Django configs attach to a debugpy server running inside the Docker
+  // `api` container (see tasks.json for the helper task that starts it).
+  //
+  // Quick-start:
+  //   • Flutter run  → select "Flutter: Run (debug)"
+  //   • Full stack   → select "Full Stack: Flutter + Django"
+  "version": "0.2.0",
+  "configurations": [
+    // ------------------------------------------------------------------ //
+    //  FLUTTER                                                             //
+    // ------------------------------------------------------------------ //
+
+    {
+      // Standard debug run – hot-reload enabled, DevTools available.
+      "name": "Flutter: Run (debug)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/frontend",
+      "flutterMode": "debug",
+      "args": ["--dart-define-from-file=.env"]
+    },
+    {
+      // Profile mode – measures real performance without debug overhead.
+      "name": "Flutter: Run (profile)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/frontend",
+      "flutterMode": "profile",
+      "args": ["--dart-define-from-file=.env"]
+    },
+    {
+      // Release build – closest to production; no debugger attached.
+      "name": "Flutter: Run (release)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/frontend",
+      "flutterMode": "release",
+      "args": ["--dart-define-from-file=.env"]
+    },
+    {
+      // Run the Flutter widget / unit test suite.
+      "name": "Flutter: Test (all)",
+      "type": "dart",
+      "request": "launch",
+      "program": "test",
+      "cwd": "${workspaceFolder}/frontend"
+    },
+
+    // ------------------------------------------------------------------ //
+    //  DJANGO (Docker attach via debugpy)                                  //
+    //                                                                      //
+    //  Prerequisites:                                                       //
+    //    1. Ensure the `api` service runs Django under debugpy:            //
+    //         python -m debugpy --listen 0.0.0.0:5678 \                   //
+    //                --wait-for-client -m manage runserver \               //
+    //                --noreload 0.0.0.0:8000                               //
+    //    2. Port 5678 must be published in docker-compose.yml.             //
+    //    3. Run `make up` (or the "Docker: Compose Up" task) first.        //
+    //                                                                      //
+    //  The "Django: Attach (Docker)" config does this automatically via    //
+    //  a preLaunchTask defined in tasks.json.                              //
+    // ------------------------------------------------------------------ //
+
+    {
+      // Attach to a debugpy server already listening on localhost:5678.
+      // Automatically starts the debug compose stack via preLaunchTask;
+      // VS Code waits for port 5678 to be ready before attaching.
+      "name": "Django: Attach (Docker)",
+      "type": "debugpy",
+      "request": "attach",
+      "preLaunchTask": "Docker: Compose Up (debug)",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          // Map the in-container path to the local backend source tree.
+          "localRoot": "${workspaceFolder}/backend",
+          "remoteRoot": "/app"
+        }
+      ],
+      "django": true,
+      "justMyCode": true
+    },
+    {
+      // Run Django unit tests inside the container using `manage.py test`.
+      // Output is streamed to the Debug Console.
+      "name": "Django: Run Tests (Docker)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5679
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/backend",
+          "remoteRoot": "/app"
+        }
+      ],
+      "django": true,
+      "justMyCode": false
+    }
+  ],
+
+  // ------------------------------------------------------------------ //
+  //  COMPOUND CONFIGURATIONS                                             //
+  // ------------------------------------------------------------------ //
+  "compounds": [
+    {
+      // Launches both Flutter and the Django attach debugger simultaneously.
+      // Start `make up` (with debugpy) before using this compound.
+      "name": "Full Stack: Flutter + Django",
+      "configurations": ["Flutter: Run (debug)", "Django: Attach (Docker)"],
+      "stopAll": true
+    }
+  ]
+}

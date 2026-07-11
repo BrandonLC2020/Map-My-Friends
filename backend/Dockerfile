@@ -38,7 +38,7 @@ COPY pyproject.toml poetry.lock /app/
 
 # Configure poetry to not create a virtualenv (since we are already in a container)
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+    && poetry install --no-interaction --no-ansi --extras dev
 
 # 6. Copy the rest of the backend code
 COPY . /app/

@@ -1,0 +1,29 @@
+# docker-compose.debug.yml
+#
+# Overlay for local VS Code debugging. Merges with docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.debug.yml up
+#
+# Changes vs. base:
+#   • Overrides the `api` command to start Django under debugpy.
+#   • Publishes port 5678 so VS Code can attach from the host.
+#   • Disables Django's auto-reloader (--noreload) so the debugpy process
+#     is stable — the reloader forks a child that breaks the debugger.
+#
+# Usage:
+#   Run via VS Code "Docker: Compose Up (debug)" task, or manually:
+#
+#     docker compose -f docker-compose.yml -f docker-compose.debug.yml up
+#
+# Then attach VS Code with the "Django: Attach (Docker)" launch config.
+services:
+  api:
+    command: >
+      python -m debugpy
+        --listen 0.0.0.0:5678
+        --wait-for-client
+        -m manage runserver
+        --noreload
+        0.0.0.0:8000
+    ports:
+      - "5678:5678"
