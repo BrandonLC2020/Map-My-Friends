@@ -13,8 +13,8 @@ class MapSettingsButton extends StatelessWidget {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Positioned(
-      right: 20,
-      top: topPadding > 0 ? topPadding + 10 : 20,
+      right: 16,
+      top: topPadding + 16,
       child: GlassContainer(
         padding: const EdgeInsets.all(8),
         borderRadius: 30,

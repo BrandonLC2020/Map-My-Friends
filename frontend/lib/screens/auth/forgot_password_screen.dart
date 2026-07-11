@@ -22,6 +22,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _resetPassword() {
+    if (context.read<AuthBloc>().state is AuthLoading) return;
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         PasswordResetRequested(email: _emailController.text.trim()),
@@ -31,6 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Reset Password')),
       body: BlocListener<AuthBloc, AuthState>(
@@ -58,10 +60,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               padding: const EdgeInsets.all(24.0),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: AbsorbPointer(
+                  absorbing: isLoading,
+                  child: ExcludeFocus(
+                    excluding: isLoading,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Icon(
                         Icons.lock_reset,
@@ -79,7 +85,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       Text(
                         'Enter your email address and we\'ll send you a link to reset your password.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
@@ -108,27 +116,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Reset Button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return SizedBox(
-                            height: 48,
-                            child: FilledButton(
-                              onPressed: isLoading ? null : _resetPassword,
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text('Send Reset Link'),
-                            ),
-                          );
-                        },
+                      SizedBox(
+                        height: 48,
+                        child: FilledButton(
+                          onPressed: isLoading ? null : _resetPassword,
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Send Reset Link'),
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -145,6 +147,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

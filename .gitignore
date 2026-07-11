@@ -193,7 +193,7 @@ agents.md
 skills-lock.json
 
 # Design context (private — local only)
-frontend/PRODUCT.md
-frontend/DESIGN.md
+PRODUCT.md
+DESIGN.md
 frontend/.impeccable/
 frontend/test/screens/map/failures/

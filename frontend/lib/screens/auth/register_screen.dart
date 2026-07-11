@@ -38,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _register() {
+    if (context.read<AuthBloc>().state is AuthLoading) return;
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         RegisterRequested(
@@ -59,6 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Create Account')),
       body: BlocListener<AuthBloc, AuthState>(
@@ -86,10 +88,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               padding: const EdgeInsets.all(24.0),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: AbsorbPointer(
+                  absorbing: isLoading,
+                  child: ExcludeFocus(
+                    excluding: isLoading,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
                         'Join Map My Friends',
@@ -99,7 +105,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Create an account to save and share your friends\' locations.',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
@@ -266,27 +274,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      // Register Button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return SizedBox(
-                            height: 48,
-                            child: FilledButton(
-                              onPressed: isLoading ? null : _register,
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text('Create Account'),
-                            ),
-                          );
-                        },
+                      SizedBox(
+                        height: 48,
+                        child: FilledButton(
+                          onPressed: isLoading ? null : _register,
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Create Account'),
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -297,7 +299,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Text(
                             'Already have an account? ',
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -313,6 +317,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

@@ -30,6 +30,7 @@ class AddEditPersonScreen extends StatefulWidget {
 class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
+  bool _isSaving = false;
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -275,7 +276,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   }
 
   void _save() {
+    if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
+      setState(() => _isSaving = true);
       final person = Person(
         id: widget.person?.id ?? '',
         firstName: _firstNameController.text,
@@ -417,10 +420,14 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                   horizontal: 24.0,
                   vertical: 24.0,
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: AbsorbPointer(
+                  absorbing: _isSaving,
+                  child: ExcludeFocus(
+                    excluding: _isSaving,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildProfileImagePicker(),
                       if (timeString != null) ...[
@@ -813,19 +820,28 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                       SizedBox(
                         height: 50,
                         child: FilledButton(
-                          onPressed: _save,
+                          onPressed: _isSaving ? null : _save,
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Save Person',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isSaving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Save Person',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 24), // Bottom padding
@@ -834,10 +850,12 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
+          ),
+        ),
+      );
+    },
+  ),
+);
   }
 
   String _getInitials() {

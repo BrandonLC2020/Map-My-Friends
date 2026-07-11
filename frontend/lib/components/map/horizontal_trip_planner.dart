@@ -22,14 +22,16 @@ class HorizontalTripPlanner extends StatelessWidget {
 
         final theme = Theme.of(context);
         final scheme = theme.colorScheme;
+        final isDesktop = MediaQuery.of(context).size.width >= 600;
+        final bottomInset = MediaQuery.of(context).padding.bottom;
 
         return Positioned(
-          bottom: 20,
-          left: 20,
-          right: 20,
+          bottom: isDesktop ? 24 : 112 + bottomInset,
+          left: isDesktop ? 24 : 16,
+          right: isDesktop ? 24 : 16,
           child: GlassContainer(
             height: 140,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               children: [
                 Expanded(
@@ -65,7 +67,7 @@ class HorizontalTripPlanner extends StatelessWidget {
                       final letter = String.fromCharCode(65 + index);
 
                       return Container(
-                        width: 100,
+                        width: 120,
                         margin: const EdgeInsets.only(right: 8),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,

@@ -35,8 +35,8 @@ import '../../utils/app_theme.dart';
 // Spatial tokens per DESIGN.md §5: floating chrome lives at 20px inset; the
 // compass clears the settings button (~75px tall plus its inset) with a
 // spacing.lg gap.
-const double _kChromeInset = 20.0;
-const double _kCompassTopOffset = 95.0;
+const double _kChromeInset = 16.0;
+const double _kCompassTopOffset = 72.0;
 const double _kCameraFitPadding = 50.0;
 const double _kFallbackLat = 37.7749;
 const double _kFallbackLon = -122.4194;

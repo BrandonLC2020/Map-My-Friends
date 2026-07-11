@@ -29,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
+    if (context.read<AuthBloc>().state is AuthLoading) return;
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         LoginRequested(
@@ -41,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -143,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               TextFormField(
                                 controller: _usernameController,
+                                enabled: !isLoading,
                                 style: GoogleFonts.openSans(color: Colors.white, fontSize: 15),
                                 decoration: InputDecoration(
                                   labelText: 'Username',
@@ -175,6 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
+                                enabled: !isLoading,
                                 style: GoogleFonts.openSans(color: Colors.white, fontSize: 15),
                                 decoration: InputDecoration(
                                   labelText: 'Password',
@@ -198,11 +202,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                           : Icons.visibility,
                                       color: Colors.white60,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
-                                    },
+                                    onPressed: isLoading
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _obscurePassword = !_obscurePassword;
+                                            });
+                                          },
                                   ),
                                   filled: true,
                                   fillColor: Colors.white.withValues(alpha: 0.02),
@@ -221,15 +227,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ForgotPasswordScreen(),
-                                      ),
-                                    );
-                                  },
+                                  onPressed: isLoading
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ForgotPasswordScreen(),
+                                            ),
+                                          );
+                                        },
                                   child: Text(
                                     'Forgot Password?',
                                     style: GoogleFonts.openSans(
@@ -241,41 +249,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  final isLoading = state is AuthLoading;
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    height: 50,
-                                    child: FilledButton(
-                                      onPressed: isLoading ? null : _login,
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: const Color(0xFF3F51B5), // Evening Indigo
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                      ),
-                                      child: isLoading
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Text(
-                                              'Sign In',
-                                              style: GoogleFonts.montserrat(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 15,
-                                                letterSpacing: 1.0,
-                                              ),
-                                            ),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: FilledButton(
+                                  onPressed: isLoading ? null : _login,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF3F51B5), // Evening Indigo
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
-                                  );
-                                },
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Text(
+                                          'Sign In',
+                                          style: GoogleFonts.montserrat(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                ),
                               ),
                             ],
                           ),
@@ -308,12 +311,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () {
-                                  context.read<AuthBloc>().add(
-                                        const Auth0LoginRequested(
-                                            connection: 'google-oauth2'),
-                                      );
-                                },
+                                onPressed: isLoading
+                                    ? null
+                                    : () {
+                                        context.read<AuthBloc>().add(
+                                              const Auth0LoginRequested(
+                                                  connection: 'google-oauth2'),
+                                            );
+                                      },
                                 icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.white),
                                 label: Text(
                                   'Google',
@@ -335,12 +340,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () {
-                                  context.read<AuthBloc>().add(
-                                        const Auth0LoginRequested(
-                                            connection: 'apple'),
-                                      );
-                                },
+                                onPressed: isLoading
+                                    ? null
+                                    : () {
+                                        context.read<AuthBloc>().add(
+                                              const Auth0LoginRequested(
+                                                  connection: 'apple'),
+                                            );
+                                      },
                                 icon: const Icon(Icons.apple, size: 22, color: Colors.white),
                                 label: Text(
                                   'Apple',
@@ -365,9 +372,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Unified Auth0 Web Auth Button
                         OutlinedButton(
-                          onPressed: () {
-                            context.read<AuthBloc>().add(const Auth0LoginRequested());
-                          },
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  context.read<AuthBloc>().add(const Auth0LoginRequested());
+                                },
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
                             shape: RoundedRectangleBorder(
@@ -406,14 +415,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const RegisterScreen(),
-                                  ),
-                                );
-                              },
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const RegisterScreen(),
+                                        ),
+                                      );
+                                    },
                               child: Text(
                                 'Sign Up',
                                 style: GoogleFonts.montserrat(

@@ -87,6 +87,7 @@ class MapControls extends StatelessWidget {
         final positionDuration = reduceMotion
             ? Duration.zero
             : const Duration(milliseconds: 300);
+        final bottomInset = MediaQuery.of(context).padding.bottom;
         return Stack(
           children: [
             // Pan Controls Group
@@ -94,11 +95,11 @@ class MapControls extends StatelessWidget {
               duration: positionDuration,
               curve: Curves.easeOutQuart,
               bottom: isBottomModalVisible
-                  ? (isDesktop ? 160 : 260)
-                  : (isDesktop ? 20 : 120),
-              right: 20,
+                  ? (isDesktop ? 180 : 268 + bottomInset)
+                  : (isDesktop ? 24 : 112 + bottomInset),
+              right: isDesktop ? 24 : 16,
               child: GlassContainer(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 borderRadius: 30, // Rounded for D-pad feel
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -116,14 +117,14 @@ class MapControls extends StatelessWidget {
                           onPressed: () => _pan(0, -0.01),
                           icon: Icons.arrow_left,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 8),
                         _buildGlassButton(
                           context: context,
                           onPressed: () => _resetView(context),
                           icon: Icons.my_location,
                           tooltip: 'My Location',
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 8),
                         _buildGlassButton(
                           context: context,
                           onPressed: () => _pan(0, 0.01),
@@ -145,11 +146,12 @@ class MapControls extends StatelessWidget {
               duration: positionDuration,
               curve: Curves.easeOutQuart,
               bottom: isBottomModalVisible
-                  ? (isDesktop ? 320 : 420)
-                  : (isDesktop ? 180 : 280),
-              right: 20,
+                  ? (isDesktop ? 348 : 436 + bottomInset)
+                  : (isDesktop ? 192 : 280 + bottomInset),
+              right: isDesktop ? 24 : 16,
               child: GlassContainer(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                borderRadius: 30,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -159,13 +161,7 @@ class MapControls extends StatelessWidget {
                       icon: Icons.add,
                       tooltip: 'Zoom In',
                     ),
-                    const SizedBox(height: 4),
-                    Icon(
-                      Icons.search,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     _buildGlassButton(
                       context: context,
                       onPressed: _zoomOut,
