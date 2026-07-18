@@ -108,6 +108,7 @@ class MapControls extends StatelessWidget {
                       context: context,
                       onPressed: () => _pan(0.01, 0),
                       icon: Icons.arrow_drop_up,
+                      tooltip: 'Pan Up',
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -116,6 +117,7 @@ class MapControls extends StatelessWidget {
                           context: context,
                           onPressed: () => _pan(0, -0.01),
                           icon: Icons.arrow_left,
+                          tooltip: 'Pan Left',
                         ),
                         const SizedBox(width: 8),
                         _buildGlassButton(
@@ -129,6 +131,7 @@ class MapControls extends StatelessWidget {
                           context: context,
                           onPressed: () => _pan(0, 0.01),
                           icon: Icons.arrow_right,
+                          tooltip: 'Pan Right',
                         ),
                       ],
                     ),
@@ -136,6 +139,7 @@ class MapControls extends StatelessWidget {
                       context: context,
                       onPressed: () => _pan(-0.01, 0),
                       icon: Icons.arrow_drop_down,
+                      tooltip: 'Pan Down',
                     ),
                   ],
                 ),

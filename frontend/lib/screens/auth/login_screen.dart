@@ -202,6 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           : Icons.visibility,
                                       color: Colors.white60,
                                     ),
+                                    tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                                     onPressed: isLoading
                                         ? null
                                         : () {
@@ -319,7 +320,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   connection: 'google-oauth2'),
                                             );
                                       },
-                                icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.white),
+                                icon: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white12,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'G',
+                                    style: GoogleFonts.montserrat(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
                                 label: Text(
                                   'Google',
                                   style: GoogleFonts.montserrat(

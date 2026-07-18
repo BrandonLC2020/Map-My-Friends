@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:map_my_friends/bloc/map/map_settings_cubit.dart';
 import 'package:map_my_friends/models/trip.dart';
 import 'package:map_my_friends/screens/trips/trip_details_screen.dart';
+
+class MockMapSettingsCubit extends Mock implements MapSettingsCubit {}
 
 void main() {
   testWidgets('TripDetailsScreen builds successfully', (
     WidgetTester tester,
   ) async {
+    final mapSettingsCubit = MockMapSettingsCubit();
+    when(() => mapSettingsCubit.state).thenReturn(const MapSettingsState());
+    when(() => mapSettingsCubit.stream).thenAnswer((_) => Stream<MapSettingsState>.empty());
+    when(() => mapSettingsCubit.close()).thenAnswer((_) => Future.value());
+
     final trip = Trip(
       id: 1,
       name: 'Test Trip',
@@ -31,7 +41,14 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(MaterialApp(home: TripDetailsScreen(trip: trip)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider<MapSettingsCubit>.value(
+          value: mapSettingsCubit,
+          child: TripDetailsScreen(trip: trip),
+        ),
+      ),
+    );
 
     expect(find.text('Test Trip'), findsOneWidget);
     expect(find.text('BOOKED'), findsOneWidget);

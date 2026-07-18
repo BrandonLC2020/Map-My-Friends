@@ -98,8 +98,8 @@ class PersonDetailsScreen extends StatelessWidget {
                           icon: const Icon(Icons.add_location_alt_outlined),
                           label: const Text('Add to Trip Planner'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.indigo,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

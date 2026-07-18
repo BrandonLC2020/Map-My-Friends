@@ -198,6 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ? Icons.visibility_off
                                   : Icons.visibility,
                             ),
+                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
@@ -232,6 +233,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ? Icons.visibility_off
                                   : Icons.visibility,
                             ),
+                            tooltip: _obscureConfirmPassword
+                                ? 'Show confirm password'
+                                : 'Hide confirm password',
                             onPressed: () {
                               setState(() {
                                 _obscureConfirmPassword =

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import '../../models/trip.dart';
 import '../../components/shared/glass_container.dart';
 import '../../services/routing_service.dart';
+import '../../bloc/map/map_settings_cubit.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -28,22 +30,82 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context);
+    final isWide = size.size.width > 600;
+
+    Widget buildLeadingButton() {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GlassContainer(
+          padding: EdgeInsets.zero,
+          borderRadius: 12,
+          child: IconButton(
+            icon: Icon(Icons.adaptive.arrow_back, color: theme.colorScheme.onSurface),
+            tooltip: 'Back',
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+      );
+    }
+
+    if (isWide) {
+      return Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: buildLeadingButton(),
+        ),
+        body: Row(
+          children: [
+            // Left Panel (Timeline & Info)
+            SafeArea(
+              right: false,
+              child: Container(
+                width: 380,
+                padding: const EdgeInsets.only(top: 56), // below appbar
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildHeader(context),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: _buildStopsList(context, isWide: true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Right Panel (Map)
+            Expanded(
+              child: Stack(
+                children: [
+                  _buildMap(),
+                  // Visual separation border on the left edge
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 1,
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GlassContainer(
-            padding: EdgeInsets.zero,
-            borderRadius: 12,
-            child: IconButton(
-              icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
+        leading: buildLeadingButton(),
       ),
       body: Stack(
         children: [
@@ -57,7 +119,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 const SizedBox(height: 20),
                 _buildHeader(context),
                 const Spacer(),
-                _buildStopsList(context),
+                _buildStopsList(context, isWide: false),
               ],
             ),
           ),
@@ -80,65 +142,92 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           );
         }
 
-        return FlutterMap(
-          options: MapOptions(
-            initialCameraFit: bounds != null
-                ? CameraFit.bounds(
-                    bounds: bounds,
-                    padding: const EdgeInsets.all(100),
-                  )
-                : null,
-            initialCenter: widget.trip.stops.isNotEmpty
-                ? widget.trip.stops.first.location
-                : const LatLng(0, 0),
-            initialZoom: 10,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.none,
-            ),
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.app',
-            ),
-            if (points.isNotEmpty)
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: points,
-                    color: Colors.indigo.withValues(alpha: 0.7),
-                    strokeWidth: 5,
-                  ),
-                ],
+        return BlocBuilder<MapSettingsCubit, MapSettingsState>(
+          builder: (context, settingsState) {
+            final isDark = settingsState.themeMode == ThemeMode.system
+                ? Theme.of(context).brightness == Brightness.dark
+                : settingsState.themeMode == ThemeMode.dark;
+
+            String tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+            if (settingsState.mapType == MapType.satellite) {
+              tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+            } else if (settingsState.mapType == MapType.minimal) {
+              tileUrl = isDark
+                  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+            } else if (isDark) {
+              tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+            } else {
+              final locale = Localizations.localeOf(context).languageCode;
+              if (locale == 'de') {
+                tileUrl = 'https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png';
+              } else if (locale == 'fr') {
+                tileUrl = 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
+              }
+            }
+
+            return FlutterMap(
+              options: MapOptions(
+                initialCameraFit: bounds != null
+                    ? CameraFit.bounds(
+                        bounds: bounds,
+                        padding: const EdgeInsets.all(100),
+                      )
+                    : null,
+                initialCenter: widget.trip.stops.isNotEmpty
+                    ? widget.trip.stops.first.location
+                    : const LatLng(0, 0),
+                initialZoom: 10,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.none,
+                ),
               ),
-            MarkerLayer(
-              markers: widget.trip.stops.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final stop = entry.value;
-                return Marker(
-                  point: stop.location,
-                  width: 30,
-                  height: 30,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.indigo,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        String.fromCharCode(65 + idx),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+              children: [
+                TileLayer(
+                  urlTemplate: tileUrl,
+                  subdomains: const ['a', 'b', 'c'],
+                  userAgentPackageName: 'com.mapmyfriends.app',
+                ),
+                if (points.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: points,
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                        strokeWidth: 5,
+                      ),
+                    ],
+                  ),
+                MarkerLayer(
+                  markers: widget.trip.stops.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final stop = entry.value;
+                    return Marker(
+                      point: stop.location,
+                      width: 30,
+                      height: 30,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            String.fromCharCode(65 + idx),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -167,7 +256,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     ),
                   ),
                 ),
-                _buildStatusBadge(widget.trip.status),
+                 _buildStatusBadge(context, widget.trip.status),
               ],
             ),
             const SizedBox(height: 8),
@@ -184,17 +273,18 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     );
   }
 
-  Widget _buildStatusBadge(TripStatus status) {
+  Widget _buildStatusBadge(BuildContext context, TripStatus status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Color color;
     switch (status) {
       case TripStatus.booked:
-        color = Colors.greenAccent;
+        color = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
         break;
       case TripStatus.cancelled:
-        color = Colors.redAccent;
+        color = isDark ? const Color(0xFFE57373) : const Color(0xFFC62828);
         break;
       default:
-        color = Colors.orangeAccent;
+        color = isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
     }
 
     return Container(
@@ -215,7 +305,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     );
   }
 
-  Widget _buildStopsList(BuildContext context) {
+  Widget _buildStopsList(BuildContext context, {required bool isWide}) {
     final List<dynamic> timelineItems = [];
     for (int i = 0; i < widget.trip.stops.length; i++) {
       timelineItems.add(widget.trip.stops[i]);
@@ -240,26 +330,35 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       }
     }
 
+    final listView = ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: timelineItems.length,
+      itemBuilder: (context, index) {
+        final item = timelineItems[index];
+        if (item is TripStop) {
+          return _buildStopItem(
+            context,
+            item,
+            widget.trip.stops.indexOf(item),
+          );
+        } else if (item is TripLeg) {
+          return _buildLegItem(context, item);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+
+    if (isWide) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: listView,
+      );
+    }
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.5,
       padding: const EdgeInsets.only(bottom: 20),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: timelineItems.length,
-        itemBuilder: (context, index) {
-          final item = timelineItems[index];
-          if (item is TripStop) {
-            return _buildStopItem(
-              context,
-              item,
-              widget.trip.stops.indexOf(item),
-            );
-          } else if (item is TripLeg) {
-            return _buildLegItem(context, item);
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+      child: listView,
     );
   }
 
@@ -377,15 +476,15 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             Container(
               width: 32,
               height: 32,
-              decoration: const BoxDecoration(
-                color: Colors.indigo,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
                   String.fromCharCode(65 + index),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -134,12 +134,12 @@ class TripsScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _getStatusColor(trip.status).withValues(alpha: 0.2),
+              color: _getStatusColor(context, trip.status).withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getStatusIcon(trip.status),
-              color: _getStatusColor(trip.status),
+              color: _getStatusColor(context, trip.status),
             ),
           ),
           title: Text(
@@ -221,7 +221,7 @@ class TripsScreen extends StatelessWidget {
               onPressed: onNavigateToMap,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
@@ -332,14 +332,15 @@ class TripsScreen extends StatelessWidget {
     }
   }
 
-  Color _getStatusColor(TripStatus status) {
+  Color _getStatusColor(BuildContext context, TripStatus status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (status) {
       case TripStatus.booked:
-        return Colors.greenAccent;
+        return isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
       case TripStatus.cancelled:
-        return Colors.redAccent;
+        return isDark ? const Color(0xFFE57373) : const Color(0xFFC62828);
       default:
-        return Colors.orangeAccent;
+        return isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
     }
   }
 }

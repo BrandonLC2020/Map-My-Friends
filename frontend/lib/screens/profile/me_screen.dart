@@ -42,7 +42,7 @@ class _MeScreenState extends State<MeScreen> {
   _localImageBytes; // For showing local image immediately after picking
 
   // Pin customization state
-  String _pinColor = '#2196F3';
+  String _pinColor = '#3F51B5';
   String _pinStyle = 'teardrop';
   String _pinIconType = 'none';
   String? _pinEmoji;
@@ -801,21 +801,21 @@ class _MeScreenState extends State<MeScreen> {
                                       LogoutRequested(),
                                     );
                                   },
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.logout,
-                                    color: Colors.red,
+                                    color: Theme.of(context).colorScheme.error,
                                   ),
-                                  label: const Text(
+                                  label: Text(
                                     'Logout',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: Theme.of(context).colorScheme.error,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                      color: Colors.red,
+                                    side: BorderSide(
+                                      color: Theme.of(context).colorScheme.error,
                                       width: 2,
                                     ),
                                     shape: RoundedRectangleBorder(
