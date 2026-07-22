@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.gis.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
@@ -9,6 +10,13 @@ class Person(models.Model):
         ('FAMILY', _('Family')),
     ]
 
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='people',
+        null=True,
+        blank=True,
+    )
     tag = models.CharField(max_length=10, choices=TAG_CHOICES)
     
     first_name = models.CharField(max_length=100, default="")

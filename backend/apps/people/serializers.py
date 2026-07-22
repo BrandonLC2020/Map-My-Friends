@@ -21,6 +21,12 @@ class ContactLogSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('created_at',)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            self.fields['person'].queryset = Person.objects.filter(owner=request.user)
+
 
 class PersonSerializer(GeoFeatureModelSerializer):
     preferred_airport = serializers.PrimaryKeyRelatedField(
@@ -43,6 +49,7 @@ class PersonSerializer(GeoFeatureModelSerializer):
         geo_field = "location"
         fields = (
             'id',
+            'owner',
             'first_name',
             'last_name',
             'tag',
@@ -67,7 +74,7 @@ class PersonSerializer(GeoFeatureModelSerializer):
             'preferred_airport_detail',
             'preferred_station_detail',
         )
-        read_only_fields = ('location', 'timezone')
+        read_only_fields = ('location', 'timezone', 'owner')
 
     def _latest_log(self, obj):
         # Reads from the prefetched `contact_logs` cache (see PersonViewSet's
@@ -86,3 +93,16 @@ class PersonSerializer(GeoFeatureModelSerializer):
     def get_last_contact_channel(self, obj):
         log = self._latest_log(obj)
         return log.channel if log else None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        is_authenticated = request and request.user and request.user.is_authenticated
+        if not is_authenticated:
+            if 'properties' in ret:
+                ret['properties'].pop('last_contacted_at', None)
+                ret['properties'].pop('last_contact_channel', None)
+            else:
+                ret.pop('last_contacted_at', None)
+                ret.pop('last_contact_channel', None)
+        return ret

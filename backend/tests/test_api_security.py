@@ -229,3 +229,167 @@ class Auth0AuthTests(APITestCase):
         response = self.client.get(self.profile_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+
+class ContactLogSecurityTests(APITestCase):
+    def setUp(self):
+        from apps.people.models import Person, ContactLog
+        from django.contrib.gis.geos import Point
+        from django.utils import timezone
+
+        self.user_a = User.objects.create_user(username='usera', password='password123')
+        self.user_b = User.objects.create_user(username='userb', password='password123')
+        
+        self.location = Point(12.34, 56.78)
+        
+        # Create person for User A
+        self.person_a = Person.objects.create(
+            first_name='Person',
+            last_name='A',
+            city='New York',
+            state='NY',
+            country='USA',
+            tag='FRIEND',
+            owner=self.user_a,
+            location=self.location
+        )
+        
+        # Create person for User B
+        self.person_b = Person.objects.create(
+            first_name='Person',
+            last_name='B',
+            city='Los Angeles',
+            state='CA',
+            country='USA',
+            tag='FAMILY',
+            owner=self.user_b,
+            location=self.location
+        )
+
+        # Create public person (no owner)
+        self.person_public = Person.objects.create(
+            first_name='Public',
+            last_name='Person',
+            city='Chicago',
+            state='IL',
+            country='USA',
+            tag='FRIEND',
+            owner=None,
+            location=self.location
+        )
+        
+        # Create contact log for Person A
+        self.log_a = ContactLog.objects.create(
+            person=self.person_a,
+            channel='CALL',
+            contacted_at=timezone.now(),
+            note='Call with A'
+        )
+        
+        # Create contact log for Person B
+        self.log_b = ContactLog.objects.create(
+            person=self.person_b,
+            channel='VIDEO',
+            contacted_at=timezone.now(),
+            note='Video with B'
+        )
+
+        self.log_public = ContactLog.objects.create(
+            person=self.person_public,
+            channel='MESSAGE',
+            contacted_at=timezone.now(),
+            note='Public note'
+        )
+        
+        self.logs_url = reverse('contactlog-list')
+        self.people_url = reverse('person-list')
+
+    def test_contact_logs_require_auth(self):
+        """Test that unauthenticated requests to contact-logs endpoints are rejected with 401."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+        response = self.client.post(self.logs_url, {})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+        detail_url = reverse('contactlog-detail', args=[self.log_a.id])
+        response = self.client.get(detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_contact_logs_isolation(self):
+        """Test that users can only see contact logs for people they own."""
+        # Authenticate as User A
+        self.client.force_authenticate(user=self.user_a)
+        
+        # List logs - should only see log_a
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data['results'] if 'results' in response.data else response.data
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['note'], 'Call with A')
+        
+        # Retrieve User B's log - should return 404
+        detail_url = reverse('contactlog-detail', args=[self.log_b.id])
+        response = self.client.get(detail_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_contact_logs_person_filter_isolation(self):
+        """Test that ?person= query param only returns logs if the user owns the person."""
+        self.client.force_authenticate(user=self.user_a)
+        
+        # Querying with Person A (owned) - should return logs
+        response = self.client.get(self.logs_url, {'person': self.person_a.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data['results'] if 'results' in response.data else response.data
+        self.assertEqual(len(results), 1)
+        
+        # Querying with Person B (not owned) - should return empty list (since queryset filters by person owner)
+        response = self.client.get(self.logs_url, {'person': self.person_b.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data['results'] if 'results' in response.data else response.data
+        self.assertEqual(len(results), 0)
+
+    def test_cannot_create_log_for_other_user_person(self):
+        """Test that a user cannot create a contact log for a person owned by another user."""
+        self.client.force_authenticate(user=self.user_a)
+        
+        from django.utils import timezone
+        payload = {
+            'person': self.person_b.id,
+            'channel': 'MESSAGE',
+            'contacted_at': timezone.now().isoformat(),
+            'note': 'Unauthorized note'
+        }
+        
+        response = self.client.post(self.logs_url, payload)
+        # Should fail with 400 Bad Request because person is not in the allowed choices
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('person', response.data)
+
+    def test_person_recency_fields_public_gating(self):
+        """Test that last_contacted_at and last_contact_channel are hidden from anonymous users but shown to authenticated owners."""
+        # 1. Unauthenticated - fields should be omitted from the geojson properties
+        response = self.client.get(self.people_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Check GeoJSON structure
+        features = response.data['features'] if 'features' in response.data else []
+        self.assertGreater(len(features), 0)
+        for feature in features:
+            properties = feature['properties']
+            self.assertNotIn('last_contacted_at', properties)
+            self.assertNotIn('last_contact_channel', properties)
+            
+        # 2. Authenticated as User A - fields should be present for owned people
+        self.client.force_authenticate(user=self.user_a)
+        response = self.client.get(self.people_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        features = response.data['features'] if 'features' in response.data else []
+        # User A owns person_a. person_public has no owner so User A shouldn't see it (queryset filters owner=user_a).
+        self.assertEqual(len(features), 1)
+        properties = features[0]['properties']
+        self.assertIn('last_contacted_at', properties)
+        self.assertIn('last_contact_channel', properties)
+        self.assertEqual(properties['last_contact_channel'], 'CALL')
+
+
