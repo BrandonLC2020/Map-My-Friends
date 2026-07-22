@@ -48,6 +48,12 @@ class Person(models.Model):
     
     pin_emoji = models.CharField(max_length=10, blank=True, null=True)
 
+    # Target rhythm for staying in touch, in days. When null, the app falls
+    # back to a sensible default derived from `tag` (see ContactChannel /
+    # frontend contact_recency). Drives the "overdue" color spectrum on the
+    # Keep-in-Touch (Pulse) screen.
+    contact_cadence_days = models.PositiveIntegerField(blank=True, null=True)
+
     preferred_airport = models.ForeignKey(
         'airports.Airport',
         on_delete=models.SET_NULL,
@@ -105,3 +111,43 @@ class Person(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.tag})"
+
+
+class ContactLog(models.Model):
+    """A single logged touchpoint with a Person: a call, video chat, or message.
+
+    These records power the Keep-in-Touch (Pulse) calendar and the recency
+    color spectrum. Each row is one interaction on one day.
+    """
+
+    CHANNEL_CALL = 'CALL'
+    CHANNEL_VIDEO = 'VIDEO'
+    CHANNEL_MESSAGE = 'MESSAGE'
+    CHANNEL_CHOICES = [
+        (CHANNEL_CALL, _('Call')),
+        (CHANNEL_VIDEO, _('Video chat')),
+        (CHANNEL_MESSAGE, _('Message')),
+    ]
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        related_name='contact_logs',
+    )
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
+    # When the interaction actually happened (may be backdated by the user).
+    contacted_at = models.DateTimeField()
+    note = models.CharField(max_length=280, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-contacted_at']
+        indexes = [
+            models.Index(
+                fields=['person', '-contacted_at'],
+                name='people_contactlog_recent_idx',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_channel_display()} with {self.person} on {self.contacted_at:%Y-%m-%d}"

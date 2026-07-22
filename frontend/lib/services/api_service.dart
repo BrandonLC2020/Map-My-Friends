@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/person.dart';
+import '../models/contact_log.dart';
 import '../models/trip.dart';
 import '../models/airport.dart';
 import '../models/station.dart';
@@ -175,6 +176,44 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Failed to delete person: $e');
+    }
+  }
+
+  // Contact log methods (Keep-in-Touch)
+  Future<List<ContactLog>> getContactLogs({String? personId}) async {
+    try {
+      final response = await _dio.get(
+        'contact-logs/',
+        queryParameters: personId != null ? {'person': personId} : null,
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        // DRF may paginate (`{results: [...]}`) or return a bare list.
+        final results = data is Map ? data['results'] as List : data as List;
+        return results
+            .map((json) => ContactLog.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to load contact logs');
+      }
+    } catch (e) {
+      throw Exception('Failed to load contact logs: $e');
+    }
+  }
+
+  Future<ContactLog> addContactLog(ContactLog log) async {
+    try {
+      final response = await _dio.post(
+        'contact-logs/',
+        data: log.toCreateJson(),
+      );
+      if (response.statusCode == 201) {
+        return ContactLog.fromJson(response.data as Map<String, dynamic>);
+      } else {
+        throw Exception('Failed to log contact');
+      }
+    } catch (e) {
+      throw Exception('Failed to log contact: $e');
     }
   }
 
