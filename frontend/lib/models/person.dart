@@ -25,6 +25,14 @@ class Person {
   final Airport? preferredAirport;
   final Station? preferredStation;
 
+  /// Target rhythm for staying in touch, in days. When null, the app derives a
+  /// default from [relationshipTag] (see ContactRecency).
+  final int? contactCadenceDays;
+
+  /// Read-only recency summary from the server: the most recent touchpoint.
+  final DateTime? lastContactedAt;
+  final String? lastContactChannel;
+
   Person({
     required this.id,
     required this.firstName,
@@ -48,7 +56,20 @@ class Person {
     this.preferredStationId,
     this.preferredAirport,
     this.preferredStation,
+    this.contactCadenceDays,
+    this.lastContactedAt,
+    this.lastContactChannel,
   });
+
+  /// Parses the recency summary fields shared by both JSON shapes.
+  static int? _cadenceFrom(Map<String, dynamic> src) =>
+      (src['contact_cadence_days'] as num?)?.toInt();
+
+  static DateTime? _lastContactedFrom(Map<String, dynamic> src) {
+    final raw = src['last_contacted_at'] as String?;
+    if (raw == null) return null;
+    return DateTime.parse(raw).toLocal();
+  }
 
   factory Person.fromJson(Map<String, dynamic> json) {
     return Person(
@@ -80,6 +101,9 @@ class Person {
       preferredStation: json['preferred_station_detail'] != null
           ? Station.fromGeoJson(json['preferred_station_detail'])
           : null,
+      contactCadenceDays: _cadenceFrom(json),
+      lastContactedAt: _lastContactedFrom(json),
+      lastContactChannel: json['last_contact_channel'] as String?,
     );
   }
 
@@ -120,6 +144,9 @@ class Person {
       preferredStation: properties['preferred_station_detail'] != null
           ? Station.fromGeoJson(properties['preferred_station_detail'])
           : null,
+      contactCadenceDays: _cadenceFrom(properties),
+      lastContactedAt: _lastContactedFrom(properties),
+      lastContactChannel: properties['last_contact_channel'] as String?,
     );
   }
 
@@ -145,6 +172,11 @@ class Person {
       data['preferred_airport'] = preferredAirportId;
     if (preferredStationId != null)
       data['preferred_station'] = preferredStationId;
+    // last_contacted_at / last_contact_channel are server-derived (read-only),
+    // so they are intentionally never sent back.
+    if (contactCadenceDays != null) {
+      data['contact_cadence_days'] = contactCadenceDays.toString();
+    }
     return data;
   }
 
@@ -171,6 +203,9 @@ class Person {
     String? preferredStationId,
     Airport? preferredAirport,
     Station? preferredStation,
+    int? contactCadenceDays,
+    DateTime? lastContactedAt,
+    String? lastContactChannel,
   }) {
     return Person(
       id: id ?? this.id,
@@ -195,6 +230,9 @@ class Person {
       preferredStationId: preferredStationId ?? this.preferredStationId,
       preferredAirport: preferredAirport ?? this.preferredAirport,
       preferredStation: preferredStation ?? this.preferredStation,
+      contactCadenceDays: contactCadenceDays ?? this.contactCadenceDays,
+      lastContactedAt: lastContactedAt ?? this.lastContactedAt,
+      lastContactChannel: lastContactChannel ?? this.lastContactChannel,
     );
   }
 }

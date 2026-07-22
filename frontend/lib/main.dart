@@ -6,6 +6,7 @@ import 'bloc/auth/auth_event.dart';
 import 'bloc/auth/auth_state.dart';
 import 'bloc/location/location_bloc.dart';
 import 'bloc/people/people_bloc.dart';
+import 'bloc/pulse/pulse_bloc.dart';
 import 'bloc/airport/airport_bloc.dart';
 import 'bloc/airport/airport_event.dart';
 import 'bloc/station/station_bloc.dart';
@@ -17,6 +18,7 @@ import 'services/api_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/map/map_screen.dart';
 import 'screens/people/people_screen.dart';
+import 'screens/pulse/pulse_screen.dart';
 import 'screens/profile/me_screen.dart';
 import 'screens/trips/trips_screen.dart';
 import 'utils/app_theme.dart';
@@ -62,6 +64,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<PeopleBloc>(
           create: (context) =>
               PeopleBloc(apiService: apiService)..add(LoadPeople()),
+        ),
+        BlocProvider<PulseBloc>(
+          create: (context) => PulseBloc(apiService: apiService),
         ),
         BlocProvider<ProfileBloc>(create: (context) => ProfileBloc()),
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
@@ -148,8 +153,10 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return const PeopleScreen();
       case 2:
-        return TripsScreen(onNavigateToMap: () => _onItemTapped(0));
+        return const PulseScreen();
       case 3:
+        return TripsScreen(onNavigateToMap: () => _onItemTapped(0));
+      case 4:
         return const MeScreen();
       default:
         return const MapScreen();
@@ -232,10 +239,18 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(height: 24),
                           _buildGlassNavItem(
-                            icon: Icons.route_outlined,
-                            selectedIcon: Icons.route,
+                            icon: Icons.monitor_heart_outlined,
+                            selectedIcon: Icons.monitor_heart,
+                            label: 'Pulse',
                             index: 2,
                             isSelected: _selectedIndex == 2,
+                          ),
+                          const SizedBox(height: 24),
+                          _buildGlassNavItem(
+                            icon: Icons.route_outlined,
+                            selectedIcon: Icons.route,
+                            index: 3,
+                            isSelected: _selectedIndex == 3,
                             label: 'Trips',
                           ),
                           const SizedBox(height: 24),
@@ -243,8 +258,8 @@ class _MainScreenState extends State<MainScreen> {
                             icon: Icons.person_outline,
                             selectedIcon: Icons.person,
                             label: 'Me',
-                            index: 3,
-                            isSelected: _selectedIndex == 3,
+                            index: 4,
+                            isSelected: _selectedIndex == 4,
                           ),
                         ],
                       ),
@@ -279,16 +294,22 @@ class _MainScreenState extends State<MainScreen> {
                             isSelected: _selectedIndex == 1,
                           ),
                           _buildGlassNavItemMobile(
-                            icon: Icons.route,
-                            label: 'Trips',
+                            icon: Icons.monitor_heart,
+                            label: 'Pulse',
                             index: 2,
                             isSelected: _selectedIndex == 2,
                           ),
                           _buildGlassNavItemMobile(
-                            icon: Icons.person,
-                            label: 'Me',
+                            icon: Icons.route,
+                            label: 'Trips',
                             index: 3,
                             isSelected: _selectedIndex == 3,
+                          ),
+                          _buildGlassNavItemMobile(
+                            icon: Icons.person,
+                            label: 'Me',
+                            index: 4,
+                            isSelected: _selectedIndex == 4,
                           ),
                         ],
                       ),

@@ -1,0 +1,138 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:map_my_friends/bloc/pulse/pulse_bloc.dart';
+import 'package:map_my_friends/models/contact_log.dart';
+import 'package:map_my_friends/models/person.dart';
+import 'package:map_my_friends/screens/pulse/pulse_screen.dart';
+
+class MockPulseBloc extends MockBloc<PulseEvent, PulseState>
+    implements PulseBloc {}
+
+Person _p(
+  String id,
+  String first,
+  String last,
+  String tag,
+  DateTime? lastContacted,
+  String? channel,
+) {
+  return Person(
+    id: id,
+    firstName: first,
+    lastName: last,
+    relationshipTag: tag,
+    city: 'Denver',
+    state: 'CO',
+    country: 'USA',
+    lastContactedAt: lastContacted,
+    lastContactChannel: channel,
+  );
+}
+
+void main() {
+  final now = DateTime(2026, 7, 22);
+
+  PulseLoaded sampleState() {
+    final people = [
+      _p('1', 'Marco', 'Rossi', 'FRIEND', now.subtract(const Duration(days: 3)),
+          'MESSAGE'),
+      _p('2', 'Sara', 'Lin', 'FRIEND', now.subtract(const Duration(days: 12)),
+          'CALL'),
+      _p('3', 'Dev', 'Patel', 'FAMILY', now.subtract(const Duration(days: 31)),
+          'VIDEO'),
+      _p('4', 'Mom', '', 'FAMILY', now.subtract(const Duration(days: 48)),
+          'CALL'),
+      _p('5', 'Noah', 'Kim', 'FRIEND', null, null),
+    ];
+    final logs = [
+      ContactLog(
+        id: 'a',
+        personId: '1',
+        channel: ContactChannel.message,
+        contactedAt: now.subtract(const Duration(days: 3)),
+      ),
+      ContactLog(
+        id: 'b',
+        personId: '2',
+        channel: ContactChannel.call,
+        contactedAt: now.subtract(const Duration(days: 12)),
+      ),
+      ContactLog(
+        id: 'c',
+        personId: '3',
+        channel: ContactChannel.video,
+        contactedAt: now.subtract(const Duration(days: 12)),
+      ),
+    ];
+    return PulseLoaded(people: people, logs: logs);
+  }
+
+  // Local theme mirroring the app's color scheme but using default fonts, so
+  // the golden renders offline without GoogleFonts fetching over the network.
+  // Layout, spacing, and the thermal recency colors are what these goldens
+  // validate; production type is Montserrat/Open Sans (see AppTheme).
+  ThemeData testTheme(Brightness brightness) {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF3F51B5),
+        brightness: brightness,
+        secondary: const Color(0xFFFF4081),
+      ),
+    );
+  }
+
+  Widget harness(PulseBloc bloc, {required Brightness brightness}) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: testTheme(Brightness.light),
+      darkTheme: testTheme(Brightness.dark),
+      themeMode:
+          brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      home: BlocProvider<PulseBloc>.value(
+        value: bloc,
+        child: const PulseScreen(),
+      ),
+    );
+  }
+
+  testWidgets('Pulse screen — mobile light', (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final bloc = MockPulseBloc();
+    whenListen(bloc, const Stream<PulseState>.empty(),
+        initialState: sampleState());
+
+    await tester.pumpWidget(harness(bloc, brightness: Brightness.light));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(PulseScreen),
+      matchesGoldenFile('goldens/pulse_mobile_light.png'),
+    );
+  });
+
+  testWidgets('Pulse screen — mobile dark', (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final bloc = MockPulseBloc();
+    whenListen(bloc, const Stream<PulseState>.empty(),
+        initialState: sampleState());
+
+    await tester.pumpWidget(harness(bloc, brightness: Brightness.dark));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(PulseScreen),
+      matchesGoldenFile('goldens/pulse_mobile_dark.png'),
+    );
+  });
+}
