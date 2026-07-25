@@ -480,6 +480,16 @@ from django.core.management.base import BaseCommand
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+# Overpass enforces its usage policy by rejecting anonymous clients with
+# "406 Not Acceptable" — a misleading status that looks like content
+# negotiation. urllib's default "Python-urllib/3.x" agent is blocked, and so
+# is "Accept: */*". A descriptive User-Agent plus an explicit JSON Accept is
+# required for every request.
+REQUEST_HEADERS = {
+    "User-Agent": "map-my-friends/1.0 (station dataset fetch; +https://github.com/b1codes)",
+    "Accept": "application/json",
+}
+
 OUTPUT_PATH = Path(__file__).resolve().parents[4] / "stations_export.json"
 
 # Chunked to stay under Overpass timeouts. ISO 3166-2 subdivisions.
@@ -585,6 +595,7 @@ class Command(BaseCommand):
                 request = urllib.request.Request(
                     OVERPASS_URL,
                     data=urllib.parse.urlencode({"data": query}).encode(),
+                    headers=REQUEST_HEADERS,
                 )
                 with urllib.request.urlopen(request, timeout=300) as response:
                     payload = json.load(response)
@@ -1943,7 +1954,12 @@ def geocode_address(
         if location:
             timezone = finder.timezone_at(lng=location.longitude, lat=location.latitude)
             return location.latitude, location.longitude, timezone
-        break
+
+        # Empty result: retry, matching the original save()'s 3 attempts. The
+        # original retried back-to-back; the sleep here is a deliberate
+        # improvement for a rate-limited service.
+        if attempt < MAX_ATTEMPTS - 1:
+            time.sleep(1)
 
     address = ", ".join(filter(None, [street or "", city, state, country])).strip(", ")
     raise ValidationError(
