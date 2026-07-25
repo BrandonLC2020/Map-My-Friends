@@ -30,8 +30,11 @@ stations:
 shell:
 	docker compose exec api python manage.py shell
 
-db:
-	docker compose exec db psql -U mapuser -d mapfriends_db
+emulator:
+	docker compose up firestore
+
+ui:
+	@echo "Emulator UI: http://localhost:4000"
 
 test:
 	docker compose exec api python manage.py test 2>&1 | tee .gemini/last_test_results.txt

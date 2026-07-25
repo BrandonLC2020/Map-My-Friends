@@ -1,11 +1,11 @@
 services:
   # -----------------------------
-  # BACKEND (Django + GeoDjango)
+  # BACKEND (Django)
   # -----------------------------
   api:
     build:
-      context: ./backend # Points to the backend subdirectory
-      dockerfile: Dockerfile # Uses the file we created above
+      context: ./backend
+      dockerfile: Dockerfile
     image: map-my-friends-backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
@@ -15,26 +15,27 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - firestore
     environment:
-      # Use 'postgis' engine for GeoDjango
-      - DATABASE_URL=postgis://mapuser:password@db:5432/mapfriends_db
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIRESTORE_PROJECT_ID=map-my-friends-local
       - DJANGO_DEBUG=True
 
   # -----------------------------
-  # DATABASE (PostgreSQL + PostGIS)
+  # FIRESTORE + AUTH EMULATOR
   # -----------------------------
-  db:
-    image: postgis/postgis:16-3.4
+  firestore:
+    build:
+      context: ./docker/firebase-emulator
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=mapfriends_db
-      - POSTGRES_USER=mapuser
-      - POSTGRES_PASSWORD=password
+      - ./firebase.json:/workspace/firebase.json:ro
+      - ./firestore.rules:/workspace/firestore.rules:ro
+      - ./firestore.indexes.json:/workspace/firestore.indexes.json:ro
+      - ./.firebaserc:/workspace/.firebaserc:ro
     ports:
-      - "5432:5432"
+      - "4000:4000" # Emulator UI
+      - "8080:8080" # Firestore
+      - "9099:9099" # Auth (unused until ClickUp 86bb3eu64)
 
 volumes:
-  postgres_data:
   media_data:

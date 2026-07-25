@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'corsheaders',
+    'apps.common',
     'apps.users',
     'apps.people',
     'apps.airports',
@@ -184,7 +185,8 @@ REST_FRAMEWORK = {
         'user': '2000/day',
         'anon_burst': '10/minute',
         'anon_sustained': '50/day',
-    }
+    },
+    'EXCEPTION_HANDLER': 'apps.common.exception_handlers.firestore_exception_handler',
 }
 
 # Simple JWT Configuration
@@ -222,6 +224,11 @@ if not DEBUG:
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN', 'b1codes.us.auth0.com')
 AUTH0_AUDIENCE = os.environ.get('AUTH0_AUDIENCE', 'https://api.mapmyfriends.com/')
+
+# Firestore Configuration
+# firebase-admin auto-detects FIRESTORE_EMULATOR_HOST; when it is set the
+# client talks to the local emulator and no credentials are required.
+FIRESTORE_PROJECT_ID = os.environ.get('FIRESTORE_PROJECT_ID', 'map-my-friends-local')
 
 
 
