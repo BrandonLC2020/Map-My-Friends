@@ -146,7 +146,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Storage backends. Swapping "default" to django-storages' GoogleCloudStorage
+# is the entire production change — see spec section 7. Cloud Run has an
+# ephemeral filesystem, so local disk is not viable there.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Media files (Uploads)
 MEDIA_URL = '/media/'
