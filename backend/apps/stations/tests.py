@@ -1,36 +1,43 @@
-from django.test import TestCase
-from django.contrib.gis.geos import Point
-from .models import Station
+from django.test import SimpleTestCase
 
-class StationModelTests(TestCase):
-    def setUp(self):
-        # Union Station Chicago
-        self.union = Station.objects.create(
-            name="Union Station",
-            osm_id=12345,
-            station_type="major_station",
-            city="Chicago",
-            country="US",
-            location=Point(-87.6403, 41.8787, srid=4326)
+from apps.stations import reference
+
+
+class StationReferenceTests(SimpleTestCase):
+    def test_dataset_loads(self):
+        self.assertGreater(len(reference.all_stations()), 100)
+
+    def test_ids_are_unique_integers(self):
+        ids = [s.id for s in reference.all_stations()]
+        self.assertTrue(all(isinstance(i, int) for i in ids))
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_get_by_id_round_trips(self):
+        first = reference.all_stations()[0]
+        self.assertEqual(reference.get_by_id(first.id), first)
+
+    def test_get_by_id_missing_returns_none(self):
+        self.assertIsNone(reference.get_by_id(-1))
+
+    def test_get_nearby_respects_count(self):
+        self.assertEqual(len(reference.get_nearby(41.8781, -87.6298, count=3)), 3)
+
+    def test_get_nearby_sorted_ascending(self):
+        distances = [s.distance_km for s in reference.get_nearby(41.8781, -87.6298, count=5)]
+        self.assertTrue(all(d is not None for d in distances))
+        self.assertEqual(distances, sorted(distances))
+
+    def test_get_nearby_radius_filter(self):
+        near = reference.get_nearby(41.8781, -87.6298, radius_km=25, count=10)
+        self.assertTrue(all(s.distance_km <= 25 for s in near))
+
+    def test_station_type_filter(self):
+        filtered = reference.get_nearby(
+            41.8781, -87.6298, count=10, station_type="major_station"
         )
-        # Ogilvie Transportation Center
-        self.ogilvie = Station.objects.create(
-            name="Ogilvie Transportation Center",
-            osm_id=67890,
-            station_type="major_station",
-            city="Chicago",
-            country="US",
-            location=Point(-87.6391, 41.8823, srid=4326)
+        self.assertTrue(all(s.station_type == "major_station" for s in filtered))
+
+    def test_unknown_station_type_returns_empty(self):
+        self.assertEqual(
+            reference.get_nearby(41.8781, -87.6298, station_type="not_a_type"), []
         )
-
-    def test_station_creation(self):
-        station = Station.objects.get(osm_id=12345)
-        self.assertEqual(station.name, "Union Station")
-
-    def test_get_nearby(self):
-        # Point near Union Station
-        test_point = Point(-87.6400, 41.8780, srid=4326)
-        
-        nearby = Station.get_nearby(test_point)
-        self.assertEqual(nearby[0].osm_id, 12345) # Union Station is closer
-        self.assertEqual(nearby[1].osm_id, 67890)
