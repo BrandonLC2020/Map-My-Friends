@@ -62,20 +62,12 @@ class Person(models.Model):
     # Keep-in-Touch (Pulse) screen.
     contact_cadence_days = models.PositiveIntegerField(blank=True, null=True)
 
-    preferred_airport = models.ForeignKey(
-        'airports.Airport',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='preferred_by_people'
-    )
-    preferred_station = models.ForeignKey(
-        'stations.Station',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='preferred_by_people'
-    )
+    # Airports and stations are static reference data served from an
+    # in-memory index (see apps.airports.reference / apps.stations.reference),
+    # not Django models, so these are plain integer IDs rather than
+    # ForeignKeys. IDs are stable across dataset regeneration.
+    preferred_airport = models.IntegerField(null=True, blank=True)
+    preferred_station = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.location:

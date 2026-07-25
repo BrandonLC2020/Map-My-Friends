@@ -49,3 +49,36 @@ class AirportReferenceTests(SimpleTestCase):
         nearest = reference.get_nearby(41.8781, -87.6298, count=1)[0]
         self.assertGreater(nearest.distance_km, 0)
         self.assertLess(nearest.distance_km, 40)
+
+
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+
+
+class NearestAirportsEndpointTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="tester", password="pw12345!")
+        self.client.force_authenticate(user=self.user)
+
+    def test_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298")
+        self.assertEqual(response.status_code, 401)
+
+    def test_returns_geojson_features(self):
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=3")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 3)
+        feature = response.data[0]
+        self.assertEqual(feature["type"], "Feature")
+        self.assertEqual(feature["geometry"]["type"], "Point")
+        self.assertIn("iata_code", feature["properties"])
+        self.assertIn("distance_km", feature["properties"])
+
+    def test_missing_params_return_400(self):
+        response = self.client.get("/api/airports/nearest/")
+        self.assertEqual(response.status_code, 400)
+
+    def test_count_is_clamped_to_ten(self):
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=99")
+        self.assertEqual(len(response.data), 10)

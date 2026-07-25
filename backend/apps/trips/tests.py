@@ -141,12 +141,8 @@ class TripModelTests(TestCase):
 
     def test_tripstop_hub_snapshot(self):
         """Test snapshotting with an airport as a hub."""
-        from apps.airports.models import Airport
-        airport = Airport.objects.create(
-            name="Test Airport",
-            iata_code="TST",
-            location=Point(0, 0, srid=4326)
-        )
+        from apps.airports import reference as airport_reference
+        airport = airport_reference.all_airports()[0]
         trip = Trip.objects.create(
             name='Hub Trip',
             date=datetime.date(2026, 7, 4),
@@ -157,18 +153,18 @@ class TripModelTests(TestCase):
             trip=trip,
             sequence_order=1,
             location=Point(0, 0, srid=4326),
-            airport=airport
+            airport=airport.id
         )
-        
+
         # Transition to BOOKED
         trip.status = Trip.Status.BOOKED
         trip.save()
-        
+
         stop.refresh_from_db()
-        self.assertIn('Test Airport', stop.snapshot_address)
-        self.assertIn('TST', stop.snapshot_address)
-        self.assertEqual(stop.snapshot_metadata['hub']['name'], 'Test Airport')
-        self.assertEqual(stop.snapshot_metadata['hub']['code'], 'TST')
+        self.assertIn(airport.name, stop.snapshot_address)
+        self.assertIn(airport.iata_code, stop.snapshot_address)
+        self.assertEqual(stop.snapshot_metadata['hub']['name'], airport.name)
+        self.assertEqual(stop.snapshot_metadata['hub']['code'], airport.iata_code)
         self.assertEqual(stop.snapshot_metadata['hub']['type'], 'AIRPORT')
 
 

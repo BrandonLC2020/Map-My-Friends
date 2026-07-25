@@ -2,8 +2,6 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework_gis.fields import GeometryField
 from apps.people.models import Person
-from apps.airports.models import Airport
-from apps.stations.models import Station
 from .models import Trip, TripStop, TripLeg
 
 
@@ -15,18 +13,10 @@ class TripStopSerializer(serializers.ModelSerializer):
         required=False,
         default=[],
     )
-    airport = serializers.PrimaryKeyRelatedField(
-        queryset=Airport.objects.all(),
-        allow_null=True,
-        required=False,
-        default=None,
-    )
-    station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.all(),
-        allow_null=True,
-        required=False,
-        default=None,
-    )
+    # Airports and stations are static reference data served from an
+    # in-memory index, not Django models, so these are plain integer IDs.
+    airport = serializers.IntegerField(allow_null=True, required=False, default=None)
+    station = serializers.IntegerField(allow_null=True, required=False, default=None)
 
     class Meta:
         model = TripStop

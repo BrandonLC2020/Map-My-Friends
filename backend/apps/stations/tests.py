@@ -41,3 +41,37 @@ class StationReferenceTests(SimpleTestCase):
         self.assertEqual(
             reference.get_nearby(41.8781, -87.6298, station_type="not_a_type"), []
         )
+
+
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+
+
+class NearestStationsEndpointTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="tester", password="pw12345!")
+        self.client.force_authenticate(user=self.user)
+
+    def test_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/stations/nearest/?lat=41.8781&lon=-87.6298")
+        self.assertEqual(response.status_code, 401)
+
+    def test_returns_geojson_features(self):
+        response = self.client.get("/api/stations/nearest/?lat=41.8781&lon=-87.6298&count=3")
+        self.assertEqual(response.status_code, 200)
+        feature = response.data[0]
+        self.assertEqual(feature["type"], "Feature")
+        self.assertIn("osm_id", feature["properties"])
+
+    def test_station_type_filter_applied(self):
+        response = self.client.get(
+            "/api/stations/nearest/?lat=41.8781&lon=-87.6298&station_type=major_station"
+        )
+        self.assertEqual(response.status_code, 200)
+        for feature in response.data:
+            self.assertEqual(feature["properties"]["station_type"], "major_station")
+
+    def test_missing_params_return_400(self):
+        response = self.client.get("/api/stations/nearest/")
+        self.assertEqual(response.status_code, 400)

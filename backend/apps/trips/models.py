@@ -63,8 +63,12 @@ class TripStop(models.Model):
     # ... (existing TripStop code)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
     people = models.ManyToManyField('people.Person', blank=True)
-    airport = models.ForeignKey('airports.Airport', on_delete=models.SET_NULL, null=True, blank=True)
-    station = models.ForeignKey('stations.Station', on_delete=models.SET_NULL, null=True, blank=True)
+    # Airports and stations are static reference data served from an
+    # in-memory index (see apps.airports.reference / apps.stations.reference),
+    # not Django models, so these are plain integer IDs rather than
+    # ForeignKeys. IDs are stable across dataset regeneration.
+    airport = models.IntegerField(null=True, blank=True)
+    station = models.IntegerField(null=True, blank=True)
     sequence_order = models.PositiveIntegerField()
     location = models.PointField()
     snapshot_address = models.CharField(max_length=500, blank=True)
@@ -99,19 +103,27 @@ class TripStop(models.Model):
 
         # Snapshot Hub (Airport or Station)
         if self.airport:
-            metadata['hub'] = {
-                'name': self.airport.name,
-                'code': self.airport.iata_code,
-                'type': 'AIRPORT'
-            }
-            address_parts.append(f"{self.airport.name} ({self.airport.iata_code})")
+            from apps.airports import reference as airport_reference
+
+            airport = airport_reference.get_by_id(self.airport)
+            if airport:
+                metadata['hub'] = {
+                    'name': airport.name,
+                    'code': airport.iata_code,
+                    'type': 'AIRPORT'
+                }
+                address_parts.append(f"{airport.name} ({airport.iata_code})")
         elif self.station:
-            metadata['hub'] = {
-                'name': self.station.name,
-                'code': self.station.uic_ref or str(self.station.osm_id),
-                'type': 'STATION'
-            }
-            address_parts.append(self.station.name)
+            from apps.stations import reference as station_reference
+
+            station = station_reference.get_by_id(self.station)
+            if station:
+                metadata['hub'] = {
+                    'name': station.name,
+                    'code': station.uic_ref or str(station.osm_id),
+                    'type': 'STATION'
+                }
+                address_parts.append(station.name)
 
         self.snapshot_address = ", ".join(address_parts)
         self.snapshot_metadata = metadata

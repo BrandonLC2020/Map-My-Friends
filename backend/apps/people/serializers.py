@@ -2,8 +2,8 @@ from rest_framework import serializers
 from django.contrib.gis.geos import Point
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import Person, ContactLog
-from apps.airports.models import Airport
-from apps.stations.models import Station
+from apps.airports import reference as airport_reference
+from apps.stations import reference as station_reference
 from apps.airports.serializers import AirportSerializer
 from apps.stations.serializers import StationSerializer
 
@@ -29,14 +29,10 @@ class ContactLogSerializer(serializers.ModelSerializer):
 
 
 class PersonSerializer(GeoFeatureModelSerializer):
-    preferred_airport = serializers.PrimaryKeyRelatedField(
-        queryset=Airport.objects.all(), allow_null=True, required=False
-    )
-    preferred_station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.all(), allow_null=True, required=False
-    )
-    preferred_airport_detail = AirportSerializer(source='preferred_airport', read_only=True)
-    preferred_station_detail = StationSerializer(source='preferred_station', read_only=True)
+    preferred_airport = serializers.IntegerField(allow_null=True, required=False)
+    preferred_station = serializers.IntegerField(allow_null=True, required=False)
+    preferred_airport_detail = serializers.SerializerMethodField()
+    preferred_station_detail = serializers.SerializerMethodField()
 
     # Recency summary powering the Keep-in-Touch roster. Read-only; derived
     # from the person's most recent ContactLog so the client can color-code
@@ -93,6 +89,18 @@ class PersonSerializer(GeoFeatureModelSerializer):
     def get_last_contact_channel(self, obj):
         log = self._latest_log(obj)
         return log.channel if log else None
+
+    def get_preferred_airport_detail(self, obj):
+        if obj.preferred_airport is None:
+            return None
+        airport = airport_reference.get_by_id(obj.preferred_airport)
+        return AirportSerializer(airport).data if airport else None
+
+    def get_preferred_station_detail(self, obj):
+        if obj.preferred_station is None:
+            return None
+        station = station_reference.get_by_id(obj.preferred_station)
+        return StationSerializer(station).data if station else None
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
