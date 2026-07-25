@@ -10,6 +10,18 @@ from __future__ import annotations
 from apps.common import firestore as fs
 
 
+def _delete_document(reference, batch_size: int) -> None:
+    """Delete a document reference after recursively purging its subcollections."""
+    for sub in reference.collections():
+        while True:
+            sub_docs = list(sub.limit(batch_size).stream())
+            if not sub_docs:
+                break
+            for sub_doc in sub_docs:
+                _delete_document(sub_doc.reference, batch_size)
+    reference.delete()
+
+
 def purge_collection(name: str, batch_size: int = 200) -> None:
     """Recursively delete every document in a collection, including subcollections."""
     collection = fs.collection(name)
@@ -18,10 +30,7 @@ def purge_collection(name: str, batch_size: int = 200) -> None:
         if not docs:
             return
         for doc in docs:
-            for sub in doc.reference.collections():
-                for sub_doc in sub.stream():
-                    sub_doc.reference.delete()
-            doc.reference.delete()
+            _delete_document(doc.reference, batch_size)
 
 
 class FirestoreTestMixin:

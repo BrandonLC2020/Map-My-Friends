@@ -1,8 +1,9 @@
 """Firestore client singleton.
 
-firebase-admin detects FIRESTORE_EMULATOR_HOST itself and routes to the
-emulator when it is set, so no application code branches on environment.
-That is what makes local behaviour a faithful predictor of production.
+google.cloud.firestore.Client detects FIRESTORE_EMULATOR_HOST itself and
+routes to the emulator when it is set, so no application code branches on
+environment. That is what makes local behaviour a faithful predictor of
+production.
 """
 
 from __future__ import annotations
@@ -39,6 +40,11 @@ def get_client():
 
                 _check_configuration()
                 if not firebase_admin._apps:
+                    # Not consulted for Firestore itself (see the
+                    # google.cloud.firestore.Client note below) — this App is
+                    # kept initialised for a future Auth/GCIP task that will
+                    # need firebase_admin.auth. Currently unused for the
+                    # Firestore path, not dead code.
                     firebase_admin.initialize_app(
                         options={"projectId": settings.FIRESTORE_PROJECT_ID}
                     )
