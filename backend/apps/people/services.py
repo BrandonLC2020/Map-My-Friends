@@ -1,9 +1,12 @@
 """Address geocoding.
 
-Lifted out of Person.save() when the model moved to Firestore. Behaviour is
-unchanged — same structured Nominatim query, same three attempts, same
-ValidationError on failure — but it is now an explicit call the repository
-makes, which also makes it testable without touching the datastore.
+Lifted out of Person.save() when the model moved to Firestore. Behaviour
+matches the original: same structured Nominatim query, same three attempts,
+same ValidationError on failure. One deliberate improvement over the
+original: a 1s delay is now inserted between attempts on the "not found"
+path (not just the exception path), since Nominatim is rate-limited. It is
+now an explicit call the repository makes, which also makes it testable
+without touching the datastore.
 """
 
 from __future__ import annotations
@@ -53,7 +56,9 @@ def geocode_address(
         if location:
             timezone = finder.timezone_at(lng=location.longitude, lat=location.latitude)
             return location.latitude, location.longitude, timezone
-        break
+
+        if attempt < MAX_ATTEMPTS - 1:
+            time.sleep(1)
 
     address = ", ".join(filter(None, [street or "", city, state, country])).strip(", ")
     raise ValidationError(
