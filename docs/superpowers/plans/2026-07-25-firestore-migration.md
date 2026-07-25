@@ -567,20 +567,44 @@ class Command(BaseCommand):
         parser.add_argument(
             "--sleep",
             type=float,
-            default=3.0,
+            default=5.0,
             help="Seconds to wait between state queries (Overpass is rate-limited).",
+        )
+        parser.add_argument(
+            "--retries",
+            type=int,
+            default=3,
+            help="Attempts per state before giving up (429/504 are common).",
+        )
+        parser.add_argument(
+            "--states",
+            nargs="+",
+            metavar="ISO",
+            help=(
+                "Only fetch these ISO 3166-2 subdivisions (e.g. US-OR US-RI). "
+                "Results merge into the existing dataset, so this fills gaps "
+                "left by failed states without refetching everything."
+            ),
         )
 
     def handle(self, *args, **options):
+        # Load the whole existing dataset, not just its IDs: a state that fails
+        # every retry must keep the records from a previous run rather than
+        # silently vanishing from the output.
+        collected: dict[int, dict] = {}
         existing_ids: dict[int, int] = {}
         if OUTPUT_PATH.exists():
             with OUTPUT_PATH.open(encoding="utf-8") as handle:
                 for row in json.load(handle):
-                    existing_ids[int(row["osm_id"])] = int(row["id"])
+                    osm_id = int(row["osm_id"])
+                    existing_ids[osm_id] = int(row["id"])
+                    collected[osm_id] = {k: v for k, v in row.items() if k != "id"}
+            self.stdout.write(f"Loaded {len(collected)} existing stations.")
 
-        collected: dict[int, dict] = {}
+        states = options["states"] or US_STATES
+        failed: list[str] = []
 
-        for state in US_STATES:
+        for state in states:
             query = f"""
             [out:json][timeout:180];
             area["ISO3166-2"="{state}"][admin_level=4]->.a;
@@ -591,16 +615,39 @@ class Command(BaseCommand):
             out body;
             """
             self.stdout.write(f"Querying {state}...")
-            try:
-                request = urllib.request.Request(
-                    OVERPASS_URL,
-                    data=urllib.parse.urlencode({"data": query}).encode(),
-                    headers=REQUEST_HEADERS,
-                )
-                with urllib.request.urlopen(request, timeout=300) as response:
-                    payload = json.load(response)
-            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-                self.stderr.write(f"  {state} failed ({exc}); skipping.")
+            payload = None
+            for attempt in range(options["retries"]):
+                try:
+                    request = urllib.request.Request(
+                        OVERPASS_URL,
+                        data=urllib.parse.urlencode({"data": query}).encode(),
+                        headers=REQUEST_HEADERS,
+                    )
+                    with urllib.request.urlopen(request, timeout=300) as response:
+                        payload = json.load(response)
+                    break
+                except (
+                    urllib.error.URLError,
+                    TimeoutError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    if attempt < options["retries"] - 1:
+                        # 429 and 504 are the usual failures and both ease off
+                        # with time, so back off exponentially before retrying.
+                        backoff = options["sleep"] * (2 ** (attempt + 1))
+                        self.stderr.write(
+                            f"  {state} attempt {attempt + 1} failed ({exc}); "
+                            f"retrying in {backoff:.0f}s."
+                        )
+                        time.sleep(backoff)
+                    else:
+                        self.stderr.write(
+                            f"  {state} failed after {options['retries']} attempts "
+                            f"({exc}); keeping any existing records."
+                        )
+                        failed.append(state)
+
+            if payload is None:
                 time.sleep(options["sleep"])
                 continue
 
@@ -639,11 +686,23 @@ class Command(BaseCommand):
                 next_id += 1
 
         rows.sort(key=lambda r: r["id"])
-        with OUTPUT_PATH.open("w", encoding="utf-8") as handle:
+        # Write via a temp file and atomic rename so an interrupted run cannot
+        # leave a truncated dataset behind.
+        tmp_path = OUTPUT_PATH.with_suffix(".json.tmp")
+        with tmp_path.open("w", encoding="utf-8") as handle:
             json.dump(rows, handle, ensure_ascii=False, indent=1)
             handle.write("\n")
+        tmp_path.replace(OUTPUT_PATH)
 
         self.stdout.write(self.style.SUCCESS(f"Wrote {len(rows)} stations to {OUTPUT_PATH}"))
+        if failed:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"{len(failed)} state(s) failed: {' '.join(failed)}\n"
+                    f"Re-run just those with: "
+                    f"manage.py fetch_stations --states {' '.join(failed)}"
+                )
+            )
 ```
 
 - [ ] **Step 2: Run the command to generate the dataset**
