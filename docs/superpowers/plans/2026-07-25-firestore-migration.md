@@ -17,7 +17,7 @@
 - The project uses **Django's test runner**, not pytest. Tests subclass `django.test.TestCase` or DRF's `APITestCase`. Run via `make test` → `manage.py test`.
 - **No application code may branch on environment** to choose Firestore vs. emulator. `FIRESTORE_EMULATOR_HOST` is detected by `firebase-admin` itself.
 - Python `>=3.12,<4.0`. Django `>=6.0.2,<7.0.0`. DRF `>=3.16.1,<4.0.0`.
-- Poetry manages dependencies; commands run inside Docker via `docker compose exec api poetry run ...`.
+- Commands run inside Docker via `docker compose exec api python manage.py ...`. **Do not use `poetry run`** — the anonymous `/app/.venv` volume in `docker-compose.yml` shadows the system install and breaks it. Poetry itself still manages dependencies (`poetry lock`, `poetry install`, `poetry add`), which work fine.
 - The GeoJSON `Feature` envelope emitted by `rest_framework_gis` **must be reproduced exactly** — `{"id":…, "type":"Feature", "geometry":{"type":"Point","coordinates":[lng,lat]}, "properties":{…}}`. Flutter's `Person.fromGeoJson` (`frontend/lib/models/person.dart:110`) depends on it, and a mismatch fails silently rather than erroring.
 - Airport/Station IDs stay **integers** and must be **stable across regeneration** — `preferred_airport_id` in Firestore references them, and `frontend/lib/models/airport.dart:48` casts `as int?`.
 - Commit after every task.
@@ -93,7 +93,7 @@ class HaversineTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_geo -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_geo -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.common'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -128,7 +128,7 @@ def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_geo -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_geo -v 2`
 Expected: PASS — 4 tests
 
 - [ ] **Step 5: Commit**
@@ -140,10 +140,17 @@ git commit -m "feat(common): add Haversine distance helper for in-memory geo sea
 
 ---
 
-### Task 2: Airport reference index
+### Task 2: Airport reference index and dataset
+
+> Merges the former Tasks 2 and 3. The index and the dataset regeneration ship
+> together so the task ends with green tests instead of a knowingly-red commit.
+> There is no Task 3; numbering of later tasks is unchanged.
 
 **Files:**
 - Create: `backend/apps/airports/reference.py`
+- Create: `backend/apps/airports/management/commands/fetch_airports.py`
+- Delete: `backend/apps/airports/management/commands/import_airports.py`
+- Modify: `backend/airports_export.json` (regenerated)
 - Test: `backend/apps/airports/tests.py` (replace entirely)
 
 **Interfaces:**
@@ -214,7 +221,7 @@ class AirportReferenceTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.airports -v 2`
+Run: `docker compose exec api python manage.py test apps.airports -v 2`
 Expected: FAIL — `ImportError: cannot import name 'reference' from 'apps.airports'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -315,30 +322,12 @@ def get_nearby(
 
 - [ ] **Step 4: Run test to verify it fails on missing `id`**
 
-Run: `docker compose exec api poetry run python manage.py test apps.airports -v 2`
-Expected: FAIL — `KeyError: 'id'`. The committed `airports_export.json` has no `id`, `icao`, or `continent` keys yet; Task 3 regenerates it. This failure is expected and confirms the loader reads the real file.
+Run: `docker compose exec api python manage.py test apps.airports -v 2`
+Expected: FAIL — `KeyError: 'id'`. The committed `airports_export.json` has no `id`, `icao`, or `continent` keys yet; Step 5 regenerates it. This failure is expected and confirms the loader reads the real file rather than a fixture.
 
-- [ ] **Step 5: Commit**
+**Do not commit here** — the dataset regeneration below is part of this same task, and the commit comes after tests are green.
 
-```bash
-git add backend/apps/airports/reference.py backend/apps/airports/tests.py
-git commit -m "feat(airports): add in-memory reference index (dataset regen pending)"
-```
-
----
-
-### Task 3: Regenerate the airports dataset
-
-**Files:**
-- Create: `backend/apps/airports/management/commands/fetch_airports.py`
-- Delete: `backend/apps/airports/management/commands/import_airports.py`
-- Modify: `backend/airports_export.json` (regenerated)
-
-**Interfaces:**
-- Consumes: nothing
-- Produces: `airports_export.json` records shaped `{id, name, iata, icao, type, city, country, continent, lat, lon}` — consumed by `apps.airports.reference`
-
-- [ ] **Step 1: Write the fetch command**
+- [ ] **Step 5: Write the fetch command**
 
 Create `backend/apps/airports/management/commands/fetch_airports.py`:
 
@@ -431,32 +420,33 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Wrote {len(rows)} airports to {OUTPUT_PATH}"))
 ```
 
-- [ ] **Step 2: Run the command to regenerate the dataset**
+- [ ] **Step 6: Run the command to regenerate the dataset**
 
-Run: `docker compose exec api poetry run python manage.py fetch_airports`
+Run: `docker compose exec api python manage.py fetch_airports`
 Expected: `Wrote 4XXX airports to /app/airports_export.json` (count near 4,551; it tracks upstream OurAirports data)
 
-- [ ] **Step 3: Run the Task 2 tests to verify they now pass**
+- [ ] **Step 7: Run the tests to verify they now pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.airports -v 2`
+Run: `docker compose exec api python manage.py test apps.airports -v 2`
 Expected: PASS — 9 tests
 
-- [ ] **Step 4: Delete the obsolete importer**
+- [ ] **Step 8: Delete the obsolete importer**
 
 ```bash
 git rm backend/apps/airports/management/commands/import_airports.py
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add backend/apps/airports/management/commands/fetch_airports.py backend/airports_export.json
-git commit -m "feat(airports): regenerate dataset with stable IDs, replace DB importer with fetch"
+git add backend/apps/airports/reference.py backend/apps/airports/tests.py \
+        backend/apps/airports/management/commands/fetch_airports.py backend/airports_export.json
+git commit -m "feat(airports): add in-memory reference index and regenerate dataset with stable IDs"
 ```
 
 ---
 
-### Task 4: Station dataset fetch
+### Task 4: Station dataset fetch *(RESERVED — executed inline by the controller, not a subagent)*
 
 **Files:**
 - Create: `backend/apps/stations/management/commands/fetch_stations.py`
@@ -647,14 +637,14 @@ class Command(BaseCommand):
 
 - [ ] **Step 2: Run the command to generate the dataset**
 
-Run: `docker compose exec api poetry run python manage.py fetch_stations`
+Run: `docker compose exec api python manage.py fetch_stations`
 Expected: per-state progress lines, ending `Wrote NNNNN stations to /app/stations_export.json`. Takes several minutes due to deliberate rate-limit sleeps. Individual states may fail and be skipped — acceptable, rerun to fill gaps.
 
 - [ ] **Step 3: Sanity-check the output**
 
 Run:
 ```bash
-docker compose exec api poetry run python -c "
+docker compose exec api python -c "
 import json
 rows = json.load(open('stations_export.json'))
 print('count:', len(rows))
@@ -748,7 +738,7 @@ class StationReferenceTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.stations -v 2`
+Run: `docker compose exec api python manage.py test apps.stations -v 2`
 Expected: FAIL — `ImportError: cannot import name 'reference' from 'apps.stations'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -841,7 +831,7 @@ def get_nearby(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.stations -v 2`
+Run: `docker compose exec api python manage.py test apps.stations -v 2`
 Expected: PASS — 9 tests
 
 - [ ] **Step 5: Commit**
@@ -922,7 +912,7 @@ class GeoFeatureSerializerTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_serializers -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_serializers -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.common.serializers'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -975,7 +965,7 @@ class GeoFeatureSerializer(serializers.Serializer):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_serializers -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_serializers -v 2`
 Expected: PASS — 6 tests
 
 - [ ] **Step 5: Commit**
@@ -1076,7 +1066,7 @@ class NearestStationsEndpointTests(APITestCase):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `docker compose exec api poetry run python manage.py test apps.airports apps.stations -v 2`
+Run: `docker compose exec api python manage.py test apps.airports apps.stations -v 2`
 Expected: FAIL — assertion errors on the `Feature` envelope, since the current views still query the ORM.
 
 - [ ] **Step 3: Rewrite serializers**
@@ -1240,7 +1230,7 @@ Replace `backend/apps/airports/admin.py` and `backend/apps/stations/admin.py` ea
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.airports apps.stations apps.common -v 2`
+Run: `docker compose exec api python manage.py test apps.airports apps.stations apps.common -v 2`
 Expected: PASS — all tests across the three modules
 
 - [ ] **Step 7: Commit**
@@ -1474,7 +1464,7 @@ class FirestoreClientTests(FirestoreTestMixin, SimpleTestCase):
 
 - [ ] **Step 5: Run test to verify it fails**
 
-Run: `docker compose up -d firestore && docker compose exec api poetry run python manage.py test apps.common.tests.test_firestore -v 2`
+Run: `docker compose up -d firestore && docker compose exec api python manage.py test apps.common.tests.test_firestore -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.common.firestore'`
 
 - [ ] **Step 6: Write the client, exception handler, and test mixin**
@@ -1648,7 +1638,7 @@ ui:
 
 - [ ] **Step 9: Run tests to verify they pass**
 
-Run: `docker compose up -d --build firestore && docker compose exec api poetry run python manage.py test apps.common -v 2`
+Run: `docker compose up -d --build firestore && docker compose exec api python manage.py test apps.common -v 2`
 Expected: PASS — all `apps.common` tests including the three Firestore round-trip tests
 
 - [ ] **Step 10: Commit**
@@ -1721,7 +1711,7 @@ class StorageTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_storage -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_storage -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.common.storage'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1786,7 +1776,7 @@ STORAGES = {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.common.tests.test_storage -v 2`
+Run: `docker compose exec api python manage.py test apps.common.tests.test_storage -v 2`
 Expected: PASS — 4 tests
 
 - [ ] **Step 6: Commit**
@@ -1890,7 +1880,7 @@ class GeocodeAddressTests(SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.people.tests_services -v 2`
+Run: `docker compose exec api python manage.py test apps.people.tests_services -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.people.services'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1963,7 +1953,7 @@ def geocode_address(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.people.tests_services -v 2`
+Run: `docker compose exec api python manage.py test apps.people.tests_services -v 2`
 Expected: PASS — 5 tests
 
 - [ ] **Step 5: Commit**
@@ -2140,7 +2130,7 @@ class ContactLogRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.people.tests_repositories -v 2`
+Run: `docker compose exec api python manage.py test apps.people.tests_repositories -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.people.repositories'`
 
 - [ ] **Step 3: Write minimal implementation**
@@ -2386,7 +2376,7 @@ class ContactLogRepository:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker compose exec api poetry run python manage.py test apps.people.tests_repositories -v 2`
+Run: `docker compose exec api python manage.py test apps.people.tests_repositories -v 2`
 Expected: PASS — 16 tests
 
 - [ ] **Step 5: Commit**
@@ -2401,9 +2391,28 @@ git commit -m "feat(people): add owner-scoped Firestore repositories for Person 
 ### Task 12: Person + ContactLog API layer
 
 **Files:**
+- Create: `backend/apps/common/ownership.py`
 - Modify: `backend/apps/people/serializers.py` (rewrite), `backend/apps/people/views.py` (rewrite), `backend/apps/people/admin.py` (empty out)
 - Delete: `backend/apps/people/models.py`, `backend/apps/people/migrations/`
 - Test: `backend/apps/people/tests.py` (rewrite)
+
+Create `backend/apps/common/ownership.py` first — Task 13 imports it too, so it lives in the shared module rather than in either app's views:
+
+```python
+"""Request-to-Firestore-owner mapping.
+
+Shared by people and trips. Lives here rather than in either app's views so
+neither app depends on the other's view module for an auth concern.
+"""
+
+
+def owner_key_for(request):
+    """Firestore ownership key for a request; None means the public dataset."""
+    user = request.user
+    if user and user.is_authenticated:
+        return user.username
+    return None
+```
 
 **Interfaces:**
 - Consumes: `PersonRepository`, `ContactLogRepository`, `geocode_address`, `AirportSerializer`, `StationSerializer`, `GeoFeatureSerializer`, `save_upload`, `upload_url`
@@ -2515,19 +2524,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
+from apps.common.ownership import owner_key_for
 from apps.common.storage import save_upload
 
 from .repositories import ContactLogRepository, PersonRepository
 from .serializers import ContactLogSerializer, PersonSerializer
 from .services import geocode_address
-
-
-def owner_key_for(request):
-    """Firestore ownership key for a request; None means the public dataset."""
-    user = request.user
-    if user and user.is_authenticated:
-        return user.username
-    return None
 
 
 class PersonViewSet(viewsets.ViewSet):
@@ -2790,7 +2792,7 @@ class PersonEndpointTests(FirestoreTestMixin, APITestCase):
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.people -v 2`
+Run: `docker compose exec api python manage.py test apps.people -v 2`
 Expected: PASS — repository, service and endpoint tests all green
 
 - [ ] **Step 6: Commit**
@@ -2928,7 +2930,7 @@ class TripRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.trips -v 2`
+Run: `docker compose exec api python manage.py test apps.trips -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.trips.repositories'`
 
 - [ ] **Step 3: Write the repository**
@@ -3287,7 +3289,7 @@ class TripRepository:
 
 - [ ] **Step 4: Run repository tests to verify they pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.trips -v 2`
+Run: `docker compose exec api python manage.py test apps.trips -v 2`
 Expected: PASS — 12 repository tests
 
 - [ ] **Step 5: Rewrite serializers, views, and add endpoint tests**
@@ -3346,7 +3348,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.people.views import owner_key_for
+from apps.common.ownership import owner_key_for
 
 from .repositories import DuplicateSequenceOrder, TripRepository
 from .serializers import TripLegSerializer, TripSerializer, TripStopSerializer
@@ -3592,7 +3594,7 @@ class TripEndpointTests(FirestoreTestMixin, APITestCase):
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.trips -v 2`
+Run: `docker compose exec api python manage.py test apps.trips -v 2`
 Expected: PASS — repository and endpoint tests
 
 - [ ] **Step 7: Commit**
@@ -3682,11 +3684,11 @@ class UserProfileEndpointTests(FirestoreTestMixin, APITestCase):
         self.assertEqual(response.data["city"], "Chicago")
 ```
 
-Confirm the profile route path first: `docker compose exec api poetry run python manage.py show_urls 2>/dev/null || cat backend/apps/users/urls.py`. Adjust `/api/user/profile/` in the tests above to match the registered path.
+Confirm the profile route path first: `docker compose exec api python manage.py show_urls 2>/dev/null || cat backend/apps/users/urls.py`. Adjust `/api/user/profile/` in the tests above to match the registered path.
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `docker compose exec api poetry run python manage.py test apps.users -v 2`
+Run: `docker compose exec api python manage.py test apps.users -v 2`
 Expected: FAIL — `ModuleNotFoundError: No module named 'apps.users.repositories'`
 
 - [ ] **Step 3: Write the repository**
@@ -3875,7 +3877,7 @@ Remove the `from .models import UserProfile` import from `views.py`, and replace
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `docker compose exec api poetry run python manage.py test apps.users -v 2`
+Run: `docker compose exec api python manage.py test apps.users -v 2`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -4050,14 +4052,14 @@ Modify `Makefile` — replace the `mig` target and add `seed`:
 
 ```make
 mig:
-	docker compose exec api poetry run python manage.py migrate
+	docker compose exec api python manage.py migrate
 
 seed:
-	docker compose exec api poetry run python manage.py seed
+	docker compose exec api python manage.py seed
 
 fetch-data:
-	docker compose exec api poetry run python manage.py fetch_airports
-	docker compose exec api poetry run python manage.py fetch_stations
+	docker compose exec api python manage.py fetch_airports
+	docker compose exec api python manage.py fetch_stations
 ```
 
 `makemigrations` is deliberately dropped from `mig` — only Django's own apps have migrations now, and they ship with the framework.
@@ -4086,8 +4088,8 @@ The `SecurityBehaviorTests.test_registration_throttling` and `JWTAuthTests` clas
 docker compose down -v
 docker compose build
 docker compose up -d
-docker compose exec api poetry run python manage.py migrate
-docker compose exec api poetry run python manage.py test 2>&1 | tail -30
+docker compose exec api python manage.py migrate
+docker compose exec api python manage.py test 2>&1 | tail -30
 ```
 Expected: PASS, with **zero** failures. `tests/test_api_security.py` assertions must be unchanged from `git show e81891d`.
 
