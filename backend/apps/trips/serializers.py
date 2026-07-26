@@ -1,89 +1,41 @@
-from django.db import transaction
 from rest_framework import serializers
-from rest_framework_gis.fields import GeometryField
-from apps.people.models import Person
-from .models import Trip, TripStop, TripLeg
+
+STATUS_CHOICES = ["DRAFT", "BOOKED", "CANCELLED"]
+TRANSPORT_CHOICES = ["FLIGHT", "TRAIN", "BUS", "CAR"]
 
 
-class TripStopSerializer(serializers.ModelSerializer):
-    location = GeometryField()
-    people = serializers.PrimaryKeyRelatedField(
-        queryset=Person.objects.all(),
-        many=True,
-        required=False,
-        default=[],
+class TripStopSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    trip = serializers.CharField(source="trip_id", read_only=True)
+    sequence_order = serializers.IntegerField(min_value=0)
+    lat = serializers.FloatField(required=False, allow_null=True)
+    lng = serializers.FloatField(required=False, allow_null=True)
+    people = serializers.ListField(
+        source="person_ids", child=serializers.CharField(), required=False
     )
-    # Airports and stations are static reference data served from an
-    # in-memory index, not Django models, so these are plain integer IDs.
-    airport = serializers.IntegerField(allow_null=True, required=False, default=None)
-    station = serializers.IntegerField(allow_null=True, required=False, default=None)
-
-    class Meta:
-        model = TripStop
-        fields = ('id', 'people', 'airport', 'station', 'sequence_order', 'location', 'snapshot_address', 'snapshot_metadata')
-        read_only_fields = ('snapshot_address', 'snapshot_metadata')
+    airport = serializers.IntegerField(source="airport_id", required=False, allow_null=True)
+    station = serializers.IntegerField(source="station_id", required=False, allow_null=True)
+    snapshot_address = serializers.CharField(read_only=True, allow_blank=True)
+    snapshot_metadata = serializers.DictField(read_only=True)
 
 
-class TripLegSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TripLeg
-        fields = ('id', 'departure_stop', 'arrival_stop', 'departure_time', 'arrival_time', 'transport_type', 'booking_reference', 'ticket_data')
+class TripLegSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    trip = serializers.CharField(source="trip_id", read_only=True)
+    departure_stop = serializers.CharField(source="departure_stop_id", read_only=True)
+    arrival_stop = serializers.CharField(source="arrival_stop_id", read_only=True)
+    departure_time = serializers.DateTimeField(required=False, allow_null=True)
+    arrival_time = serializers.DateTimeField(required=False, allow_null=True)
+    transport_type = serializers.ChoiceField(choices=TRANSPORT_CHOICES, required=False)
+    booking_reference = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    ticket_data = serializers.DictField(required=False)
 
 
-class TripSerializer(serializers.ModelSerializer):
-    stops = TripStopSerializer(many=True)
-    legs = TripLegSerializer(many=True, required=False)
-
-    class Meta:
-        model = Trip
-        fields = ('id', 'name', 'date', 'start_date', 'end_date', 'status', 'stops', 'legs')
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            stops_data = validated_data.pop('stops')
-            legs_data = validated_data.pop('legs', [])
-            trip = Trip.objects.create(**validated_data)
-            
-            for stop_data in stops_data:
-                people = stop_data.pop('people', [])
-                stop = TripStop.objects.create(trip=trip, **stop_data)
-                stop.people.set(people)
-                
-            trip.generate_legs()
-        return trip
-
-    def update(self, instance, validated_data):
-        with transaction.atomic():
-            stops_data = validated_data.pop('stops', None)
-            legs_data = validated_data.pop('legs', None)
-            
-            for attr, value in validated_data.items():
-                setattr(instance, attr, value)
-            instance.save()
-            
-            if stops_data is not None:
-                instance.stops.all().delete()
-                for stop_data in stops_data:
-                    people = stop_data.pop('people', [])
-                    stop = TripStop.objects.create(trip=instance, **stop_data)
-                    stop.people.set(people)
-                
-                instance.generate_legs()
-                
-            if legs_data:
-                self._update_legs(instance, legs_data)
-                    
-        return instance
-
-    def _update_legs(self, trip, legs_data):
-        for leg_data in legs_data:
-            leg_id = leg_data.get('id')
-            if leg_id:
-                try:
-                    leg = TripLeg.objects.get(id=leg_id, trip=trip)
-                    for attr, value in leg_data.items():
-                        if attr != 'id':
-                            setattr(leg, attr, value)
-                    leg.save()
-                except TripLeg.DoesNotExist:
-                    pass
+class TripSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=255)
+    date = serializers.DateField()
+    start_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=STATUS_CHOICES, required=False)
+    user = serializers.CharField(source="owner_key", read_only=True)

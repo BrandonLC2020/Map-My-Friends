@@ -1,387 +1,141 @@
-import datetime
-from django.test import TestCase
+from django.test import SimpleTestCase
+
+from apps.common.testing import FirestoreTestMixin
+from apps.trips.repositories import DuplicateSequenceOrder, TripRepository
+
+TRIP_DATA = {
+    "name": "Summer trip",
+    "date": "2026-08-01",
+    "start_date": "2026-08-01",
+    "end_date": "2026-08-10",
+    "status": "DRAFT",
+}
+
+
+class TripRepositoryTests(FirestoreTestMixin, SimpleTestCase):
+    collections_to_purge = ["trips"]
+
+    def setUp(self):
+        super().setUp()
+        self.trips = TripRepository()
+
+    def test_create_assigns_string_id_and_owner(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.assertIsInstance(trip.id, str)
+        self.assertEqual(trip.owner_key, "owner-a")
+
+    def test_list_is_owner_scoped(self):
+        self.trips.create("owner-a", TRIP_DATA)
+        self.trips.create("owner-b", TRIP_DATA)
+        self.assertEqual(len(self.trips.list_for_owner("owner-a")), 1)
+
+    def test_get_for_wrong_owner_returns_none(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.assertIsNone(self.trips.get_for_owner(trip.id, "owner-b"))
+
+    def test_dates_default_from_legacy_date_field(self):
+        trip = self.trips.create("owner-a", {"name": "T", "date": "2026-09-01", "status": "DRAFT"})
+        self.assertEqual(trip.start_date, "2026-09-01")
+        self.assertEqual(trip.end_date, "2026-09-01")
+
+    def test_add_stop_persists(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        stop = self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        )
+        self.assertEqual(stop.sequence_order, 1)
+
+    def test_duplicate_sequence_order_rejected(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        with self.assertRaises(DuplicateSequenceOrder):
+            self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 3.0, "lng": 4.0})
+
+    def test_add_stop_for_wrong_owner_returns_none(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.assertIsNone(
+            self.trips.add_stop(trip.id, "owner-b", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        )
+
+    def test_generate_legs_links_consecutive_stops(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0})
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 3, "lat": 5.0, "lng": 6.0})
+
+        legs = self.trips.generate_legs(trip.id, "owner-a")
+        self.assertEqual(len(legs), 2)
+
+    def test_generate_legs_is_idempotent(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0})
+
+        self.trips.generate_legs(trip.id, "owner-a")
+        legs = self.trips.generate_legs(trip.id, "owner-a")
+        self.assertEqual(len(legs), 1)
+
+    def test_snapshot_on_draft_to_booked(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.trips.add_stop(
+            trip.id,
+            "owner-a",
+            {"sequence_order": 1, "lat": 1.0, "lng": 2.0, "airport_id": 1},
+        )
+        self.trips.update(trip.id, "owner-a", {"status": "BOOKED"})
+
+        stops = self.trips.list_stops(trip.id, "owner-a")
+        self.assertTrue(stops[0].snapshot_address)
+        self.assertIn("hub", stops[0].snapshot_metadata)
+
+    def test_delete_removes_trip_and_children(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        self.assertTrue(self.trips.delete(trip.id, "owner-a"))
+        self.assertIsNone(self.trips.get_for_owner(trip.id, "owner-a"))
+
+    def test_delete_by_wrong_owner_refused(self):
+        trip = self.trips.create("owner-a", TRIP_DATA)
+        self.assertFalse(self.trips.delete(trip.id, "owner-b"))
+
+
 from django.contrib.auth.models import User
-from django.contrib.gis.geos import Point
-from apps.people.models import Person
-from .models import Trip, TripStop, TripLeg
-from .serializers import TripSerializer
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
 
-class TripModelTests(TestCase):
+class TripEndpointTests(FirestoreTestMixin, APITestCase):
+    collections_to_purge = ["trips"]
+
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pw')
-        self.person = Person.objects.create(
-            tag='FRIEND',
-            first_name='Jane',
-            last_name='Doe',
-            city='Chicago',
-            state='IL',
-            country='US',
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-
-    def test_trip_creation(self):
-        trip = Trip.objects.create(
-            name='Summer Road Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-        )
-        self.assertEqual(trip.name, 'Summer Road Trip')
-        self.assertEqual(trip.user, self.user)
-
-    def test_tripstop_ordering(self):
-        trip = Trip.objects.create(
-            name='Test Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-        )
-        stop2 = TripStop.objects.create(
-            trip=trip,
-            sequence_order=2,
-            location=Point(-73.9857, 40.7484, srid=4326),
-        )
-        stop2.people.set([self.person])
-        stop1 = TripStop.objects.create(
-            trip=trip,
-            sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        stop1.people.set([self.person])
-        stops = list(trip.stops.all())
-        self.assertEqual(stops[0].sequence_order, 1)
-        self.assertEqual(stops[1].sequence_order, 2)
-
-    def test_tripstop_cascade_delete(self):
-        trip = Trip.objects.create(
-            name='Test Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-        )
-        stop = TripStop.objects.create(
-            trip=trip,
-            sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        stop.people.set([self.person])
-        trip_id = trip.id
-        trip.delete()
-        self.assertFalse(TripStop.objects.filter(trip_id=trip_id).exists())
-
-    def test_trip_snapshotting_on_status_change(self):
-        trip = Trip.objects.create(
-            name='Snapshot Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-            status=Trip.Status.DRAFT,
-        )
-        stop = TripStop.objects.create(
-            trip=trip,
-            sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        stop.people.set([self.person])
-        
-        # Initially snapshots should be empty
-        self.assertEqual(stop.snapshot_address, '')
-        self.assertEqual(stop.snapshot_metadata, {})
-
-        # Transition to BOOKED
-        trip.status = Trip.Status.BOOKED
-        trip.save()
-
-        stop.refresh_from_db()
-        self.assertIn('Jane Doe', stop.snapshot_address)
-        self.assertIn('Chicago', stop.snapshot_address)
-        self.assertEqual(stop.snapshot_metadata['people'][0]['name'], 'Jane Doe')
-
-    def test_trip_snapshot_remains_frozen(self):
-        trip = Trip.objects.create(
-            name='Frozen Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-            status=Trip.Status.DRAFT,
-        )
-        stop = TripStop.objects.create(
-            trip=trip,
-            sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        stop.people.set([self.person])
-
-        # Transition to BOOKED to trigger snapshot
-        trip.status = Trip.Status.BOOKED
-        trip.save()
-        
-        stop.refresh_from_db()
-        original_address = stop.snapshot_address
-        original_name = stop.snapshot_metadata['people'][0]['name']
-
-        # Modify Person
-        self.person.first_name = 'Janet'
-        self.person.city = 'New York'
-        self.person.save()
-
-        # Re-verify snapshot hasn't changed
-        stop.refresh_from_db()
-        self.assertEqual(stop.snapshot_address, original_address)
-        self.assertEqual(stop.snapshot_metadata['people'][0]['name'], original_name)
-        self.assertIn('Jane Doe', stop.snapshot_address)
-        self.assertIn('Chicago', stop.snapshot_address)
-
-    def test_trip_date_sync(self):
-        """Test that start_date and end_date sync with date on save if not set."""
-        trip = Trip.objects.create(
-            name='Sync Trip',
-            date=datetime.date(2026, 12, 25),
-            user=self.user
-        )
-        self.assertEqual(trip.start_date, datetime.date(2026, 12, 25))
-        self.assertEqual(trip.end_date, datetime.date(2026, 12, 25))
-
-    def test_tripstop_hub_snapshot(self):
-        """Test snapshotting with an airport as a hub."""
-        from apps.airports import reference as airport_reference
-        airport = airport_reference.all_airports()[0]
-        trip = Trip.objects.create(
-            name='Hub Trip',
-            date=datetime.date(2026, 7, 4),
-            user=self.user,
-            status=Trip.Status.DRAFT
-        )
-        stop = TripStop.objects.create(
-            trip=trip,
-            sequence_order=1,
-            location=Point(0, 0, srid=4326),
-            airport=airport.id
-        )
-
-        # Transition to BOOKED
-        trip.status = Trip.Status.BOOKED
-        trip.save()
-
-        stop.refresh_from_db()
-        self.assertIn(airport.name, stop.snapshot_address)
-        self.assertIn(airport.iata_code, stop.snapshot_address)
-        self.assertEqual(stop.snapshot_metadata['hub']['name'], airport.name)
-        self.assertEqual(stop.snapshot_metadata['hub']['code'], airport.iata_code)
-        self.assertEqual(stop.snapshot_metadata['hub']['type'], 'AIRPORT')
-
-
-class TripSerializerTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='seruser', password='pw')
-        self.person = Person.objects.create(
-            tag='FRIEND',
-            first_name='Alice',
-            last_name='Smith',
-            city='New York',
-            state='NY',
-            country='US',
-            location=Point(-73.9857, 40.7484, srid=4326),
-        )
-
-    def test_serializer_includes_stops_in_order(self):
-        trip = Trip.objects.create(
-            name='My Trip',
-            date=datetime.date(2026, 8, 1),
-            user=self.user,
-        )
-        s2 = TripStop.objects.create(
-            trip=trip, sequence_order=2,
-            location=Point(-73.9857, 40.7484, srid=4326),
-        )
-        s2.people.set([self.person])
-        s1 = TripStop.objects.create(
-            trip=trip, sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        s1.people.set([self.person])
-        serializer = TripSerializer(trip)
-        data = serializer.data
-        self.assertEqual(data['name'], 'My Trip')
-        self.assertEqual(len(data['stops']), 2)
-        self.assertEqual(data['stops'][0]['sequence_order'], 1)
-        self.assertEqual(data['stops'][1]['sequence_order'], 2)
-
-    def test_serializer_write_creates_stops(self):
-        data = {
-            'name': 'New Trip',
-            'date': '2026-09-01',
-            'stops': [
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 1,
-                    'location': {'type': 'Point', 'coordinates': [-87.6298, 41.8781]},
-                },
-            ],
-        }
-        serializer = TripSerializer(data=data)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-        trip = serializer.save(user=self.user)
-        self.assertEqual(trip.stops.count(), 1)
-        self.assertEqual(trip.stops.first().sequence_order, 1)
-
-    def test_serializer_update_replaces_stops(self):
-        trip = Trip.objects.create(
-            name='Old Trip',
-            date=datetime.date(2026, 8, 1),
-            user=self.user,
-        )
-        s = TripStop.objects.create(
-            trip=trip, sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        s.people.set([self.person])
-        data = {
-            'name': 'Updated Trip',
-            'date': '2026-09-15',
-            'stops': [
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 1,
-                    'location': {'type': 'Point', 'coordinates': [-73.9857, 40.7484]},
-                },
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 2,
-                    'location': {'type': 'Point', 'coordinates': [-87.6298, 41.8781]},
-                },
-            ],
-        }
-        serializer = TripSerializer(trip, data=data)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-        updated = serializer.save()
-        self.assertEqual(updated.name, 'Updated Trip')
-        self.assertEqual(updated.stops.count(), 2)
-
-    def test_serializer_update_handles_sequence_order_overlap(self):
-        trip = Trip.objects.create(
-            name='Overlap Trip',
-            date=datetime.date(2026, 8, 1),
-            user=self.user,
-        )
-        s1 = TripStop.objects.create(
-            trip=trip, sequence_order=1,
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
-        s1.people.set([self.person])
-        s2 = TripStop.objects.create(
-            trip=trip, sequence_order=2,
-            location=Point(-73.9857, 40.7484, srid=4326),
-        )
-        s2.people.set([self.person])
-        # Update with stops where sequence_order 2 overlaps with old stop 2 but is a different stop
-        data = {
-            'name': 'Overlap Trip',
-            'date': '2026-08-01',
-            'stops': [
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 2,
-                    'location': {'type': 'Point', 'coordinates': [-87.6298, 41.8781]},
-                },
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 3,
-                    'location': {'type': 'Point', 'coordinates': [-73.9857, 40.7484]},
-                },
-            ],
-        }
-        serializer = TripSerializer(trip, data=data)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-        updated = serializer.save()
-        self.assertEqual(updated.stops.count(), 2)
-        orders = list(updated.stops.values_list('sequence_order', flat=True))
-        self.assertEqual(orders, [2, 3])
-
-
-class TripLegTests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username='leguser', password='pw')
+        super().setUp()
+        self.user = User.objects.create_user(username="owner-a", password="pw12345!")
+        self.other = User.objects.create_user(username="owner-b", password="pw12345!")
         self.client.force_authenticate(user=self.user)
-        self.person = Person.objects.create(
-            tag='FRIEND',
-            first_name='Charlie',
-            last_name='Brown',
-            city='Chicago',
-            state='IL',
-            country='US',
-            location=Point(-87.6298, 41.8781, srid=4326),
-        )
 
-    def test_legs_auto_created_on_trip_create(self):
-        payload = {
-            'name': 'Leggy Trip',
-            'date': '2026-08-15',
-            'stops': [
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 1,
-                    'location': {'type': 'Point', 'coordinates': [-87.6298, 41.8781]},
-                },
-                {
-                    'people': [self.person.id],
-                    'sequence_order': 2,
-                    'location': {'type': 'Point', 'coordinates': [-73.9857, 40.7484]},
-                },
-            ],
-        }
-        response = self.client.post('/api/trips/', payload, format='json')
-        self.assertEqual(response.status_code, 201)
-        trip_id = response.data['id']
-        trip = Trip.objects.get(id=trip_id)
-        self.assertEqual(trip.legs.count(), 1)
-        leg = trip.legs.first()
-        self.assertEqual(leg.departure_stop.sequence_order, 1)
-        self.assertEqual(leg.arrival_stop.sequence_order, 2)
+    def test_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get("/api/trips/").status_code, 401)
 
-    def test_update_leg_details(self):
-        trip = Trip.objects.create(name='Leg Trip', date='2026-07-01', user=self.user)
-        s1 = TripStop.objects.create(trip=trip, sequence_order=1, location=Point(0, 0))
-        s2 = TripStop.objects.create(trip=trip, sequence_order=2, location=Point(1, 1))
-        leg = TripLeg.objects.create(trip=trip, departure_stop=s1, arrival_stop=s2)
-        
-        payload = {
-            'transport_type': 'FLIGHT',
-            'booking_reference': 'ABC123',
-            'ticket_data': {'seat': '12A'}
-        }
-        response = self.client.patch(f'/api/trips/legs/{leg.id}/', payload, format='json')
-        self.assertEqual(response.status_code, 200)
-        leg.refresh_from_db()
-        self.assertEqual(leg.transport_type, 'FLIGHT')
-        self.assertEqual(leg.booking_reference, 'ABC123')
-        self.assertEqual(leg.ticket_data['seat'], '12A')
+    def test_create_and_list(self):
+        created = self.client.post("/api/trips/", TRIP_DATA, format="json")
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(len(self.client.get("/api/trips/").data), 1)
 
-    def test_legs_regenerated_on_stop_reorder(self):
-        trip = Trip.objects.create(name='Reorder Trip', date='2026-07-01', user=self.user)
-        s1 = TripStop.objects.create(trip=trip, sequence_order=1, location=Point(0, 0))
-        s2 = TripStop.objects.create(trip=trip, sequence_order=2, location=Point(1, 1))
-        
-        # Initially 1 leg
-        self.assertEqual(TripLeg.objects.filter(trip=trip).count(), 1)
-        
-        # Update stops (reorder and add one)
-        payload = {
-            'name': 'Reorder Trip',
-            'date': '2026-07-01',
-            'stops': [
-                {
-                    'sequence_order': 1,
-                    'location': {'type': 'Point', 'coordinates': [0, 0]},
-                },
-                {
-                    'sequence_order': 2,
-                    'location': {'type': 'Point', 'coordinates': [2, 2]},
-                },
-                {
-                    'sequence_order': 3,
-                    'location': {'type': 'Point', 'coordinates': [1, 1]},
-                },
-            ],
-        }
-        response = self.client.put(f'/api/trips/{trip.id}/', payload, format='json')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(TripLeg.objects.filter(trip=trip).count(), 2)
+    def test_trip_data_isolation(self):
+        self.client.post("/api/trips/", TRIP_DATA, format="json")
+        self.client.force_authenticate(user=self.other)
+        self.assertEqual(len(self.client.get("/api/trips/").data), 0)
+
+    def test_cannot_retrieve_another_owners_trip(self):
+        created = self.client.post("/api/trips/", TRIP_DATA, format="json")
+        self.client.force_authenticate(user=self.other)
+        response = self.client.get(f"/api/trips/{created.data['id']}/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_duplicate_sequence_order_returns_400(self):
+        created = self.client.post("/api/trips/", TRIP_DATA, format="json")
+        trip_id = created.data["id"]
+        stop = {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
+        second = self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
+        self.assertEqual(second.status_code, 400)

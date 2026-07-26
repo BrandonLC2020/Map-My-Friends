@@ -1,26 +1,85 @@
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Trip, TripLeg
-from .serializers import TripSerializer, TripLegSerializer
+from apps.common.ownership import owner_key_for
+
+from .repositories import DuplicateSequenceOrder, TripRepository
+from .serializers import TripLegSerializer, TripSerializer, TripStopSerializer
 from .services import OSRMService, RoutingError, TransportLookupService
 
 
-class TripViewSet(viewsets.ModelViewSet):
-    serializer_class = TripSerializer
+class TripViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Trip.objects.filter(user=self.request.user).prefetch_related('stops', 'legs')
+    @property
+    def repository(self):
+        return TripRepository()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def list(self, request):
+        trips = self.repository.list_for_owner(owner_key_for(request))
+        return Response(TripSerializer(trips, many=True).data)
+
+    def retrieve(self, request, pk=None):
+        trip = self.repository.get_for_owner(pk, owner_key_for(request))
+        if trip is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(TripSerializer(trip).data)
+
+    def create(self, request):
+        serializer = TripSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = {
+            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            for k, v in serializer.validated_data.items()
+        }
+        trip = self.repository.create(owner_key_for(request), payload)
+        return Response(TripSerializer(trip).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, pk=None):
+        return self._write_update(request, pk, partial=False)
+
+    def partial_update(self, request, pk=None):
+        return self._write_update(request, pk, partial=True)
+
+    def _write_update(self, request, pk, partial):
+        serializer = TripSerializer(data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        payload = {
+            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            for k, v in serializer.validated_data.items()
+        }
+        trip = self.repository.update(pk, owner_key_for(request), payload)
+        if trip is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(TripSerializer(trip).data)
+
+    def destroy(self, request, pk=None):
+        if not self.repository.delete(pk, owner_key_for(request)):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get', 'post'], url_path='stops')
+    def stops(self, request, pk=None):
+        owner_key = owner_key_for(request)
+        if request.method == 'GET':
+            return Response(
+                TripStopSerializer(self.repository.list_stops(pk, owner_key), many=True).data
+            )
+
+        serializer = TripStopSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            stop = self.repository.add_stop(pk, owner_key, dict(serializer.validated_data))
+        except DuplicateSequenceOrder as exc:
+            return Response({'sequence_order': [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
+        if stop is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(TripStopSerializer(stop).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'])
     def calculate_route(self, request):
-        # ... (existing code)
         coordinates = request.data.get('coordinates')
 
         if not coordinates or not isinstance(coordinates, list):
@@ -52,35 +111,78 @@ class TripViewSet(viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=e.status_code)
 
 
-class TripLegViewSet(viewsets.ModelViewSet):
-    serializer_class = TripLegSerializer
+class TripLegViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return TripLeg.objects.filter(trip__user=self.request.user)
+    @property
+    def repository(self):
+        return TripRepository()
+
+    def list(self, request):
+        owner_key = owner_key_for(request)
+        legs = []
+        for trip in self.repository.list_for_owner(owner_key):
+            legs.extend(self.repository.list_legs(trip.id, owner_key))
+        return Response(TripLegSerializer(legs, many=True).data)
+
+    def _find_leg(self, leg_id, owner_key):
+        for trip in self.repository.list_for_owner(owner_key):
+            for leg in self.repository.list_legs(trip.id, owner_key):
+                if leg.id == leg_id:
+                    return leg
+        return None
+
+    def retrieve(self, request, pk=None):
+        leg = self._find_leg(pk, owner_key_for(request))
+        if leg is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(TripLegSerializer(leg).data)
+
+    def partial_update(self, request, pk=None):
+        owner_key = owner_key_for(request)
+        leg = self._find_leg(pk, owner_key)
+        if leg is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TripLegSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        payload = {
+            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            for k, v in serializer.validated_data.items()
+        }
+        updated = self.repository.update_leg(leg.trip_id, pk, owner_key, payload)
+        return Response(TripLegSerializer(updated).data)
 
     @action(detail=True, methods=['post'])
     def smart_lookup(self, request, pk=None):
-        leg = self.get_object()
+        owner_key = owner_key_for(request)
+        leg = self._find_leg(pk, owner_key)
+        if leg is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         identifier = request.data.get('identifier', leg.booking_reference)
-        
         if not identifier:
             return Response({'error': 'Missing identifier'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         data = {}
         if leg.transport_type == 'FLIGHT':
             data = TransportLookupService.lookup_flight(identifier)
         elif leg.transport_type == 'TRAIN':
             data = TransportLookupService.lookup_train(identifier)
-            
+
         if data:
-            leg.ticket_data.update(data)
-            # Auto-fill times if available
+            ticket_data = dict(leg.ticket_data)
+            ticket_data.update(data)
+            payload = {'ticket_data': ticket_data}
             if 'departure' in data and 'time' in data['departure']:
-                leg.departure_time = data['departure']['time']
+                payload['departure_time'] = data['departure']['time']
             if 'arrival' in data and 'time' in data['arrival']:
-                leg.arrival_time = data['arrival']['time']
-            leg.save()
-            return Response(TripLegSerializer(leg).data)
-            
-        return Response({'message': 'No data found for this identifier'}, status=status.HTTP_404_NOT_FOUND)
+                payload['arrival_time'] = data['arrival']['time']
+
+            updated = self.repository.update_leg(leg.trip_id, pk, owner_key, payload)
+            return Response(TripLegSerializer(updated).data)
+
+        return Response(
+            {'message': 'No data found for this identifier'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
