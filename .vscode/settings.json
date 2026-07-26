@@ -6,5 +6,6 @@
     ],
     "python.terminal.activateEnvInCurrentTerminal": true,
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.importFormat": "absolute"
+    "python.analysis.importFormat": "absolute",
+    "cmake.ignoreCMakeListsMissing": true
 }
