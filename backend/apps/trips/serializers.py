@@ -62,15 +62,22 @@ class TripStopSerializer(serializers.Serializer):
 
     def to_internal_value(self, data):
         ret = super().to_internal_value(data)
-        # PointField returns {'lat': ..., 'lng': ...}; flatten it so the
-        # repository receives the field names it stores.
+        # DRF propagates root.partial into nested serializers, so on PATCH the
+        # required=True on `location` is skipped. A stop persisted without
+        # coordinates comes back as location: null, and TripStop.fromJson
+        # dereferences it unguarded — one bad stop breaks the whole Trips tab.
         location = ret.pop("location", None)
-        if location:
-            ret.update(location)
+        if not location:
+            raise serializers.ValidationError(
+                {"location": ["This field is required."]}
+            )
+        ret.update(location)
         return ret
 
 
 class TripLegSerializer(serializers.Serializer):
+    # Writable so update payloads can address a leg by id, but stripped before
+    # the write so it never lands in the document (the doc id is the id).
     id = serializers.CharField(required=False, allow_null=True)
     trip = serializers.CharField(source="trip_id", read_only=True)
     departure_stop = serializers.CharField(source="departure_stop_id", read_only=True)

@@ -79,7 +79,7 @@ class TripViewSet(viewsets.ViewSet):
                 leg_payload = {
                     k: (v.isoformat() if hasattr(v, 'isoformat') else v)
                     for k, v in leg.items()
-                    if k != 'id'
+                    if k not in ('id', 'trip_id', 'departure_stop_id', 'arrival_stop_id')
                 }
                 if leg_payload:
                     self.repository.update_leg(pk, leg_id, owner_key, leg_payload)

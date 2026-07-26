@@ -261,15 +261,22 @@ class TripRepository:
             return False
 
         stops_ref = trip_ref.collection(STOPS)
+
+        # One batch, so a failure mid-way cannot leave the trip with its old
+        # stops deleted and the new ones unwritten. The old code had this via
+        # transaction.atomic(); issuing the deletes and sets as independent
+        # writes would strand the trip with zero stops on any error.
+        batch = fs.get_client().batch()
         for doc in stops_ref.stream():
-            doc.reference.delete()
-        # Legs reference stop IDs that no longer exist, so they go too;
+            batch.delete(doc.reference)
+        # Legs reference stop IDs that are about to disappear, so they go too;
         # generate_legs rebuilds them from the new stops.
         for doc in trip_ref.collection(LEGS).stream():
-            doc.reference.delete()
+            batch.delete(doc.reference)
 
         for index, data in enumerate(stops_data):
-            stops_ref.document().set(
+            batch.set(
+                stops_ref.document(),
                 {
                     "sequence_order": int(data.get("sequence_order", index)),
                     "lat": data.get("lat"),
@@ -279,8 +286,9 @@ class TripRepository:
                     "station_id": data.get("station_id"),
                     "snapshot_address": data.get("snapshot_address", ""),
                     "snapshot_metadata": data.get("snapshot_metadata", {}),
-                }
+                },
             )
+        batch.commit()
 
         self.generate_legs(trip_id, owner_key)
         return True

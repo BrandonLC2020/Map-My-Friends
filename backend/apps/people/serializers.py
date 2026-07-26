@@ -31,7 +31,14 @@ class PersonSerializer(GeoFeatureSerializer):
     state = serializers.CharField(max_length=100, required=False, allow_blank=True)
     country = serializers.CharField(max_length=100, required=False, allow_blank=True)
     street = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
-    birthday = serializers.DateField(required=False, allow_null=True)
+    # Dart's DateTime.toIso8601String() yields "1990-01-02T00:00:00.000",
+    # which DRF's default DateField input_formats reject (400). Accept the
+    # datetime forms the client actually sends alongside plain dates.
+    birthday = serializers.DateField(
+        required=False,
+        allow_null=True,
+        input_formats=['iso-8601', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S'],
+    )
     phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     profile_image = serializers.SerializerMethodField()
     lat = serializers.FloatField(read_only=True)

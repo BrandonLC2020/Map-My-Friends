@@ -79,6 +79,19 @@ class PersonEndpointTests(FirestoreTestMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["properties"]["birthday"], "1990-01-02")
 
+    def test_birthday_accepts_dart_iso_datetime(self, _geocode):
+        # Dart's DateTime.toIso8601String() sends "1990-01-02T00:00:00.000",
+        # which DRF's default DateField input_formats reject with a 400 —
+        # failing the whole person save, not just the birthday field.
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/people/",
+            {**PERSON_PAYLOAD, "birthday": "1990-01-02T00:00:00.000"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["properties"]["birthday"], "1990-01-02")
+
     def test_recency_fields_hidden_from_anonymous(self, _geocode):
         self.client.force_authenticate(user=self.user)
         self.client.post("/api/people/", PERSON_PAYLOAD, format="json")

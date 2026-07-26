@@ -135,10 +135,19 @@ class TripEndpointTests(FirestoreTestMixin, APITestCase):
     def test_duplicate_sequence_order_returns_400(self):
         created = self.client.post("/api/trips/", TRIP_DATA, format="json")
         trip_id = created.data["id"]
-        stop = {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
-        self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
+        # `location` is required, so the payload must carry it — otherwise both
+        # posts 400 on validation and never reach the DuplicateSequenceOrder
+        # handler, making this assertion vacuous.
+        stop = {
+            "sequence_order": 1,
+            "location": {"type": "Point", "coordinates": [2.0, 1.0]},
+        }
+        first = self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
+        self.assertEqual(first.status_code, 201)
+
         second = self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
         self.assertEqual(second.status_code, 400)
+        self.assertIn("sequence_order", second.data)
 
 
 class TripNestedContractTests(FirestoreTestMixin, APITestCase):
