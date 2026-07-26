@@ -198,3 +198,6 @@ PRODUCT.md
 DESIGN.md
 frontend/.impeccable/
 frontend/test/screens/map/failures/
+
+# Flutter golden-test failure output
+**/test/**/failures/

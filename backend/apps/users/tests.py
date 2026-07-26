@@ -56,3 +56,43 @@ class UserProfileEndpointTests(FirestoreTestMixin, APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["city"], "Chicago")
+
+
+class ProfileNameWriteTests(FirestoreTestMixin, APITestCase):
+    """first_name/last_name live on the Django User, not the Firestore doc.
+
+    The Flutter client sends a name-only PATCH body when only the name is
+    edited, which previously filtered to an empty Firestore update and 500'd.
+    """
+
+    collections_to_purge = ["user_profiles"]
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(
+            username="owner-a", password="pw12345!", first_name="Old", last_name="Name"
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_name_only_patch_succeeds_and_persists(self):
+        response = self.client.patch(
+            "/api/user/profile/",
+            {"first_name": "New", "last_name": "Person"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["first_name"], "New")
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "New")
+        self.assertEqual(self.user.last_name, "Person")
+
+    def test_name_and_profile_field_together(self):
+        response = self.client.patch(
+            "/api/user/profile/",
+            {"first_name": "Both", "city": "Chicago"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["first_name"], "Both")
+        self.assertEqual(response.data["city"], "Chicago")

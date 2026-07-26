@@ -61,5 +61,8 @@ class UserProfileRepository:
         self.get_or_create(owner_key)
         payload = {k: v for k, v in data.items() if k in _EDITABLE}
         ref = self._document(owner_key)
-        ref.update(payload)
+        # Firestore raises "Cannot update with an empty document" rather than
+        # no-opping, and a PATCH carrying only non-profile fields filters to {}.
+        if payload:
+            ref.update(payload)
         return self._hydrate(owner_key, ref.get().to_dict() or {})

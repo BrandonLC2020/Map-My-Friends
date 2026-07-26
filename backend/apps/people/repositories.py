@@ -227,7 +227,10 @@ class ContactLogRepository:
         payload = {
             k: v for k, v in data.items() if k in {"channel", "contacted_at", "note"}
         }
-        ref.update(payload)
+        # Firestore raises "Cannot update with an empty document" rather than
+        # no-opping, and a PATCH with none of these fields filters to {}.
+        if payload:
+            ref.update(payload)
         return self._hydrate(ref.get(), existing.person_id)
 
     def delete(self, log_id: str, owner_key: str | None) -> bool:

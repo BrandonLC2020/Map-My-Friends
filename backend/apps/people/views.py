@@ -52,7 +52,7 @@ class PersonViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = PersonSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        payload = dict(serializer.validated_data)
+        payload = self._serialize_dates(dict(serializer.validated_data))
         payload = self._apply_geocoding(payload)
         payload = self._apply_upload(request, payload)
 
@@ -73,7 +73,7 @@ class PersonViewSet(viewsets.ViewSet):
             data=request.data, partial=partial, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        payload = dict(serializer.validated_data)
+        payload = self._serialize_dates(dict(serializer.validated_data))
         if any(k in payload for k in ('city', 'state', 'country', 'street')):
             payload = self._apply_geocoding(payload)
         payload = self._apply_upload(request, payload)
@@ -87,6 +87,19 @@ class PersonViewSet(viewsets.ViewSet):
         if not self.repository.delete(pk, owner_key_for(request)):
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def _serialize_dates(payload):
+        """Firestore rejects datetime.date, so dates go in as ISO strings.
+
+        DRF's DateField hands back a date object; writing it raises
+        "Cannot convert to a Firestore Value". trips/ and users/ views do the
+        same conversion.
+        """
+        return {
+            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            for k, v in payload.items()
+        }
 
     def _apply_geocoding(self, payload):
         lat, lng, timezone = geocode_address(

@@ -47,6 +47,21 @@ class UserProfileView(APIView):
         if birth_date is not None:
             payload['birth_date'] = birth_date.isoformat()
 
+        # first_name/last_name belong to the Django User, not the Firestore
+        # profile document. The old ModelSerializer.update() wrote them back
+        # via source='user.*'; with a plain Serializer that has to be explicit,
+        # or name-only edits silently no-op (and used to 500 on an empty
+        # Firestore update).
+        user_fields = {
+            field: payload.pop(field)
+            for field in ('first_name', 'last_name')
+            if field in payload
+        }
+        if user_fields:
+            for field, value in user_fields.items():
+                setattr(request.user, field, value)
+            request.user.save(update_fields=list(user_fields))
+
         uploaded = request.FILES.get('profile_image')
         if uploaded is not None:
             from apps.common.storage import save_upload

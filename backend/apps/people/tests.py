@@ -67,6 +67,18 @@ class PersonEndpointTests(FirestoreTestMixin, APITestCase):
         response = self.client.delete(f"/api/people/{created.data['id']}/")
         self.assertEqual(response.status_code, 404)
 
+    def test_birthday_is_accepted(self, _geocode):
+        # DRF hands back a datetime.date, which Firestore cannot encode; it
+        # must be converted to an ISO string before the write.
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/people/",
+            {**PERSON_PAYLOAD, "birthday": "1990-01-02"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["properties"]["birthday"], "1990-01-02")
+
     def test_recency_fields_hidden_from_anonymous(self, _geocode):
         self.client.force_authenticate(user=self.user)
         self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
