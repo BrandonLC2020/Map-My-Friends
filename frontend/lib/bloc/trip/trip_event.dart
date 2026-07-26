@@ -96,7 +96,7 @@ class LoadTrip extends TripEvent {
 }
 
 class DeleteTrip extends TripEvent {
-  final int tripId;
+  final String tripId;
   const DeleteTrip(this.tripId);
   @override
   List<Object?> get props => [tripId];

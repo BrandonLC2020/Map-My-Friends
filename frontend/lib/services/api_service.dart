@@ -265,7 +265,7 @@ class ApiService {
     }
   }
 
-  Future<void> deleteTrip(int id) async {
+  Future<void> deleteTrip(String id) async {
     try {
       final response = await _dio.delete('trips/$id/');
       if (response.statusCode != 204) {

@@ -10,7 +10,7 @@ class TripState extends Equatable {
   final List<Trip> userTrips;
   final bool isLoading;
   final String? error;
-  final int? currentTripId;
+  final String? currentTripId;
 
   const TripState({
     this.stops = const [],
@@ -31,7 +31,7 @@ class TripState extends Equatable {
     List<Trip>? userTrips,
     bool? isLoading,
     String? error,
-    int? currentTripId,
+    String? currentTripId,
     bool clearError = false,
     bool clearCurrentTripId = false,
   }) {

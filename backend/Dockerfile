@@ -2,17 +2,13 @@
 FROM python:3.14-slim
 
 # 1. Install System Dependencies
-# - gdal-bin, libgdal-dev: REQUIRED for GeoDjango/PostGIS
-# - libpq-dev: Required for building database drivers
 # - build-essential, python3-dev: REQUIRED for Python 3.14 to compile missing wheels
 # - gettext: REQUIRED for Django makemessages
+# GDAL/PROJ/PostGIS packages were removed with the Firestore migration: static
+# geodata is now an in-memory index (apps/*/reference.py) and Django's own
+# tables live in SQLite, so neither GeoDjango nor libpq is needed. These were
+# the slowest layers in the image build.
 RUN apt-get update && apt-get install -y \
-    binutils \
-    libproj-dev \
-    gdal-bin \
-    libgdal-dev \
-    python3-gdal \
-    libpq-dev \
     build-essential \
     python3-dev \
     gettext \
@@ -21,9 +17,6 @@ RUN apt-get update && apt-get install -y \
 # 2. Set Environment Variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# Explicitly set C compiler flags for GDAL just in case
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
 
 # 3. Work Directory
 WORKDIR /app

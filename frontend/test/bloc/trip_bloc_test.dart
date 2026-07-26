@@ -95,7 +95,7 @@ void main() {
     blocTest<TripBloc, TripState>(
       'SaveTrip (new) calls apiService.createTrip and emits success',
       build: () {
-        final savedTrip = Trip(id: 123, name: 'Saved', date: DateTime.now(), stops: []);
+        final savedTrip = Trip(id: '123', name: 'Saved', date: DateTime.now(), stops: []);
         when(() => apiService.createTrip(any())).thenAnswer((_) async => savedTrip);
         when(() => apiService.getTrips()).thenAnswer((_) async => [savedTrip]);
         return tripBloc;
@@ -103,9 +103,9 @@ void main() {
       act: (bloc) => bloc.add(const SaveTrip(name: 'New Trip', status: TripStatus.draft)),
       expect: () => [
         const TripState(isLoading: true),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == 123),
-        predicate<TripState>((state) => state.isLoading && state.currentTripId == 123),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == 123 && state.userTrips.isNotEmpty),
+        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '123'),
+        predicate<TripState>((state) => state.isLoading && state.currentTripId == '123'),
+        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '123' && state.userTrips.isNotEmpty),
       ],
     );
 
@@ -113,14 +113,14 @@ void main() {
       'LoadTrip updates stops and fetches route',
       build: () => tripBloc,
       act: (bloc) {
-        final trip = Trip(id: 456, name: 'Existing', date: DateTime.now(), stops: [
+        final trip = Trip(id: '456', name: 'Existing', date: DateTime.now(), stops: [
           TripStop(location: const LatLng(1, 1), sequenceOrder: 0),
         ]);
         bloc.add(LoadTrip(trip));
       },
       expect: () => [
-        predicate<TripState>((state) => state.isLoading && state.currentTripId == 456),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == 456),
+        predicate<TripState>((state) => state.isLoading && state.currentTripId == '456'),
+        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '456'),
       ],
       verify: (_) {
         verify(() => routingService.getRoute(any())).called(1);

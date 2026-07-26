@@ -13,19 +13,21 @@ build:
 down:
 	docker compose down
 
+# Only Django's own apps (auth/admin/sessions/contenttypes) have migrations
+# now; application data lives in Firestore. makemigrations is intentionally
+# not run here.
 mig:
-	docker compose exec api python manage.py makemigrations
 	docker compose exec api python manage.py migrate
+
+seed:
+	docker compose exec api python manage.py seed
+
+fetch-data:
+	docker compose exec api python manage.py fetch_airports
+	docker compose exec api python manage.py fetch_stations
 
 user:
 	docker compose exec api python manage.py createsuperuser
-
-airports:
-	docker compose exec api python manage.py import_airports
-
-stations:
-	@read -p "JSON File Path (default: train_stations.json): " file_path; \
-	docker compose exec api python manage.py import_stations $${file_path:-train_stations.json}
 
 shell:
 	docker compose exec api python manage.py shell

@@ -19,7 +19,7 @@ void main() {
     when(() => mapSettingsCubit.close()).thenAnswer((_) => Future.value());
 
     final trip = Trip(
-      id: 1,
+      id: '1',
       name: 'Test Trip',
       date: DateTime.now(),
       status: TripStatus.booked,

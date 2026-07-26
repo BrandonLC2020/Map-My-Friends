@@ -49,17 +49,32 @@ jobs:
         run: |
           docker compose up -d --build
 
-      - name: Wait for PostgreSQL/PostGIS to be ready
+      # The Firestore emulator is a Java process and takes a little while to
+      # bind. Tests run against it rather than mocks, so it must be up first.
+      - name: Wait for the Firestore emulator to be ready
         run: |
-          docker compose exec -T db sh -c 'until pg_isready -U mapuser -d mapfriends_db; do echo "Waiting for database..."; sleep 1; done'
+          for i in $(seq 1 60); do
+            if docker compose exec -T api python -c "import socket,sys; s=socket.create_connection(('firestore',8080),2); s.close()" 2>/dev/null; then
+              echo "Firestore emulator is accepting connections."
+              exit 0
+            fi
+            echo "Waiting for the Firestore emulator... ($i/60)"
+            sleep 2
+          done
+          echo "Firestore emulator did not become ready in time." >&2
+          docker compose logs firestore
+          exit 1
 
+      # NOTE: do not use `poetry run` here. The anonymous /app/.venv volume in
+      # docker-compose.yml shadows the system install, so `poetry run python`
+      # fails with ImportError. Plain `python` works.
       - name: Run Migrations
         run: |
-          docker compose exec -T api poetry run python manage.py migrate
+          docker compose exec -T api python manage.py migrate
 
       - name: Run Django Tests
         run: |
-          docker compose exec -T api poetry run python manage.py test
+          docker compose exec -T api python manage.py test
 
       - name: Stop Docker Compose Services
         if: always()
