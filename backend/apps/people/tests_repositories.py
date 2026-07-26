@@ -138,3 +138,69 @@ class ContactLogRepositoryTests(FirestoreTestMixin, SimpleTestCase):
         person = self.people.get_for_owner(self.person_a.id, "owner-a")
         self.assertEqual(person.last_contact_channel, "VIDEO")
         self.assertTrue(person.last_contacted_at.startswith("2026-07-05"))
+
+
+class OwnershipReassignmentTests(FirestoreTestMixin, SimpleTestCase):
+    """owner_key must never be writable from caller-supplied data.
+
+    The serializer marks it read-only, but the repository is the security
+    boundary in its own right: a caller passing {"owner_key": ...} must not be
+    able to claim another owner's record or hand away their own.
+    """
+
+    collections_to_purge = ["people"]
+
+    def setUp(self):
+        super().setUp()
+        self.people = PersonRepository()
+
+    def test_create_ignores_owner_key_in_data(self):
+        person = self.people.create(
+            "owner-a", {**PERSON_DATA, "owner_key": "owner-b"}
+        )
+        self.assertEqual(person.owner_key, "owner-a")
+
+    def test_update_cannot_reassign_ownership(self):
+        person = self.people.create("owner-a", PERSON_DATA)
+        self.people.update(person.id, "owner-a", {"owner_key": "owner-b"})
+
+        # Still owned by owner-a, and never visible to owner-b.
+        self.assertEqual(self.people.get_for_owner(person.id, "owner-a").owner_key, "owner-a")
+        self.assertIsNone(self.people.get_for_owner(person.id, "owner-b"))
+
+    def test_update_cannot_make_record_public(self):
+        person = self.people.create("owner-a", PERSON_DATA)
+        self.people.update(person.id, "owner-a", {"owner_key": None})
+        self.assertEqual(self.people.list_for_owner(None), [])
+
+
+class ContactLogCrossOwnerTests(FirestoreTestMixin, SimpleTestCase):
+    """get/update/delete on logs must refuse another owner, not just create."""
+
+    collections_to_purge = ["people"]
+
+    def setUp(self):
+        super().setUp()
+        self.people = PersonRepository()
+        self.logs = ContactLogRepository()
+        self.person_a = self.people.create("owner-a", PERSON_DATA)
+        self.log_a = self.logs.create(
+            "owner-a",
+            self.person_a.id,
+            {"channel": "CALL", "contacted_at": "2026-07-01T12:00:00+00:00"},
+        )
+
+    def test_get_for_wrong_owner_returns_none(self):
+        self.assertIsNone(self.logs.get_for_owner(self.log_a.id, "owner-b"))
+
+    def test_update_by_wrong_owner_returns_none_and_does_not_write(self):
+        self.assertIsNone(
+            self.logs.update(self.log_a.id, "owner-b", {"channel": "VIDEO"})
+        )
+        self.assertEqual(
+            self.logs.get_for_owner(self.log_a.id, "owner-a").channel, "CALL"
+        )
+
+    def test_delete_by_wrong_owner_is_refused(self):
+        self.assertFalse(self.logs.delete(self.log_a.id, "owner-b"))
+        self.assertIsNotNone(self.logs.get_for_owner(self.log_a.id, "owner-a"))

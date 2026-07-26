@@ -1,116 +1,86 @@
 from rest_framework import serializers
-from django.contrib.gis.geos import Point
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from .models import Person, ContactLog
+
 from apps.airports import reference as airport_reference
-from apps.stations import reference as station_reference
 from apps.airports.serializers import AirportSerializer
+from apps.common.serializers import GeoFeatureSerializer
+from apps.stations import reference as station_reference
 from apps.stations.serializers import StationSerializer
 
-
-class ContactLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactLog
-        fields = (
-            'id',
-            'person',
-            'channel',
-            'contacted_at',
-            'note',
-            'created_at',
-        )
-        read_only_fields = ('created_at',)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            self.fields['person'].queryset = Person.objects.filter(owner=request.user)
+TAG_CHOICES = ["FRIEND", "FAMILY"]
+PIN_STYLE_CHOICES = ["teardrop", "circle", "square", "triangle", "diamond"]
+PIN_ICON_TYPE_CHOICES = ["none", "emoji", "initials", "picture"]
+CHANNEL_CHOICES = ["CALL", "VIDEO", "MESSAGE"]
 
 
-class PersonSerializer(GeoFeatureModelSerializer):
-    preferred_airport = serializers.IntegerField(allow_null=True, required=False)
-    preferred_station = serializers.IntegerField(allow_null=True, required=False)
+class ContactLogSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    person = serializers.CharField(source="person_id")
+    channel = serializers.ChoiceField(choices=CHANNEL_CHOICES)
+    contacted_at = serializers.DateTimeField()
+    note = serializers.CharField(max_length=280, required=False, allow_null=True, allow_blank=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+
+class PersonSerializer(GeoFeatureSerializer):
+    id = serializers.CharField(read_only=True)
+    owner = serializers.CharField(source="owner_key", read_only=True)
+    tag = serializers.ChoiceField(choices=TAG_CHOICES)
+    first_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    city = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    state = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    street = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+    birthday = serializers.DateField(required=False, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    profile_image = serializers.SerializerMethodField()
+    lat = serializers.FloatField(read_only=True)
+    lng = serializers.FloatField(read_only=True)
+    timezone = serializers.CharField(read_only=True, allow_null=True)
+    pin_color = serializers.CharField(max_length=20, required=False)
+    pin_style = serializers.ChoiceField(choices=PIN_STYLE_CHOICES, required=False)
+    pin_icon_type = serializers.ChoiceField(choices=PIN_ICON_TYPE_CHOICES, required=False)
+    pin_emoji = serializers.CharField(max_length=10, required=False, allow_null=True, allow_blank=True)
+    contact_cadence_days = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    preferred_airport = serializers.IntegerField(required=False, allow_null=True)
+    preferred_station = serializers.IntegerField(required=False, allow_null=True)
     preferred_airport_detail = serializers.SerializerMethodField()
     preferred_station_detail = serializers.SerializerMethodField()
+    last_contacted_at = serializers.CharField(read_only=True, allow_null=True)
+    last_contact_channel = serializers.CharField(read_only=True, allow_null=True)
 
-    # Recency summary powering the Keep-in-Touch roster. Read-only; derived
-    # from the person's most recent ContactLog so the client can color-code
-    # without fetching every log.
-    last_contacted_at = serializers.SerializerMethodField()
-    last_contact_channel = serializers.SerializerMethodField()
+    def get_profile_image(self, obj):
+        from apps.common.storage import upload_url
 
-    class Meta:
-        model = Person
-        geo_field = "location"
-        fields = (
-            'id',
-            'owner',
-            'first_name',
-            'last_name',
-            'tag',
-            'city',
-            'state',
-            'country',
-            'street',
-            'birthday',
-            'phone_number',
-            'profile_image',
-            'location',
-            'timezone',
-            'pin_color',
-            'pin_style',
-            'pin_icon_type',
-            'pin_emoji',
-            'contact_cadence_days',
-            'last_contacted_at',
-            'last_contact_channel',
-            'preferred_airport',
-            'preferred_station',
-            'preferred_airport_detail',
-            'preferred_station_detail',
-        )
-        read_only_fields = ('location', 'timezone', 'owner')
-
-    def _latest_log(self, obj):
-        # Reads from the prefetched `contact_logs` cache (see PersonViewSet's
-        # prefetch_related) so the roster loads without an N+1 query. The
-        # related manager's default ordering is '-contacted_at', so element 0
-        # is the most recent touchpoint.
-        if not hasattr(obj, '_cached_latest_log'):
-            logs = list(obj.contact_logs.all())
-            obj._cached_latest_log = logs[0] if logs else None
-        return obj._cached_latest_log
-
-    def get_last_contacted_at(self, obj):
-        log = self._latest_log(obj)
-        return log.contacted_at.isoformat() if log else None
-
-    def get_last_contact_channel(self, obj):
-        log = self._latest_log(obj)
-        return log.channel if log else None
+        return upload_url(getattr(obj, "profile_image", None), self.context.get("request"))
 
     def get_preferred_airport_detail(self, obj):
-        if obj.preferred_airport is None:
+        if not obj.preferred_airport:
             return None
         airport = airport_reference.get_by_id(obj.preferred_airport)
         return AirportSerializer(airport).data if airport else None
 
     def get_preferred_station_detail(self, obj):
-        if obj.preferred_station is None:
+        if not obj.preferred_station:
             return None
         station = station_reference.get_by_id(obj.preferred_station)
         return StationSerializer(station).data if station else None
 
+    def validate_preferred_airport(self, value):
+        if value is not None and airport_reference.get_by_id(value) is None:
+            raise serializers.ValidationError("Unknown airport id.")
+        return value
+
+    def validate_preferred_station(self, value):
+        if value is not None and station_reference.get_by_id(value) is None:
+            raise serializers.ValidationError("Unknown station id.")
+        return value
+
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        request = self.context.get('request')
-        is_authenticated = request and request.user and request.user.is_authenticated
+        request = self.context.get("request")
+        is_authenticated = bool(request and request.user and request.user.is_authenticated)
         if not is_authenticated:
-            if 'properties' in ret:
-                ret['properties'].pop('last_contacted_at', None)
-                ret['properties'].pop('last_contact_channel', None)
-            else:
-                ret.pop('last_contacted_at', None)
-                ret.pop('last_contact_channel', None)
+            ret["properties"].pop("last_contacted_at", None)
+            ret["properties"].pop("last_contact_channel", None)
         return ret

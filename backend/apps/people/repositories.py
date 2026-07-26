@@ -60,6 +60,13 @@ class ContactLogRecord:
 
 _PERSON_FIELDS = {f.name for f in fields(PersonRecord)} - {"id"}
 
+# owner_key is deliberately NOT writable from caller-supplied data. `create`
+# sets it from its own argument and `update` must never change it, or a caller
+# passing {"owner_key": "someone-else"} could hand their record to another
+# owner (or claim one). The serializer also marks it read-only, but ownership
+# is enforced here so the repository stays the security boundary on its own.
+_PERSON_WRITABLE_FIELDS = _PERSON_FIELDS - {"owner_key"}
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -103,7 +110,7 @@ class PersonRepository:
         return self._hydrate(doc)
 
     def create(self, owner_key: str | None, data: dict) -> PersonRecord:
-        payload = {k: v for k, v in data.items() if k in _PERSON_FIELDS}
+        payload = {k: v for k, v in data.items() if k in _PERSON_WRITABLE_FIELDS}
         payload["owner_key"] = owner_key
         payload["created_at"] = _now_iso()
         payload["updated_at"] = _now_iso()
@@ -118,7 +125,7 @@ class PersonRepository:
         if not doc.exists or (doc.to_dict() or {}).get("owner_key") != owner_key:
             return None
 
-        payload = {k: v for k, v in data.items() if k in _PERSON_FIELDS}
+        payload = {k: v for k, v in data.items() if k in _PERSON_WRITABLE_FIELDS}
         payload["updated_at"] = _now_iso()
         ref.update(payload)
         return self._hydrate(ref.get())
