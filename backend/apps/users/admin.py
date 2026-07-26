@@ -1,8 +1,3 @@
-from django.contrib import admin
-from .models import UserProfile
-
-
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'city', 'state', 'country')
-    search_fields = ('user__username', 'city', 'state', 'country')
+# UserProfile lives in Firestore, not the ORM. Django admin retains only the
+# built-in User and Group models until ClickUp 86bb3eu64 removes the need for
+# a relational identity table.
