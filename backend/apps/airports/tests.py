@@ -68,8 +68,8 @@ class NearestAirportsEndpointTests(APITestCase):
     def test_returns_geojson_features(self):
         response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=3")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 3)
-        feature = response.data[0]
+        self.assertEqual(len(response.data["features"]), 3)
+        feature = response.data["features"][0]
         self.assertEqual(feature["type"], "Feature")
         self.assertEqual(feature["geometry"]["type"], "Point")
         self.assertIn("iata_code", feature["properties"])
@@ -81,4 +81,4 @@ class NearestAirportsEndpointTests(APITestCase):
 
     def test_count_is_clamped_to_ten(self):
         response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=99")
-        self.assertEqual(len(response.data), 10)
+        self.assertEqual(len(response.data["features"]), 10)

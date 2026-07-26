@@ -43,8 +43,11 @@ class GeoFeatureSerializerTests(SimpleTestCase):
         data = ThingSerializer(_Thing("abc", "Somewhere", None, None)).data
         self.assertIsNone(data["geometry"])
 
-    def test_many_true_returns_list_of_features(self):
+    def test_many_true_returns_feature_collection(self):
         things = [_Thing("a", "A", 1.0, 2.0), _Thing("b", "B", 3.0, 4.0)]
         data = ThingSerializer(things, many=True).data
-        self.assertEqual(len(data), 2)
-        self.assertTrue(all(item["type"] == "Feature" for item in data))
+        # rest_framework_gis wrapped many=True in a FeatureCollection and the
+        # Flutter client reads data['features']; a bare list breaks it.
+        self.assertEqual(data["type"], "FeatureCollection")
+        self.assertEqual(len(data["features"]), 2)
+        self.assertTrue(all(f["type"] == "Feature" for f in data["features"]))

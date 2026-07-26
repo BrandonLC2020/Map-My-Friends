@@ -60,7 +60,7 @@ class NearestStationsEndpointTests(APITestCase):
     def test_returns_geojson_features(self):
         response = self.client.get("/api/stations/nearest/?lat=41.8781&lon=-87.6298&count=3")
         self.assertEqual(response.status_code, 200)
-        feature = response.data[0]
+        feature = response.data["features"][0]
         self.assertEqual(feature["type"], "Feature")
         self.assertIn("osm_id", feature["properties"])
 
@@ -69,7 +69,7 @@ class NearestStationsEndpointTests(APITestCase):
             "/api/stations/nearest/?lat=41.8781&lon=-87.6298&station_type=major_station"
         )
         self.assertEqual(response.status_code, 200)
-        for feature in response.data:
+        for feature in response.data["features"]:
             self.assertEqual(feature["properties"]["station_type"], "major_station")
 
     def test_missing_params_return_400(self):

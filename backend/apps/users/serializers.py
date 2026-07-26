@@ -4,6 +4,15 @@ from django.contrib.auth.password_validation import validate_password
 
 
 class UserProfileSerializer(serializers.Serializer):
+    # username/email/first_name/last_name live on the Django User, not on the
+    # Firestore profile document, so they are resolved from the request user.
+    # They were part of this endpoint's contract before the migration:
+    # frontend/lib/services/auth_service.dart sends first_name/last_name on
+    # update, and dropping them would silently stop name edits from saving.
+    username = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
     profile_image = serializers.SerializerMethodField()
     city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     state = serializers.CharField(max_length=100, required=False, allow_blank=True)
@@ -22,6 +31,28 @@ class UserProfileSerializer(serializers.Serializer):
         max_length=10, required=False, allow_null=True, allow_blank=True
     )
     distance_unit = serializers.ChoiceField(choices=["metric", "imperial"], required=False)
+
+    def _request_user(self):
+        request = self.context.get("request")
+        return getattr(request, "user", None)
+
+    def get_username(self, obj):
+        user = self._request_user()
+        return user.username if user and user.is_authenticated else None
+
+    def get_email(self, obj):
+        user = self._request_user()
+        return user.email if user and user.is_authenticated else None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        user = self._request_user()
+        # first_name/last_name are declared writable, so they are not
+        # SerializerMethodFields; fill them from the User on the way out.
+        if user and user.is_authenticated:
+            ret["first_name"] = user.first_name
+            ret["last_name"] = user.last_name
+        return ret
 
     def get_profile_image(self, obj):
         from apps.common.storage import upload_url

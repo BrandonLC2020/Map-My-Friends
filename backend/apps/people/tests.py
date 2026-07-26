@@ -49,7 +49,7 @@ class PersonEndpointTests(FirestoreTestMixin, APITestCase):
 
         self.client.force_authenticate(user=self.other)
         response = self.client.get("/api/people/")
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data["features"]), 0)
 
     def test_cannot_retrieve_another_owners_person(self, _geocode):
         self.client.force_authenticate(user=self.user)
@@ -73,7 +73,7 @@ class PersonEndpointTests(FirestoreTestMixin, APITestCase):
 
         self.client.force_authenticate(user=None)
         response = self.client.get("/api/people/")
-        for feature in response.data:
+        for feature in response.data["features"]:
             self.assertNotIn("last_contacted_at", feature["properties"])
 
 

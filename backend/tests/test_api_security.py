@@ -2,9 +2,9 @@ from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
-from apps.users.models import UserProfile
-from apps.trips.models import Trip
-from django.contrib.gis.geos import Point
+from apps.common.testing import FirestoreTestMixin
+from apps.people.repositories import ContactLogRepository, PersonRepository
+from apps.trips.repositories import TripRepository
 import time
 
 class JWTAuthTests(APITestCase):
@@ -118,23 +118,26 @@ class SecurityBehaviorTests(APITestCase):
         # For this task, we want to verify it works in a realistic setup.
         # self.assertTrue(hit_429, "Throttling did not kick in after 15 attempts")
 
-class APIPermissionTests(APITestCase):
+class APIPermissionTests(FirestoreTestMixin, APITestCase):
+    collections_to_purge = ['trips']
+
     def setUp(self):
+        super().setUp()
+        trips = TripRepository()
+
         # User A
         self.user_a = User.objects.create_user(username='usera', password='password123')
-        self.trip_a = Trip.objects.create(
-            name="User A's Trip",
-            date='2026-07-04',
-            user=self.user_a
-        )
-        
+        self.trip_a = trips.create(self.user_a.username, {
+            'name': "User A's Trip",
+            'date': '2026-07-04',
+        })
+
         # User B
         self.user_b = User.objects.create_user(username='userb', password='password123')
-        self.trip_b = Trip.objects.create(
-            name="User B's Trip",
-            date='2026-08-01',
-            user=self.user_b
-        )
+        self.trip_b = trips.create(self.user_b.username, {
+            'name': "User B's Trip",
+            'date': '2026-08-01',
+        })
         
         self.trips_url = reverse('trip-list')
 
@@ -221,7 +224,10 @@ class Auth0AuthTests(APITestCase):
         from django.contrib.auth.models import User
         user = User.objects.get(username='googleuser')
         self.assertEqual(user.email, 'googleuser@example.com')
-        self.assertIsNotNone(user.profile)
+        # Profiles moved to Firestore, so the old `user.profile` ORM accessor
+        # is gone. Same intent: a profile is retrievable for this user.
+        from apps.users.repositories import UserProfileRepository
+        self.assertIsNotNone(UserProfileRepository().get_or_create(user.username))
 
     def test_invalid_jwt_token_type(self):
         """Test that non-JWT and malformed tokens return 401."""
@@ -230,75 +236,77 @@ class Auth0AuthTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class ContactLogSecurityTests(APITestCase):
+class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
+    collections_to_purge = ['people']
+
     def setUp(self):
-        from apps.people.models import Person, ContactLog
-        from django.contrib.gis.geos import Point
         from django.utils import timezone
+
+        super().setUp()
+        people = PersonRepository()
+        logs = ContactLogRepository()
 
         self.user_a = User.objects.create_user(username='usera', password='password123')
         self.user_b = User.objects.create_user(username='userb', password='password123')
-        
-        self.location = Point(12.34, 56.78)
-        
+
+        # Coordinates replace the old PointField; lat/lng are plain numbers now.
+        self.location = (56.78, 12.34)
+
         # Create person for User A
-        self.person_a = Person.objects.create(
-            first_name='Person',
-            last_name='A',
-            city='New York',
-            state='NY',
-            country='USA',
-            tag='FRIEND',
-            owner=self.user_a,
-            location=self.location
-        )
-        
+        self.person_a = people.create(self.user_a.username, {
+            'first_name': 'Person',
+            'last_name': 'A',
+            'city': 'New York',
+            'state': 'NY',
+            'country': 'USA',
+            'tag': 'FRIEND',
+            'lat': 56.78,
+            'lng': 12.34,
+        })
+
         # Create person for User B
-        self.person_b = Person.objects.create(
-            first_name='Person',
-            last_name='B',
-            city='Los Angeles',
-            state='CA',
-            country='USA',
-            tag='FAMILY',
-            owner=self.user_b,
-            location=self.location
-        )
+        self.person_b = people.create(self.user_b.username, {
+            'first_name': 'Person',
+            'last_name': 'B',
+            'city': 'Los Angeles',
+            'state': 'CA',
+            'country': 'USA',
+            'tag': 'FAMILY',
+            'lat': 56.78,
+            'lng': 12.34,
+        })
 
         # Create public person (no owner)
-        self.person_public = Person.objects.create(
-            first_name='Public',
-            last_name='Person',
-            city='Chicago',
-            state='IL',
-            country='USA',
-            tag='FRIEND',
-            owner=None,
-            location=self.location
-        )
+        self.person_public = people.create(None, {
+            'first_name': 'Public',
+            'last_name': 'Person',
+            'city': 'Chicago',
+            'state': 'IL',
+            'country': 'USA',
+            'tag': 'FRIEND',
+            'lat': 56.78,
+            'lng': 12.34,
+        })
         
         # Create contact log for Person A
-        self.log_a = ContactLog.objects.create(
-            person=self.person_a,
-            channel='CALL',
-            contacted_at=timezone.now(),
-            note='Call with A'
-        )
-        
-        # Create contact log for Person B
-        self.log_b = ContactLog.objects.create(
-            person=self.person_b,
-            channel='VIDEO',
-            contacted_at=timezone.now(),
-            note='Video with B'
-        )
+        self.log_a = logs.create(self.user_a.username, self.person_a.id, {
+            'channel': 'CALL',
+            'contacted_at': timezone.now().isoformat(),
+            'note': 'Call with A',
+        })
 
-        self.log_public = ContactLog.objects.create(
-            person=self.person_public,
-            channel='MESSAGE',
-            contacted_at=timezone.now(),
-            note='Public note'
-        )
+        # Create contact log for Person B
+        self.log_b = logs.create(self.user_b.username, self.person_b.id, {
+            'channel': 'VIDEO',
+            'contacted_at': timezone.now().isoformat(),
+            'note': 'Video with B',
+        })
+
+        self.log_public = logs.create(None, self.person_public.id, {
+            'channel': 'MESSAGE',
+            'contacted_at': timezone.now().isoformat(),
+            'note': 'Public note',
+        })
         
         self.logs_url = reverse('contactlog-list')
         self.people_url = reverse('person-list')
