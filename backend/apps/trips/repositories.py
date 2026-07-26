@@ -36,6 +36,10 @@ class DuplicateSequenceOrder(Exception):
 class TripRecord:
     id: str
     owner_key: str
+    # Stops and legs are nested in the API payload (Flutter's Trip.fromJson
+    # reads them inline), so hydrated trips carry them.
+    stops: list = field(default_factory=list)
+    legs: list = field(default_factory=list)
     name: str = ""
     date: str | None = None
     start_date: str | None = None
@@ -85,11 +89,23 @@ class TripRepository:
             return None
         return ref
 
-    def _hydrate(self, doc) -> TripRecord:
+    def _hydrate(self, doc, with_children: bool = True) -> TripRecord:
         data = doc.to_dict() or {}
+        stops: list = []
+        legs: list = []
+        if with_children:
+            stops = [
+                self._hydrate_stop(d, doc.id) for d in doc.reference.collection(STOPS).stream()
+            ]
+            stops.sort(key=lambda s: s.sequence_order)
+            legs = [
+                self._hydrate_leg(d, doc.id) for d in doc.reference.collection(LEGS).stream()
+            ]
         return TripRecord(
             id=doc.id,
             owner_key=data.get("owner_key", ""),
+            stops=stops,
+            legs=legs,
             name=data.get("name", ""),
             date=data.get("date"),
             start_date=data.get("start_date"),
@@ -231,6 +247,43 @@ class TripRepository:
         _create(client.transaction())
         self.generate_legs(trip_id, owner_key)
         return self._hydrate_stop(new_ref.get(), trip_id)
+
+    def replace_stops(self, trip_id: str, owner_key: str, stops_data: list) -> bool:
+        """Replace a trip's stops wholesale, mirroring the old nested update.
+
+        The previous ModelSerializer deleted every stop and recreated them from
+        the payload, so sequence_order collisions were impossible by
+        construction. Same semantics here: clear first, then insert in the
+        given order, then regenerate legs.
+        """
+        trip_ref = self._owned_ref(trip_id, owner_key)
+        if trip_ref is None:
+            return False
+
+        stops_ref = trip_ref.collection(STOPS)
+        for doc in stops_ref.stream():
+            doc.reference.delete()
+        # Legs reference stop IDs that no longer exist, so they go too;
+        # generate_legs rebuilds them from the new stops.
+        for doc in trip_ref.collection(LEGS).stream():
+            doc.reference.delete()
+
+        for index, data in enumerate(stops_data):
+            stops_ref.document().set(
+                {
+                    "sequence_order": int(data.get("sequence_order", index)),
+                    "lat": data.get("lat"),
+                    "lng": data.get("lng"),
+                    "person_ids": list(data.get("person_ids", [])),
+                    "airport_id": data.get("airport_id"),
+                    "station_id": data.get("station_id"),
+                    "snapshot_address": data.get("snapshot_address", ""),
+                    "snapshot_metadata": data.get("snapshot_metadata", {}),
+                }
+            )
+
+        self.generate_legs(trip_id, owner_key)
+        return True
 
     def generate_legs(self, trip_id: str, owner_key: str) -> list[TripLegRecord]:
         """Ensure a leg exists between each consecutive pair of stops.

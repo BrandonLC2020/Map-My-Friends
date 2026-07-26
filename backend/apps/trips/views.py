@@ -27,14 +27,28 @@ class TripViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(TripSerializer(trip).data)
 
+    @staticmethod
+    def _split_payload(validated):
+        """Separate the nested children from the trip's own fields."""
+        data = dict(validated)
+        stops = data.pop('stops', None)
+        legs = data.pop('legs', None)
+        payload = {
+            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            for k, v in data.items()
+        }
+        return payload, stops, legs
+
     def create(self, request):
         serializer = TripSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        payload = {
-            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
-            for k, v in serializer.validated_data.items()
-        }
-        trip = self.repository.create(owner_key_for(request), payload)
+        payload, stops, _legs = self._split_payload(serializer.validated_data)
+
+        owner_key = owner_key_for(request)
+        trip = self.repository.create(owner_key, payload)
+        if stops:
+            self.repository.replace_stops(trip.id, owner_key, stops)
+            trip = self.repository.get_for_owner(trip.id, owner_key)
         return Response(TripSerializer(trip).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk=None):
@@ -46,13 +60,31 @@ class TripViewSet(viewsets.ViewSet):
     def _write_update(self, request, pk, partial):
         serializer = TripSerializer(data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        payload = {
-            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
-            for k, v in serializer.validated_data.items()
-        }
-        trip = self.repository.update(pk, owner_key_for(request), payload)
+        payload, stops, legs = self._split_payload(serializer.validated_data)
+
+        owner_key = owner_key_for(request)
+        trip = self.repository.update(pk, owner_key, payload)
         if trip is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # Matching the old serializer: a supplied `stops` array replaces the
+        # trip's stops wholesale, and `legs` patches existing legs by id.
+        if stops is not None:
+            self.repository.replace_stops(pk, owner_key, stops)
+        if legs:
+            for leg in legs:
+                leg_id = leg.get('id')
+                if not leg_id:
+                    continue
+                leg_payload = {
+                    k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+                    for k, v in leg.items()
+                    if k != 'id'
+                }
+                if leg_payload:
+                    self.repository.update_leg(pk, leg_id, owner_key, leg_payload)
+
+        trip = self.repository.get_for_owner(pk, owner_key)
         return Response(TripSerializer(trip).data)
 
     def destroy(self, request, pk=None):

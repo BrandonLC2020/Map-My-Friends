@@ -139,3 +139,115 @@ class TripEndpointTests(FirestoreTestMixin, APITestCase):
         self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
         second = self.client.post(f"/api/trips/{trip_id}/stops/", stop, format="json")
         self.assertEqual(second.status_code, 400)
+
+
+class TripNestedContractTests(FirestoreTestMixin, APITestCase):
+    """Locks the payload shape Flutter's Trip.fromJson actually parses.
+
+    trip.dart does `json['stops'] as List` with no null guard, and
+    TripStop.fromJson reads json['location']['coordinates'] as [lng, lat].
+    A flat trip payload, or flat lat/lng on a stop, breaks the Trips tab with
+    a TypeError rather than a visible error — so these assertions mirror the
+    client's parsing exactly.
+    """
+
+    collections_to_purge = ["trips"]
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username="owner-a", password="pw12345!")
+        self.client.force_authenticate(user=self.user)
+        self.payload = {
+            "name": "Nested trip",
+            "date": "2026-08-01",
+            "stops": [
+                {
+                    "sequence_order": 0,
+                    "location": {"type": "Point", "coordinates": [-87.6298, 41.8781]},
+                },
+                {
+                    "sequence_order": 1,
+                    "location": {"type": "Point", "coordinates": [-0.1278, 51.5074]},
+                },
+            ],
+        }
+
+    def test_create_persists_nested_stops(self):
+        response = self.client.post("/api/trips/", self.payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.data["stops"]), 2)
+
+    def test_response_always_carries_stops_and_legs_keys(self):
+        self.client.post("/api/trips/", self.payload, format="json")
+        listing = self.client.get("/api/trips/")
+        self.assertEqual(listing.status_code, 200)
+        for trip in listing.data:
+            # `json['stops'] as List` throws on a missing key.
+            self.assertIn("stops", trip)
+            self.assertIn("legs", trip)
+            self.assertIsInstance(trip["stops"], list)
+            self.assertIsInstance(trip["legs"], list)
+
+    def test_stop_location_is_geojson_point_lng_lat(self):
+        created = self.client.post("/api/trips/", self.payload, format="json")
+        stop = created.data["stops"][0]
+        self.assertEqual(stop["location"]["type"], "Point")
+        # [longitude, latitude] — reversing this silently misplaces the stop.
+        self.assertEqual(stop["location"]["coordinates"], [-87.6298, 41.8781])
+
+    def test_stops_are_ordered_by_sequence(self):
+        created = self.client.post("/api/trips/", self.payload, format="json")
+        orders = [s["sequence_order"] for s in created.data["stops"]]
+        self.assertEqual(orders, sorted(orders))
+
+    def test_legs_generated_between_consecutive_stops(self):
+        created = self.client.post("/api/trips/", self.payload, format="json")
+        self.assertEqual(len(created.data["legs"]), 1)
+
+    def test_update_replaces_stops(self):
+        created = self.client.post("/api/trips/", self.payload, format="json")
+        trip_id = created.data["id"]
+
+        response = self.client.patch(
+            f"/api/trips/{trip_id}/",
+            {
+                "name": "Nested trip",
+                "date": "2026-08-01",
+                "stops": [
+                    {
+                        "sequence_order": 0,
+                        "location": {"type": "Point", "coordinates": [2.3522, 48.8566]},
+                    }
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["stops"]), 1)
+        self.assertEqual(response.data["stops"][0]["location"]["coordinates"], [2.3522, 48.8566])
+
+    def test_stop_without_location_is_rejected(self):
+        response = self.client.post(
+            "/api/trips/",
+            {"name": "Bad", "date": "2026-08-01", "stops": [{"sequence_order": 0}]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_reversed_coordinates_are_rejected(self):
+        response = self.client.post(
+            "/api/trips/",
+            {
+                "name": "Bad",
+                "date": "2026-08-01",
+                "stops": [
+                    {
+                        "sequence_order": 0,
+                        # latitude in the longitude slot, out of range
+                        "location": {"type": "Point", "coordinates": [41.8781, -187.0]},
+                    }
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
