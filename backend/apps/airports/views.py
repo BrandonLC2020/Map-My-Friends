@@ -2,22 +2,20 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models.functions import Distance
 
-from .models import Airport
+from . import reference
 from .serializers import AirportSerializer
 
 
 class NearestAirportsView(APIView):
-    """
-    Return the N nearest airports to a given latitude/longitude.
+    """Return the N nearest airports to a given latitude/longitude.
 
     Query params:
         lat (float): Latitude
         lon (float): Longitude
         count (int): Number of airports to return (default 3, max 10)
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -36,19 +34,5 @@ class NearestAirportsView(APIView):
         except (TypeError, ValueError):
             count = 3
 
-        user_location = Point(lon, lat, srid=4326)
-
-        airports = (
-            Airport.objects
-            .annotate(distance=Distance('location', user_location))
-            .order_by('distance')[:count]
-        )
-
-        # Add distance_km as a plain float for the serializer
-        airport_list = []
-        for airport in airports:
-            airport.distance_km = round(airport.distance.km, 1)
-            airport_list.append(airport)
-
-        serializer = AirportSerializer(airport_list, many=True)
-        return Response(serializer.data)
+        airports = reference.get_nearby(lat, lon, count=count)
+        return Response(AirportSerializer(airports, many=True).data)

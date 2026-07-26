@@ -121,9 +121,10 @@ class TripStop extends Equatable {
 }
 
 class TripLeg extends Equatable {
-  final int? id;
-  final int departureStopId;
-  final int arrivalStopId;
+  // Firestore document IDs are strings, not integers.
+  final String? id;
+  final String departureStopId;
+  final String arrivalStopId;
   final DateTime? departureTime;
   final DateTime? arrivalTime;
   final String transportType;
@@ -175,9 +176,9 @@ class TripLeg extends Equatable {
 
   factory TripLeg.fromJson(Map<String, dynamic> json) {
     return TripLeg(
-      id: json['id'] as int?,
-      departureStopId: json['departure_stop'] as int,
-      arrivalStopId: json['arrival_stop'] as int,
+      id: json['id']?.toString(),
+      departureStopId: json['departure_stop'].toString(),
+      arrivalStopId: json['arrival_stop'].toString(),
       departureTime: json['departure_time'] != null
           ? DateTime.parse(json['departure_time'] as String)
           : null,
@@ -204,7 +205,8 @@ class TripLeg extends Equatable {
 }
 
 class Trip extends Equatable {
-  final int? id;
+  // Firestore document IDs are strings, not integers.
+  final String? id;
   final String name;
   final DateTime date; // Legacy
   final DateTime? startDate;
@@ -225,7 +227,7 @@ class Trip extends Equatable {
   });
 
   Trip copyWith({
-    int? id,
+    String? id,
     String? name,
     DateTime? date,
     DateTime? startDate,
@@ -261,7 +263,7 @@ class Trip extends Equatable {
 
   factory Trip.fromJson(Map<String, dynamic> json) {
     return Trip(
-      id: json['id'] as int?,
+      id: json['id']?.toString(),
       name: json['name'] as String,
       date: DateTime.parse(json['date'] as String),
       startDate: json['start_date'] != null

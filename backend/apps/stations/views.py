@@ -2,23 +2,28 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models.functions import Distance
 
-from .models import Station
+from . import reference
 from .serializers import StationSerializer
+
+VALID_STATION_TYPES = {
+    'major_station',
+    'regional_station',
+    'commuter_rail_station',
+    'subway_station',
+}
 
 
 class NearestStationsView(APIView):
-    """
-    Return the N nearest train stations to a given latitude/longitude.
+    """Return the N nearest train stations to a given latitude/longitude.
 
     Query params:
         lat (float): Latitude
         lon (float): Longitude
         count (int): Number of stations to return (default 3, max 10)
-        station_type (str): Optional filter by 'major_station' or 'regional_station'
+        station_type (str): Optional filter by station type
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -38,23 +43,8 @@ class NearestStationsView(APIView):
             count = 3
 
         station_type = request.query_params.get('station_type')
+        if station_type not in VALID_STATION_TYPES:
+            station_type = None
 
-        user_location = Point(lon, lat, srid=4326)
-
-        queryset = Station.objects.all()
-        if station_type in ['major_station', 'regional_station', 'commuter_rail_station', 'subway_station']:
-            queryset = queryset.filter(station_type=station_type)
-
-        stations = (
-            queryset
-            .annotate(distance=Distance('location', user_location))
-            .order_by('distance')[:count]
-        )
-
-        station_list = []
-        for station in stations:
-            station.distance_km = round(station.distance.km, 1)
-            station_list.append(station)
-
-        serializer = StationSerializer(station_list, many=True)
-        return Response(serializer.data)
+        stations = reference.get_nearby(lat, lon, count=count, station_type=station_type)
+        return Response(StationSerializer(stations, many=True).data)

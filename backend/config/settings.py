@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
-import dj_database_url
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,10 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
     'rest_framework',
-    'rest_framework_gis',
     'corsheaders',
+    'apps.common',
     'apps.users',
     'apps.people',
     'apps.airports',
@@ -88,12 +86,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# Django's own tables only (auth, admin, sessions, contenttypes). Application
+# data lives in Firestore. Ephemeral on Cloud Run — ClickUp 86bb3eu64
+# (Auth0 -> GCIP) removes the need for this entirely.
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f'postgis:///{BASE_DIR / "db.sqlite3"}'),
-        engine='django.contrib.gis.db.backends.postgis',
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'django_internal.sqlite3',
+    }
 }
 
 
@@ -146,7 +146,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Storage backends. Swapping "default" to django-storages' GoogleCloudStorage
+# is the entire production change — see spec section 7. Cloud Run has an
+# ephemeral filesystem, so local disk is not viable there.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Media files (Uploads)
 MEDIA_URL = '/media/'
@@ -173,7 +184,8 @@ REST_FRAMEWORK = {
         'user': '2000/day',
         'anon_burst': '10/minute',
         'anon_sustained': '50/day',
-    }
+    },
+    'EXCEPTION_HANDLER': 'apps.common.exception_handlers.firestore_exception_handler',
 }
 
 # Simple JWT Configuration
@@ -211,6 +223,11 @@ if not DEBUG:
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN', 'b1codes.us.auth0.com')
 AUTH0_AUDIENCE = os.environ.get('AUTH0_AUDIENCE', 'https://api.mapmyfriends.com/')
+
+# Firestore Configuration
+# firebase-admin auto-detects FIRESTORE_EMULATOR_HOST; when it is set the
+# client talks to the local emulator and no credentials are required.
+FIRESTORE_PROJECT_ID = os.environ.get('FIRESTORE_PROJECT_ID', 'map-my-friends-local')
 
 
 

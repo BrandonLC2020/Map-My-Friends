@@ -6,8 +6,9 @@ from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 
+from apps.common.ownership import owner_key_for
+
 from .throttles import BurstAnonRateThrottle, SustainedAnonRateThrottle
-from .models import UserProfile
 from .serializers import (
     UserProfileSerializer,
     RegisterSerializer,
@@ -17,36 +18,58 @@ from .serializers import (
 
 
 class UserProfileView(APIView):
-    """
-    View for getting and updating the current user's profile.
+    """Get and update the current user's profile.
+
     Supports image upload via multipart form data.
     """
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
+    @property
+    def repository(self):
+        from .repositories import UserProfileRepository
+
+        return UserProfileRepository()
+
     def get(self, request):
-        """Get current user's profile."""
-        try:
-            profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=request.user)
-            
-        serializer = UserProfileSerializer(profile, context={'request': request})
-        return Response(serializer.data)
+        profile = self.repository.get_or_create(owner_key_for(request))
+        return Response(UserProfileSerializer(profile, context={'request': request}).data)
 
     def patch(self, request):
-        """Update the current user's profile (supports partial updates)."""
-        profile = request.user.profile
         serializer = UserProfileSerializer(
-            profile,
-            data=request.data,
-            partial=True,
-            context={'request': request}
+            data=request.data, partial=True, context={'request': request}
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = dict(serializer.validated_data)
+        birth_date = payload.get('birth_date')
+        if birth_date is not None:
+            payload['birth_date'] = birth_date.isoformat()
+
+        # first_name/last_name belong to the Django User, not the Firestore
+        # profile document. The old ModelSerializer.update() wrote them back
+        # via source='user.*'; with a plain Serializer that has to be explicit,
+        # or name-only edits silently no-op (and used to 500 on an empty
+        # Firestore update).
+        user_fields = {
+            field: payload.pop(field)
+            for field in ('first_name', 'last_name')
+            if field in payload
+        }
+        if user_fields:
+            for field, value in user_fields.items():
+                setattr(request.user, field, value)
+            request.user.save(update_fields=list(user_fields))
+
+        uploaded = request.FILES.get('profile_image')
+        if uploaded is not None:
+            from apps.common.storage import save_upload
+
+            payload['profile_image'] = save_upload(uploaded, prefix='user_profiles')
+
+        profile = self.repository.update(owner_key_for(request), payload)
+        return Response(UserProfileSerializer(profile, context={'request': request}).data)
 
 
 class RegisterView(generics.CreateAPIView):

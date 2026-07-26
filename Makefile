@@ -13,28 +13,33 @@ build:
 down:
 	docker compose down
 
+# Only Django's own apps (auth/admin/sessions/contenttypes) have migrations
+# now; application data lives in Firestore. makemigrations is intentionally
+# not run here.
 mig:
-	docker compose exec api poetry run python manage.py makemigrations
-	docker compose exec api poetry run python manage.py migrate
+	docker compose exec api python manage.py migrate
+
+seed:
+	docker compose exec api python manage.py seed
+
+fetch-data:
+	docker compose exec api python manage.py fetch_airports
+	docker compose exec api python manage.py fetch_stations
 
 user:
-	docker compose exec api poetry run python manage.py createsuperuser
-
-airports:
-	docker compose exec api poetry run python manage.py import_airports
-
-stations:
-	@read -p "JSON File Path (default: train_stations.json): " file_path; \
-	docker compose exec api poetry run python manage.py import_stations $${file_path:-train_stations.json}
+	docker compose exec api python manage.py createsuperuser
 
 shell:
-	docker compose exec api poetry run python manage.py shell
+	docker compose exec api python manage.py shell
 
-db:
-	docker compose exec db psql -U mapuser -d mapfriends_db
+emulator:
+	docker compose up firestore
+
+ui:
+	@echo "Emulator UI: http://localhost:4000"
 
 test:
-	docker compose exec api poetry run python manage.py test 2>&1 | tee .gemini/last_test_results.txt
+	docker compose exec api python manage.py test 2>&1 | tee .gemini/last_test_results.txt
 
 # Poetry helpers
 install:

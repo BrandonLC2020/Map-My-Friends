@@ -312,9 +312,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       // Find leg that starts at this stop
       final leg = widget.trip.legs
           .where(
-            (l) =>
-                l.departureStopId ==
-                int.tryParse(widget.trip.stops[i].id ?? ''),
+            (l) => l.departureStopId == widget.trip.stops[i].id,
           )
           .firstOrNull;
       if (leg != null) {
@@ -323,8 +321,8 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
         // Fallback for missing legs in draft
         timelineItems.add(
           TripLeg(
-            departureStopId: int.tryParse(widget.trip.stops[i].id ?? '') ?? 0,
-            arrivalStopId: int.tryParse(widget.trip.stops[i + 1].id ?? '') ?? 0,
+            departureStopId: widget.trip.stops[i].id ?? '',
+            arrivalStopId: widget.trip.stops[i + 1].id ?? '',
           ),
         );
       }

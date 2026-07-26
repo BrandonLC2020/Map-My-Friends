@@ -1,52 +1,63 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import UserProfile
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile with image upload support."""
-    username = serializers.CharField(source='user.username', read_only=True)
-    email = serializers.EmailField(source='user.email', read_only=True)
-    first_name = serializers.CharField(source='user.first_name', required=False, allow_blank=True)
-    last_name = serializers.CharField(source='user.last_name', required=False, allow_blank=True)
+class UserProfileSerializer(serializers.Serializer):
+    # username/email/first_name/last_name live on the Django User, not on the
+    # Firestore profile document, so they are resolved from the request user.
+    # They were part of this endpoint's contract before the migration:
+    # frontend/lib/services/auth_service.dart sends first_name/last_name on
+    # update, and dropping them would silently stop name edits from saving.
+    username = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    profile_image = serializers.SerializerMethodField()
+    city = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    state = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    street = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    pin_color = serializers.CharField(max_length=7, required=False)
+    pin_style = serializers.ChoiceField(
+        choices=["teardrop", "circle", "square", "triangle", "diamond"], required=False
+    )
+    pin_icon_type = serializers.ChoiceField(
+        choices=["none", "emoji", "initials", "picture"], required=False
+    )
+    pin_emoji = serializers.CharField(
+        max_length=10, required=False, allow_null=True, allow_blank=True
+    )
+    distance_unit = serializers.ChoiceField(choices=["metric", "imperial"], required=False)
 
-    class Meta:
-        model = UserProfile
-        fields = [
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'profile_image',
-            'city',
-            'state',
-            'country',
-            'street',
-            'birth_date',
-            'phone_number',
-            'pin_color',
-            'pin_style',
-            'pin_icon_type',
-            'pin_emoji',
-            'distance_unit',
-        ]
-        read_only_fields = ['username', 'email']
+    def _request_user(self):
+        request = self.context.get("request")
+        return getattr(request, "user", None)
 
-    def update(self, instance, validated_data):
-        # Extract user data if present
-        user_data = validated_data.pop('user', {})
-        if 'first_name' in user_data:
-            instance.user.first_name = user_data['first_name']
-        if 'last_name' in user_data:
-            instance.user.last_name = user_data['last_name']
-        
-        # Save user model if changes were made
-        if user_data:
-            instance.user.save()
+    def get_username(self, obj):
+        user = self._request_user()
+        return user.username if user and user.is_authenticated else None
 
-        # Update remaining profile fields
-        return super().update(instance, validated_data)
+    def get_email(self, obj):
+        user = self._request_user()
+        return user.email if user and user.is_authenticated else None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        user = self._request_user()
+        # first_name/last_name are declared writable, so they are not
+        # SerializerMethodFields; fill them from the User on the way out.
+        if user and user.is_authenticated:
+            ret["first_name"] = user.first_name
+            ret["last_name"] = user.last_name
+        return ret
+
+    def get_profile_image(self, obj):
+        from apps.common.storage import upload_url
+
+        return upload_url(getattr(obj, "profile_image", None), self.context.get("request"))
 
 
 class RegisterSerializer(serializers.ModelSerializer):

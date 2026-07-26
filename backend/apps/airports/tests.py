@@ -1,76 +1,84 @@
-from django.test import TestCase
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
-from .models import Airport
+from django.test import SimpleTestCase
 
-class AirportModelTests(TestCase):
-    def setUp(self):
-        # Create some test airports
-        # Chicago O'Hare
-        self.ord = Airport.objects.create(
-            name="O'Hare International Airport",
-            iata_code="ORD",
-            airport_type="large_airport",
-            city="Chicago",
-            country="US",
-            location=Point(-87.9073, 41.9742, srid=4326)
-        )
-        # Chicago Midway
-        self.mdw = Airport.objects.create(
-            name="Midway International Airport",
-            iata_code="MDW",
-            airport_type="large_airport",
-            city="Chicago",
-            country="US",
-            location=Point(-87.7524, 41.7868, srid=4326)
-        )
-        # New York JFK
-        self.jfk = Airport.objects.create(
-            name="John F. Kennedy International Airport",
-            iata_code="JFK",
-            airport_type="large_airport",
-            city="New York",
-            country="US",
-            location=Point(-73.7781, 40.6413, srid=4326)
-        )
+from apps.airports import reference
 
-    def test_airport_creation(self):
-        airport = Airport.objects.get(iata_code="ORD")
-        self.assertEqual(airport.name, "O'Hare International Airport")
-        self.assertEqual(airport.city, "Chicago")
+
+class AirportReferenceTests(SimpleTestCase):
+    """Exercises the in-memory index against the committed dataset."""
+
+    def test_dataset_loads(self):
+        airports = reference.all_airports()
+        self.assertGreater(len(airports), 4000)
+
+    def test_ids_are_unique_integers(self):
+        ids = [a.id for a in reference.all_airports()]
+        self.assertTrue(all(isinstance(i, int) for i in ids))
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_get_by_id_round_trips(self):
+        first = reference.all_airports()[0]
+        self.assertEqual(reference.get_by_id(first.id), first)
+
+    def test_get_by_id_missing_returns_none(self):
+        self.assertIsNone(reference.get_by_id(-1))
 
     def test_get_nearby_sorting(self):
-        # Point in downtown Chicago
-        downtown_chicago = Point(-87.6298, 41.8781, srid=4326)
-        
-        nearby = Airport.get_nearby(downtown_chicago)
-        
-        # Midway is closer to downtown than O'Hare
-        self.assertEqual(nearby[0].iata_code, "MDW")
-        self.assertEqual(nearby[1].iata_code, "ORD")
-        self.assertEqual(nearby[2].iata_code, "JFK")
+        # Downtown Chicago: Midway is closer than O'Hare.
+        nearby = reference.get_nearby(41.8781, -87.6298, count=10)
+        codes = [a.iata_code for a in nearby]
+        self.assertIn("MDW", codes)
+        self.assertIn("ORD", codes)
+        self.assertLess(codes.index("MDW"), codes.index("ORD"))
 
-    def test_get_nearby_radius(self):
-        # Point in downtown Chicago
-        downtown_chicago = Point(-87.6298, 41.8781, srid=4326)
-        
-        # O'Hare is about 25km from downtown, Midway about 15km
-        # JFK is ~1100km away
-        
-        nearby_50km = Airport.get_nearby(downtown_chicago, radius_km=50)
-        self.assertEqual(len(nearby_50km), 2)
-        self.assertIn(self.ord, nearby_50km)
-        self.assertIn(self.mdw, nearby_50km)
-        
-        nearby_20km = Airport.get_nearby(downtown_chicago, radius_km=20)
-        self.assertEqual(len(nearby_20km), 1)
-        self.assertEqual(nearby_20km[0], self.mdw)
+    def test_get_nearby_respects_count(self):
+        self.assertEqual(len(reference.get_nearby(41.8781, -87.6298, count=3)), 3)
 
-    def test_distance_annotation(self):
-        downtown_chicago = Point(-87.6298, 41.8781, srid=4326)
-        airport = Airport.get_nearby(downtown_chicago)[0]
-        
-        self.assertTrue(hasattr(airport, 'distance'))
-        # Distance should be around 14-16km for Midway
-        self.assertGreater(airport.distance.km, 10)
-        self.assertLess(airport.distance.km, 20)
+    def test_get_nearby_radius_filter(self):
+        within_20 = reference.get_nearby(41.8781, -87.6298, radius_km=20, count=10)
+        codes = [a.iata_code for a in within_20]
+        self.assertIn("MDW", codes)
+        self.assertNotIn("JFK", codes)
+
+    def test_distance_km_populated_and_ascending(self):
+        nearby = reference.get_nearby(41.8781, -87.6298, count=5)
+        distances = [a.distance_km for a in nearby]
+        self.assertTrue(all(d is not None for d in distances))
+        self.assertEqual(distances, sorted(distances))
+
+    def test_distance_km_plausible(self):
+        nearest = reference.get_nearby(41.8781, -87.6298, count=1)[0]
+        self.assertGreater(nearest.distance_km, 0)
+        self.assertLess(nearest.distance_km, 40)
+
+
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+
+
+class NearestAirportsEndpointTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="tester", password="pw12345!")
+        self.client.force_authenticate(user=self.user)
+
+    def test_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298")
+        self.assertEqual(response.status_code, 401)
+
+    def test_returns_geojson_features(self):
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=3")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["features"]), 3)
+        feature = response.data["features"][0]
+        self.assertEqual(feature["type"], "Feature")
+        self.assertEqual(feature["geometry"]["type"], "Point")
+        self.assertIn("iata_code", feature["properties"])
+        self.assertIn("distance_km", feature["properties"])
+
+    def test_missing_params_return_400(self):
+        response = self.client.get("/api/airports/nearest/")
+        self.assertEqual(response.status_code, 400)
+
+    def test_count_is_clamped_to_ten(self):
+        response = self.client.get("/api/airports/nearest/?lat=41.8781&lon=-87.6298&count=99")
+        self.assertEqual(len(response.data["features"]), 10)

@@ -1,99 +1,108 @@
-from django.db import transaction
 from rest_framework import serializers
-from rest_framework_gis.fields import GeometryField
-from apps.people.models import Person
-from apps.airports.models import Airport
-from apps.stations.models import Station
-from .models import Trip, TripStop, TripLeg
+
+STATUS_CHOICES = ["DRAFT", "BOOKED", "CANCELLED"]
+TRANSPORT_CHOICES = ["FLIGHT", "TRAIN", "BUS", "CAR"]
 
 
-class TripStopSerializer(serializers.ModelSerializer):
-    location = GeometryField()
-    people = serializers.PrimaryKeyRelatedField(
-        queryset=Person.objects.all(),
-        many=True,
-        required=False,
-        default=[],
-    )
-    airport = serializers.PrimaryKeyRelatedField(
-        queryset=Airport.objects.all(),
-        allow_null=True,
-        required=False,
-        default=None,
-    )
-    station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.all(),
-        allow_null=True,
-        required=False,
-        default=None,
-    )
+class PointField(serializers.Field):
+    """GeoJSON Point <-> flat lat/lng, replacing rest_framework_gis's GeometryField.
 
-    class Meta:
-        model = TripStop
-        fields = ('id', 'people', 'airport', 'station', 'sequence_order', 'location', 'snapshot_address', 'snapshot_metadata')
-        read_only_fields = ('snapshot_address', 'snapshot_metadata')
+    Firestore stores plain `lat`/`lng` numbers, but the API contract is a
+    GeoJSON Point and the Flutter client depends on it in both directions:
+    TripStop.toJson sends {'type': 'Point', 'coordinates': [lng, lat]} and
+    TripStop.fromJson reads json['location']['coordinates'] with no fallback.
+    Coordinates are [longitude, latitude] per the GeoJSON spec.
+    """
 
-
-class TripLegSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TripLeg
-        fields = ('id', 'departure_stop', 'arrival_stop', 'departure_time', 'arrival_time', 'transport_type', 'booking_reference', 'ticket_data')
-
-
-class TripSerializer(serializers.ModelSerializer):
-    stops = TripStopSerializer(many=True)
-    legs = TripLegSerializer(many=True, required=False)
-
-    class Meta:
-        model = Trip
-        fields = ('id', 'name', 'date', 'start_date', 'end_date', 'status', 'stops', 'legs')
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            stops_data = validated_data.pop('stops')
-            legs_data = validated_data.pop('legs', [])
-            trip = Trip.objects.create(**validated_data)
-            
-            for stop_data in stops_data:
-                people = stop_data.pop('people', [])
-                stop = TripStop.objects.create(trip=trip, **stop_data)
-                stop.people.set(people)
-                
-            trip.generate_legs()
-        return trip
-
-    def update(self, instance, validated_data):
-        with transaction.atomic():
-            stops_data = validated_data.pop('stops', None)
-            legs_data = validated_data.pop('legs', None)
-            
-            for attr, value in validated_data.items():
-                setattr(instance, attr, value)
-            instance.save()
-            
-            if stops_data is not None:
-                instance.stops.all().delete()
-                for stop_data in stops_data:
-                    people = stop_data.pop('people', [])
-                    stop = TripStop.objects.create(trip=instance, **stop_data)
-                    stop.people.set(people)
-                
-                instance.generate_legs()
-                
-            if legs_data:
-                self._update_legs(instance, legs_data)
-                    
+    def get_attribute(self, instance):
+        # The field spans two source attributes, so take the record itself.
         return instance
 
-    def _update_legs(self, trip, legs_data):
-        for leg_data in legs_data:
-            leg_id = leg_data.get('id')
-            if leg_id:
-                try:
-                    leg = TripLeg.objects.get(id=leg_id, trip=trip)
-                    for attr, value in leg_data.items():
-                        if attr != 'id':
-                            setattr(leg, attr, value)
-                    leg.save()
-                except TripLeg.DoesNotExist:
-                    pass
+    def to_representation(self, instance):
+        lat = getattr(instance, "lat", None)
+        lng = getattr(instance, "lng", None)
+        if lat is None or lng is None:
+            return None
+        return {"type": "Point", "coordinates": [lng, lat]}
+
+    def to_internal_value(self, data):
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                "Expected a GeoJSON Point object, e.g. "
+                '{"type": "Point", "coordinates": [lng, lat]}.'
+            )
+        coordinates = data.get("coordinates")
+        if not isinstance(coordinates, (list, tuple)) or len(coordinates) != 2:
+            raise serializers.ValidationError(
+                "coordinates must be a two-element [longitude, latitude] list."
+            )
+        try:
+            lng, lat = float(coordinates[0]), float(coordinates[1])
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("coordinates must be numbers.")
+        if not -90 <= lat <= 90 or not -180 <= lng <= 180:
+            raise serializers.ValidationError(
+                "coordinates out of range; expected [longitude, latitude]."
+            )
+        return {"lat": lat, "lng": lng}
+
+
+class TripStopSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    trip = serializers.CharField(source="trip_id", read_only=True)
+    sequence_order = serializers.IntegerField(min_value=0)
+    location = PointField()
+    people = serializers.ListField(
+        source="person_ids", child=serializers.CharField(), required=False
+    )
+    airport = serializers.IntegerField(source="airport_id", required=False, allow_null=True)
+    station = serializers.IntegerField(source="station_id", required=False, allow_null=True)
+    snapshot_address = serializers.CharField(read_only=True, allow_blank=True)
+    snapshot_metadata = serializers.DictField(read_only=True)
+
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        # DRF propagates root.partial into nested serializers, so on PATCH the
+        # required=True on `location` is skipped. A stop persisted without
+        # coordinates comes back as location: null, and TripStop.fromJson
+        # dereferences it unguarded — one bad stop breaks the whole Trips tab.
+        location = ret.pop("location", None)
+        if not location:
+            raise serializers.ValidationError(
+                {"location": ["This field is required."]}
+            )
+        ret.update(location)
+        return ret
+
+
+class TripLegSerializer(serializers.Serializer):
+    # Writable so update payloads can address a leg by id, but stripped before
+    # the write so it never lands in the document (the doc id is the id).
+    id = serializers.CharField(required=False, allow_null=True)
+    trip = serializers.CharField(source="trip_id", read_only=True)
+    departure_stop = serializers.CharField(source="departure_stop_id", read_only=True)
+    arrival_stop = serializers.CharField(source="arrival_stop_id", read_only=True)
+    departure_time = serializers.DateTimeField(required=False, allow_null=True)
+    arrival_time = serializers.DateTimeField(required=False, allow_null=True)
+    transport_type = serializers.ChoiceField(choices=TRANSPORT_CHOICES, required=False)
+    booking_reference = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    ticket_data = serializers.DictField(required=False)
+
+
+class TripSerializer(serializers.Serializer):
+    """Trips carry their stops and legs inline.
+
+    The pre-migration ModelSerializer nested both, created stops on POST and
+    replaced them on PUT/PATCH. Flutter's Trip.fromJson reads json['stops']
+    with no null guard, so a flat trip payload breaks the Trips tab outright.
+    """
+
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=255)
+    date = serializers.DateField()
+    start_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=STATUS_CHOICES, required=False)
+    user = serializers.CharField(source="owner_key", read_only=True)
+    stops = TripStopSerializer(many=True, required=False)
+    legs = TripLegSerializer(many=True, required=False)

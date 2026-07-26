@@ -1,113 +1,153 @@
-from django.test import TestCase
-from django.contrib.gis.geos import Point
-from django.core.exceptions import ValidationError
-from unittest.mock import patch, MagicMock
-from .models import Person
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from unittest.mock import patch
 
-class PersonModelTests(TestCase):
-    @patch('geopy.geocoders.Nominatim.geocode')
-    def test_geocoding_success(self, mock_geocode):
-        # Mock successful geocode response
-        mock_location = MagicMock()
-        mock_location.latitude = 41.8781
-        mock_location.longitude = -87.6298
-        mock_geocode.return_value = mock_location
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
 
-        person = Person(
-            first_name="Test",
-            last_name="User",
-            city="Chicago",
-            state="IL",
-            country="USA"
+from apps.common.testing import FirestoreTestMixin
+
+PERSON_PAYLOAD = {
+    "tag": "FRIEND",
+    "first_name": "Ada",
+    "last_name": "Lovelace",
+    "city": "London",
+    "state": "England",
+    "country": "UK",
+}
+
+
+@patch(
+    "apps.people.views.geocode_address",
+    return_value=(51.5074, -0.1278, "Europe/London"),
+)
+class PersonEndpointTests(FirestoreTestMixin, APITestCase):
+    collections_to_purge = ["people"]
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username="owner-a", password="pw12345!")
+        self.other = User.objects.create_user(username="owner-b", password="pw12345!")
+
+    def test_list_is_public(self, _geocode):
+        response = self.client.get("/api/people/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_requires_auth(self, _geocode):
+        response = self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_create_returns_geojson_feature(self, _geocode):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["type"], "Feature")
+        # GeoJSON is [longitude, latitude] — order is load-bearing for the client.
+        self.assertEqual(response.data["geometry"]["coordinates"], [-0.1278, 51.5074])
+
+    def test_owner_isolation_on_list(self, _geocode):
+        self.client.force_authenticate(user=self.user)
+        self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
+
+        self.client.force_authenticate(user=self.other)
+        response = self.client.get("/api/people/")
+        self.assertEqual(len(response.data["features"]), 0)
+
+    def test_cannot_retrieve_another_owners_person(self, _geocode):
+        self.client.force_authenticate(user=self.user)
+        created = self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
+
+        self.client.force_authenticate(user=self.other)
+        response = self.client.get(f"/api/people/{created.data['id']}/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_cannot_delete_another_owners_person(self, _geocode):
+        self.client.force_authenticate(user=self.user)
+        created = self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
+
+        self.client.force_authenticate(user=self.other)
+        response = self.client.delete(f"/api/people/{created.data['id']}/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_birthday_is_accepted(self, _geocode):
+        # DRF hands back a datetime.date, which Firestore cannot encode; it
+        # must be converted to an ISO string before the write.
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/people/",
+            {**PERSON_PAYLOAD, "birthday": "1990-01-02"},
+            format="json",
         )
-        person.save()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["properties"]["birthday"], "1990-01-02")
 
-        self.assertIsNotNone(person.location)
-        self.assertEqual(person.location.x, -87.6298)
-        self.assertEqual(person.location.y, 41.8781)
-        self.assertIsNotNone(person.timezone)
-        self.assertEqual(person.timezone, 'America/Chicago')
-        
-        # Verify geocode was called with correct parameters
-        mock_geocode.assert_called_once()
-        args, kwargs = mock_geocode.call_args
-        self.assertEqual(args[0]['city'], 'Chicago')
-
-    @patch('geopy.geocoders.Nominatim.geocode')
-    def test_geocoding_retry_on_timeout(self, mock_geocode):
-        # Mock timeout then success
-        mock_location = MagicMock()
-        mock_location.latitude = 40.7128
-        mock_location.longitude = -74.0060
-        
-        mock_geocode.side_effect = [GeocoderTimedOut("Timeout"), mock_location]
-
-        person = Person(
-            first_name="Retry",
-            last_name="User",
-            city="New York",
-            state="NY",
-            country="USA"
+    def test_birthday_accepts_dart_iso_datetime(self, _geocode):
+        # Dart's DateTime.toIso8601String() sends "1990-01-02T00:00:00.000",
+        # which DRF's default DateField input_formats reject with a 400 —
+        # failing the whole person save, not just the birthday field.
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/people/",
+            {**PERSON_PAYLOAD, "birthday": "1990-01-02T00:00:00.000"},
+            format="json",
         )
-        # Use a small sleep or mock time.sleep to speed up tests if needed
-        # For now, let's just run it
-        with patch('time.sleep', return_value=None):
-            person.save()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["properties"]["birthday"], "1990-01-02")
 
-        self.assertEqual(mock_geocode.call_count, 2)
-        self.assertEqual(person.location.x, -74.0060)
+    def test_recency_fields_hidden_from_anonymous(self, _geocode):
+        self.client.force_authenticate(user=self.user)
+        self.client.post("/api/people/", PERSON_PAYLOAD, format="json")
 
-    @patch('geopy.geocoders.Nominatim.geocode')
-    def test_geocoding_failure_after_retries(self, mock_geocode):
-        # Mock persistent service error
-        mock_geocode.side_effect = GeocoderServiceError("Service Down")
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/people/")
+        for feature in response.data["features"]:
+            self.assertNotIn("last_contacted_at", feature["properties"])
 
-        person = Person(
-            first_name="Fail",
-            last_name="User",
-            city="ErrorCity",
-            state="ES",
-            country="ErrorCountry"
+
+class ContactLogEndpointTests(FirestoreTestMixin, APITestCase):
+    collections_to_purge = ["people"]
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username="owner-a", password="pw12345!")
+        self.other = User.objects.create_user(username="owner-b", password="pw12345!")
+
+        from apps.people.repositories import PersonRepository
+
+        self.person = PersonRepository().create(
+            "owner-a",
+            {**PERSON_PAYLOAD, "lat": 51.5074, "lng": -0.1278},
         )
-        
-        with patch('time.sleep', return_value=None):
-            with self.assertRaises(ValidationError) as cm:
-                person.save()
-        
-        self.assertEqual(mock_geocode.call_count, 3)
-        self.assertIn("Geocoding service unavailable", str(cm.exception))
 
-    @patch('geopy.geocoders.Nominatim.geocode')
-    def test_geocoding_not_found(self, mock_geocode):
-        # Mock no result found
-        mock_geocode.return_value = None
+    def test_requires_auth(self):
+        self.assertEqual(self.client.get("/api/contact-logs/").status_code, 401)
 
-        person = Person(
-            first_name="No",
-            last_name="Result",
-            city="Nowhere",
-            state="ZZ",
-            country="None"
+    def test_create_and_list(self):
+        self.client.force_authenticate(user=self.user)
+        created = self.client.post(
+            "/api/contact-logs/",
+            {"person": self.person.id, "channel": "CALL",
+             "contacted_at": "2026-07-01T12:00:00Z"},
+            format="json",
         )
-        
-        with self.assertRaises(ValidationError) as cm:
-            person.save()
-            
-        self.assertIn("Could not geocode address", str(cm.exception))
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(len(self.client.get("/api/contact-logs/").data), 1)
 
-    def test_string_representation(self):
-        person = Person(first_name="John", last_name="Doe", tag="FRIEND", location=Point(0, 0))
-        self.assertEqual(str(person), "John Doe (FRIEND)")
+    def test_cannot_create_log_for_other_users_person(self):
+        self.client.force_authenticate(user=self.other)
+        response = self.client.post(
+            "/api/contact-logs/",
+            {"person": self.person.id, "channel": "CALL",
+             "contacted_at": "2026-07-01T12:00:00Z"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
 
-    def test_manual_location_skips_geocoding(self):
-        with patch('geopy.geocoders.Nominatim.geocode') as mock_geocode:
-            person = Person(
-                first_name="Manual",
-                last_name="Location",
-                location=Point(10, 20)
-            )
-            person.save()
-            mock_geocode.assert_not_called()
-            self.assertEqual(person.location.x, 10)
-            self.assertEqual(person.location.y, 20)
+    def test_log_isolation_on_list(self):
+        self.client.force_authenticate(user=self.user)
+        self.client.post(
+            "/api/contact-logs/",
+            {"person": self.person.id, "channel": "CALL",
+             "contacted_at": "2026-07-01T12:00:00Z"},
+            format="json",
+        )
+        self.client.force_authenticate(user=self.other)
+        self.assertEqual(len(self.client.get("/api/contact-logs/").data), 0)
