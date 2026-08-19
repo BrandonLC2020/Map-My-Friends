@@ -262,24 +262,32 @@ class AppTheme {
     textTheme: _buildTextTheme(Colors.black87),
     iconTheme: const IconThemeData(color: Colors.black87, size: 24),
     scaffoldBackgroundColor: Colors.grey[50],
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       centerTitle: true,
       elevation: 0,
       scrolledUnderElevation: 0,
       backgroundColor: Colors.transparent,
       foregroundColor: _brandColor,
-      titleTextStyle: TextStyle(
-        color: _brandColor,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
+      // Derived, not restated. A raw TextStyle here silently dropped
+      // Montserrat — the same drift the empty states had — and set a size the
+      // dark theme did not share. Dark inherits titleLarge; light now uses the
+      // same style in the brand colour, so the two appearances agree.
+      titleTextStyle: _buildTextTheme(_brandColor).titleLarge,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
-        elevation: 2,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Flat by default. DESIGN.md §4 resolves depth by refraction and §6
+        // bans drop shadows outright; a raised button is the Material default
+        // leaking through, not a decision this system made.
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(
+          horizontal: MapSpacing.md,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -295,23 +303,32 @@ class AppTheme {
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: _brandColor, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
     cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      // Depth is declared once, and as an edge — never a shadow (DESIGN.md
+      // §4). A card is not glass, so it earns its separation from a hairline
+      // outline rather than from refraction.
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(MapGlass.radiusMd),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+      ),
+      margin: const EdgeInsets.symmetric(
+        vertical: MapSpacing.xs,
+        horizontal: MapSpacing.sm,
+      ),
     ),
   );
 
@@ -339,9 +356,17 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
-        elevation: 2,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Flat by default. DESIGN.md §4 resolves depth by refraction and §6
+        // bans drop shadows outright; a raised button is the Material default
+        // leaking through, not a decision this system made.
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(
+          horizontal: MapSpacing.md,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -355,17 +380,28 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+      ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: _brandColor, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
     cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      // Depth is declared once, and as an edge — never a shadow (DESIGN.md
+      // §4). A card is not glass, so it earns its separation from a hairline
+      // outline rather than from refraction.
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(MapGlass.radiusMd),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      margin: const EdgeInsets.symmetric(
+        vertical: MapSpacing.xs,
+        horizontal: MapSpacing.sm,
+      ),
     ),
   );
 }
