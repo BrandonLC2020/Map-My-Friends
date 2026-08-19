@@ -193,7 +193,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             onColorChanged: (color) {
               setState(() {
                 _pinColor =
-                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+                    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
               });
             },
           ),
@@ -905,7 +905,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         else ...[
           // Airport selection
           DropdownButtonFormField<Airport>(
-            value:
+            initialValue:
                 _preferredAirport != null &&
                     _nearbyAirports.any((a) => a.id == _preferredAirport?.id)
                 ? _nearbyAirports.firstWhere(
@@ -933,7 +933,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
           const SizedBox(height: 16),
           // Station selection
           DropdownButtonFormField<Station>(
-            value:
+            initialValue:
                 _preferredStation != null &&
                     _nearbyStations.any((s) => s.id == _preferredStation?.id)
                 ? _nearbyStations.firstWhere(

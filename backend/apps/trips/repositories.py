@@ -11,8 +11,9 @@ runs in a transaction that re-reads existing orders and refuses duplicates.
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from google.cloud import firestore as gcloud_firestore
 
@@ -75,7 +76,7 @@ class TripLegRecord:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class TripRepository:
@@ -318,7 +319,7 @@ class TripRepository:
             for doc in legs_ref.stream()
         }
 
-        for departure, arrival in zip(stops, stops[1:]):
+        for departure, arrival in itertools.pairwise(stops):
             if (departure.id, arrival.id) in existing:
                 continue
             legs_ref.document().set(

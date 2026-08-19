@@ -14,18 +14,14 @@ import 'package:map_my_friends/bloc/profile/profile_bloc.dart';
 import 'package:map_my_friends/bloc/profile/profile_event.dart';
 import 'package:map_my_friends/bloc/profile/profile_state.dart';
 import 'package:map_my_friends/bloc/station/station_bloc.dart';
-import 'package:map_my_friends/bloc/station/station_event.dart';
 import 'package:map_my_friends/bloc/station/station_state.dart';
 import 'package:map_my_friends/bloc/trip/trip_bloc.dart';
 import 'package:map_my_friends/bloc/trip/trip_event.dart';
 import 'package:map_my_friends/bloc/trip/trip_state.dart';
 import 'package:map_my_friends/models/airport.dart';
-import 'package:map_my_friends/models/station.dart';
 import 'package:map_my_friends/models/trip.dart';
 import 'package:map_my_friends/screens/map/map_screen.dart';
 import 'package:map_my_friends/components/map/horizontal_trip_planner.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 
 class MockLocationBloc extends Mock implements LocationBloc {}
 
@@ -183,7 +179,7 @@ void main() {
     // Verify HorizontalTripPlanner reflects the added stop
     final planner = find.byType(HorizontalTripPlanner);
     if (planner.evaluate().isEmpty) {
-      print(
+      debugPrint(
         'Widgets found: ${tester.allWidgets.take(10).map((w) => w.runtimeType).join(', ')}',
       );
     }

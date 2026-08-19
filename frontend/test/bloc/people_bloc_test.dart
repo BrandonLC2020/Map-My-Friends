@@ -177,12 +177,6 @@ void main() {
 // Add a fallback for Mocktail so 'any()' works with Person
 class FakePerson extends Fake implements Person {}
 
-extension on PeopleBloc {
-  void registerFallbacks() {
-    registerFallbackValue(FakePerson());
-  }
-}
-
 // Need to call this in main or setUp
 void setupFallbacks() {
   registerFallbackValue(FakePerson());

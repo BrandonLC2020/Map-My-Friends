@@ -35,7 +35,7 @@ class OSRMService:
 
             return data["routes"][0]["geometry"]
         except requests.RequestException as e:
-            raise RoutingError(f"External routing service error: {str(e)}")
+            raise RoutingError(f"External routing service error: {e!s}")
 
 
 class TransportLookupService:

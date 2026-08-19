@@ -1,11 +1,15 @@
+import logging
 import sys
+
 import jwt
 import requests
-from jwt import PyJWKClient
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from jwt import PyJWKClient
 from rest_framework import authentication, exceptions
-from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 # Determine if we are running unit tests
 TESTING = (
@@ -57,7 +61,7 @@ class Auth0JSONWebTokenAuthentication(authentication.BaseAuthentication):
                 username = "mock_auth0_user"
 
             email = f"{username}@example.com"
-            user, created = User.objects.get_or_create(
+            user, _created = User.objects.get_or_create(
                 username=username,
                 defaults={
                     "email": email,
@@ -70,7 +74,7 @@ class Auth0JSONWebTokenAuthentication(authentication.BaseAuthentication):
         # 2. Extract and decode claims *without verification* first to inspect issuer
         try:
             unverified_payload = jwt.decode(token, options={"verify_signature": False})
-        except Exception as e:
+        except Exception:  # noqa: BLE001 - any parse failure means "not our token"
             # If it cannot be parsed as a JWT at all, return None so other backends (e.g. SimpleJWT) can try
             return None
 
@@ -102,7 +106,7 @@ class Auth0JSONWebTokenAuthentication(authentication.BaseAuthentication):
             raise exceptions.AuthenticationFailed(
                 _("Invalid token signature or claims: ") + str(e)
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all so auth never leaks an internal error
             raise exceptions.AuthenticationFailed(_("Authentication failed: ") + str(e))
 
         sub = payload.get("sub")
@@ -137,7 +141,10 @@ class Auth0JSONWebTokenAuthentication(authentication.BaseAuthentication):
                         )
                         last_name = user_info.get("family_name", "")
                 except Exception:
-                    pass
+                    # Not fatal: the email falls back to a temporary address
+                    # below. Logged so a failing userinfo endpoint is still
+                    # diagnosable rather than silent.
+                    logger.warning("Auth0 userinfo lookup failed", exc_info=True)
 
             if not email:
                 email = f"{username}@temporary.auth0.com"

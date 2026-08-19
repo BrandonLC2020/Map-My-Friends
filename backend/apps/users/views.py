@@ -1,20 +1,20 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from rest_framework import generics, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.common.ownership import owner_key_for
 
-from .throttles import BurstAnonRateThrottle, SustainedAnonRateThrottle
 from .serializers import (
-    UserProfileSerializer,
-    RegisterSerializer,
-    PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    RegisterSerializer,
+    UserProfileSerializer,
 )
+from .throttles import BurstAnonRateThrottle, SustainedAnonRateThrottle
 
 
 class UserProfileView(APIView):

@@ -35,3 +35,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 package-mode = false
+[tool.ruff.lint]
+ignore = [
+    # Django and DRF configure classes by plain assignment —
+    # `permission_classes = [IsAuthenticated]`, `serializer_class = ...`. The
+    # rule is right in general and wrong for this idiom: annotating 42 framework
+    # hooks as ClassVar would add noise without adding safety. Re-enable if the
+    # codebase ever grows non-framework mutable class defaults worth catching.
+    "RUF012",
+]

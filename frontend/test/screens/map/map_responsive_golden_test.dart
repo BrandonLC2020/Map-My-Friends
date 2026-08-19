@@ -13,7 +13,6 @@ import 'package:map_my_friends/bloc/profile/profile_bloc.dart';
 import 'package:map_my_friends/bloc/profile/profile_event.dart';
 import 'package:map_my_friends/bloc/profile/profile_state.dart';
 import 'package:map_my_friends/bloc/station/station_bloc.dart';
-import 'package:map_my_friends/bloc/station/station_event.dart';
 import 'package:map_my_friends/bloc/station/station_state.dart';
 import 'package:map_my_friends/bloc/trip/trip_bloc.dart';
 import 'package:map_my_friends/bloc/trip/trip_event.dart';

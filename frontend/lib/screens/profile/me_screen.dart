@@ -134,7 +134,7 @@ class _MeScreenState extends State<MeScreen> {
             onColorChanged: (color) {
               setState(() {
                 _pinColor =
-                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+                    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
               });
             },
           ),

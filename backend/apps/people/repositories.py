@@ -11,8 +11,8 @@ Layout:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
-from datetime import datetime, timezone
+from dataclasses import dataclass, fields
+from datetime import UTC, datetime
 
 from apps.common import firestore as fs
 
@@ -69,7 +69,7 @@ _PERSON_WRITABLE_FIELDS = _PERSON_FIELDS - {"owner_key"}
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class PersonRepository:

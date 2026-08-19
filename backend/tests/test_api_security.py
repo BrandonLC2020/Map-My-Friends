@@ -1,11 +1,11 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
+
 from apps.common.testing import FirestoreTestMixin
 from apps.people.repositories import ContactLogRepository, PersonRepository
 from apps.trips.repositories import TripRepository
-import time
 
 
 class JWTAuthTests(APITestCase):
@@ -95,7 +95,6 @@ class SecurityBehaviorTests(APITestCase):
         """Test that multiple registration attempts trigger throttling."""
         # Note: In a real test environment, we might need to ensure the cache is used
         # for throttling to work across requests.
-        hit_429 = False
         for i in range(15):
             payload = {
                 "username": f"throttleuser{i}",
@@ -105,7 +104,6 @@ class SecurityBehaviorTests(APITestCase):
             }
             response = self.client.post(self.register_url, payload)
             if response.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
-                hit_429 = True
                 break
 
         # Note: Throttling might be disabled in some test environments.
@@ -202,7 +200,7 @@ class PeoplePermissionTests(APITestCase):
         # Authenticated
         self.client.force_authenticate(user=self.user)
         # Mock geocoding to avoid external calls
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         mock_location = MagicMock()
         mock_location.latitude = 40.7128
@@ -361,9 +359,7 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         # List logs - should only see log_a
         response = self.client.get(self.logs_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = (
-            response.data["results"] if "results" in response.data else response.data
-        )
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["note"], "Call with A")
 
@@ -379,17 +375,13 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         # Querying with Person A (owned) - should return logs
         response = self.client.get(self.logs_url, {"person": self.person_a.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = (
-            response.data["results"] if "results" in response.data else response.data
-        )
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
         # Querying with Person B (not owned) - should return empty list (since queryset filters by person owner)
         response = self.client.get(self.logs_url, {"person": self.person_b.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = (
-            response.data["results"] if "results" in response.data else response.data
-        )
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 0)
 
     def test_cannot_create_log_for_other_user_person(self):
@@ -417,7 +409,7 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check GeoJSON structure
-        features = response.data["features"] if "features" in response.data else []
+        features = response.data.get("features", [])
         self.assertGreater(len(features), 0)
         for feature in features:
             properties = feature["properties"]
@@ -429,7 +421,7 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         response = self.client.get(self.people_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        features = response.data["features"] if "features" in response.data else []
+        features = response.data.get("features", [])
         # User A owns person_a. person_public has no owner so User A shouldn't see it (queryset filters owner=user_a).
         self.assertEqual(len(features), 1)
         properties = features[0]["properties"]

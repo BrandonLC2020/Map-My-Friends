@@ -232,41 +232,42 @@ class TripsScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Update Trip Status'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: TripStatus.values
-              .map(
-                (status) => ListTile(
-                  title: Text(status.name.toUpperCase()),
-                  leading: Radio<TripStatus>(
-                    value: status,
-                    groupValue: trip.status,
-                    onChanged: (v) {
+        content: RadioGroup<TripStatus>(
+          groupValue: trip.status,
+          onChanged: (v) {
+            if (v == null) return;
+            context.read<TripBloc>().add(
+              SaveTrip(
+                name: trip.name,
+                startDate: trip.startDate,
+                endDate: trip.endDate,
+                status: v,
+              ),
+            );
+            Navigator.pop(context);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: TripStatus.values
+                .map(
+                  (status) => ListTile(
+                    title: Text(status.name.toUpperCase()),
+                    leading: Radio<TripStatus>(value: status),
+                    onTap: () {
                       context.read<TripBloc>().add(
                         SaveTrip(
                           name: trip.name,
                           startDate: trip.startDate,
                           endDate: trip.endDate,
-                          status: v!,
+                          status: status,
                         ),
                       );
                       Navigator.pop(context);
                     },
                   ),
-                  onTap: () {
-                    context.read<TripBloc>().add(
-                      SaveTrip(
-                        name: trip.name,
-                        startDate: trip.startDate,
-                        endDate: trip.endDate,
-                        status: status,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
-                ),
-              )
-              .toList(),
+                )
+                .toList(),
+          ),
         ),
       ),
     );

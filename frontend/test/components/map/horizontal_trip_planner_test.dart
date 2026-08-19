@@ -10,7 +10,7 @@ import 'package:map_my_friends/models/person.dart';
 import 'package:map_my_friends/models/trip.dart';
 
 class MockTripBloc extends Bloc<TripEvent, TripState> implements TripBloc {
-  MockTripBloc(TripState initialState) : super(initialState);
+  MockTripBloc(super.initialState);
 
   final List<TripEvent> events = [];
 
