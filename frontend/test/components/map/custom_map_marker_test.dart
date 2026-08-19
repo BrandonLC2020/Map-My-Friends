@@ -96,10 +96,7 @@ void main() {
         ),
       );
 
-      expect(
-        find.bySemanticsLabel('Test Marker'),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel('Test Marker'), findsOneWidget);
     });
   });
 }

@@ -169,9 +169,7 @@ class UnifiedClusterModal extends StatelessWidget {
                               preferredAirport: stop.airport,
                               preferredStation: stop.station,
                             );
-                            peopleBloc.add(
-                              UpdatePerson(updatedPerson),
-                            );
+                            peopleBloc.add(UpdatePerson(updatedPerson));
                           },
                         ),
                       ),

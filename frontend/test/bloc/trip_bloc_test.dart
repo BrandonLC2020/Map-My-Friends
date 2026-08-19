@@ -11,6 +11,7 @@ import 'package:map_my_friends/services/routing_service.dart';
 import 'package:map_my_friends/services/api_service.dart';
 
 class MockRoutingService extends Mock implements RoutingService {}
+
 class MockApiService extends Mock implements ApiService {}
 
 void main() {
@@ -33,15 +34,29 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const TripState());
     registerFallbackValue(testPerson);
-    registerFallbackValue(AddStop(Person(id: '0', firstName: '', lastName: '', relationshipTag: '', city: '', state: '', country: '')));
-    registerFallbackValue(Trip(name: 'Test Trip', date: DateTime.now(), stops: const []));
+    registerFallbackValue(
+      AddStop(
+        Person(
+          id: '0',
+          firstName: '',
+          lastName: '',
+          relationshipTag: '',
+          city: '',
+          state: '',
+          country: '',
+        ),
+      ),
+    );
+    registerFallbackValue(
+      Trip(name: 'Test Trip', date: DateTime.now(), stops: const []),
+    );
   });
 
   setUp(() {
     routingService = MockRoutingService();
     apiService = MockApiService();
     tripBloc = TripBloc(routingService: routingService, apiService: apiService);
-    
+
     // Default mock behavior
     when(() => routingService.getRoute(any())).thenAnswer((_) async => []);
   });
@@ -60,8 +75,12 @@ void main() {
       build: () => tripBloc,
       act: (bloc) => bloc.add(AddStop(testPerson)),
       expect: () => [
-        predicate<TripState>((state) => state.stops.length == 1 && state.isOptimizing),
-        predicate<TripState>((state) => state.stops.length == 1 && !state.isOptimizing),
+        predicate<TripState>(
+          (state) => state.stops.length == 1 && state.isOptimizing,
+        ),
+        predicate<TripState>(
+          (state) => state.stops.length == 1 && !state.isOptimizing,
+        ),
       ],
       verify: (_) {
         verify(() => routingService.getRoute(any())).called(1);
@@ -95,17 +114,34 @@ void main() {
     blocTest<TripBloc, TripState>(
       'SaveTrip (new) calls apiService.createTrip and emits success',
       build: () {
-        final savedTrip = Trip(id: '123', name: 'Saved', date: DateTime.now(), stops: []);
-        when(() => apiService.createTrip(any())).thenAnswer((_) async => savedTrip);
+        final savedTrip = Trip(
+          id: '123',
+          name: 'Saved',
+          date: DateTime.now(),
+          stops: [],
+        );
+        when(
+          () => apiService.createTrip(any()),
+        ).thenAnswer((_) async => savedTrip);
         when(() => apiService.getTrips()).thenAnswer((_) async => [savedTrip]);
         return tripBloc;
       },
-      act: (bloc) => bloc.add(const SaveTrip(name: 'New Trip', status: TripStatus.draft)),
+      act: (bloc) =>
+          bloc.add(const SaveTrip(name: 'New Trip', status: TripStatus.draft)),
       expect: () => [
         const TripState(isLoading: true),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '123'),
-        predicate<TripState>((state) => state.isLoading && state.currentTripId == '123'),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '123' && state.userTrips.isNotEmpty),
+        predicate<TripState>(
+          (state) => !state.isLoading && state.currentTripId == '123',
+        ),
+        predicate<TripState>(
+          (state) => state.isLoading && state.currentTripId == '123',
+        ),
+        predicate<TripState>(
+          (state) =>
+              !state.isLoading &&
+              state.currentTripId == '123' &&
+              state.userTrips.isNotEmpty,
+        ),
       ],
     );
 
@@ -113,14 +149,21 @@ void main() {
       'LoadTrip updates stops and fetches route',
       build: () => tripBloc,
       act: (bloc) {
-        final trip = Trip(id: '456', name: 'Existing', date: DateTime.now(), stops: [
-          TripStop(location: const LatLng(1, 1), sequenceOrder: 0),
-        ]);
+        final trip = Trip(
+          id: '456',
+          name: 'Existing',
+          date: DateTime.now(),
+          stops: [TripStop(location: const LatLng(1, 1), sequenceOrder: 0)],
+        );
         bloc.add(LoadTrip(trip));
       },
       expect: () => [
-        predicate<TripState>((state) => state.isLoading && state.currentTripId == '456'),
-        predicate<TripState>((state) => !state.isLoading && state.currentTripId == '456'),
+        predicate<TripState>(
+          (state) => state.isLoading && state.currentTripId == '456',
+        ),
+        predicate<TripState>(
+          (state) => !state.isLoading && state.currentTripId == '456',
+        ),
       ],
       verify: (_) {
         verify(() => routingService.getRoute(any())).called(1);

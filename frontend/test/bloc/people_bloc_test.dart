@@ -47,7 +47,9 @@ void main() {
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleLoading, PeopleLoaded] on success',
         build: () {
-          when(() => apiService.getPeople()).thenAnswer((_) async => testPeople);
+          when(
+            () => apiService.getPeople(),
+          ).thenAnswer((_) async => testPeople);
           return peopleBloc;
         },
         act: (bloc) => bloc.add(LoadPeople()),
@@ -57,11 +59,16 @@ void main() {
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleLoading, PeopleError] on failure',
         build: () {
-          when(() => apiService.getPeople()).thenThrow(Exception('Failed to load'));
+          when(
+            () => apiService.getPeople(),
+          ).thenThrow(Exception('Failed to load'));
           return peopleBloc;
         },
         act: (bloc) => bloc.add(LoadPeople()),
-        expect: () => [PeopleLoading(), const PeopleError('Exception: Failed to load')],
+        expect: () => [
+          PeopleLoading(),
+          const PeopleError('Exception: Failed to load'),
+        ],
       );
     });
 
@@ -81,18 +88,24 @@ void main() {
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleLoaded] with new person on success',
         build: () {
-          when(() => apiService.addPerson(any())).thenAnswer((_) async => newPerson);
+          when(
+            () => apiService.addPerson(any()),
+          ).thenAnswer((_) async => newPerson);
           return peopleBloc;
         },
         seed: () => PeopleLoaded(testPeople),
         act: (bloc) => bloc.add(AddPerson(newPerson)),
-        expect: () => [PeopleLoaded([...testPeople, newPerson])],
+        expect: () => [
+          PeopleLoaded([...testPeople, newPerson]),
+        ],
       );
 
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleError] on failure',
         build: () {
-          when(() => apiService.addPerson(any())).thenThrow(Exception('Failed to add'));
+          when(
+            () => apiService.addPerson(any()),
+          ).thenThrow(Exception('Failed to add'));
           return peopleBloc;
         },
         seed: () => PeopleLoaded(testPeople),
@@ -107,18 +120,24 @@ void main() {
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleLoaded] with updated person on success',
         build: () {
-          when(() => apiService.updatePerson(any())).thenAnswer((_) async => updatedPerson);
+          when(
+            () => apiService.updatePerson(any()),
+          ).thenAnswer((_) async => updatedPerson);
           return peopleBloc;
         },
         seed: () => PeopleLoaded(testPeople),
         act: (bloc) => bloc.add(UpdatePerson(updatedPerson)),
-        expect: () => [PeopleLoaded([updatedPerson])],
+        expect: () => [
+          PeopleLoaded([updatedPerson]),
+        ],
       );
 
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleError] on failure',
         build: () {
-          when(() => apiService.updatePerson(any())).thenThrow(Exception('Failed to update'));
+          when(
+            () => apiService.updatePerson(any()),
+          ).thenThrow(Exception('Failed to update'));
           return peopleBloc;
         },
         seed: () => PeopleLoaded(testPeople),
@@ -142,7 +161,9 @@ void main() {
       blocTest<PeopleBloc, PeopleState>(
         'emits [PeopleError] on failure',
         build: () {
-          when(() => apiService.deletePerson('1')).thenThrow(Exception('Failed to delete'));
+          when(
+            () => apiService.deletePerson('1'),
+          ).thenThrow(Exception('Failed to delete'));
           return peopleBloc;
         },
         seed: () => PeopleLoaded(testPeople),

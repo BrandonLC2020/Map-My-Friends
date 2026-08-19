@@ -15,7 +15,9 @@ void main() {
   ) async {
     final mapSettingsCubit = MockMapSettingsCubit();
     when(() => mapSettingsCubit.state).thenReturn(const MapSettingsState());
-    when(() => mapSettingsCubit.stream).thenAnswer((_) => Stream<MapSettingsState>.empty());
+    when(
+      () => mapSettingsCubit.stream,
+    ).thenAnswer((_) => Stream<MapSettingsState>.empty());
     when(() => mapSettingsCubit.close()).thenAnswer((_) => Future.value());
 
     final trip = Trip(

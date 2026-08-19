@@ -39,7 +39,7 @@ void main() {
       });
       prefs = await SharedPreferences.getInstance();
       final cubit = MapSettingsCubit(prefs: prefs);
-      
+
       expect(cubit.state.showControls, false);
       expect(cubit.state.mapType, MapType.satellite);
       expect(cubit.state.themeMode, ThemeMode.dark);
@@ -48,7 +48,7 @@ void main() {
       expect(cubit.state.airportFilter, AirportFilter.international);
       expect(cubit.state.stationFilter, StationFilter.major);
       expect(cubit.state.distanceUnit, DistanceUnit.imperial);
-      
+
       cubit.close();
     });
 
@@ -86,7 +86,9 @@ void main() {
       'setMapType updates state and saves to prefs',
       build: () => mapSettingsCubit,
       act: (cubit) => cubit.setMapType(MapType.minimal),
-      expect: () => [const MapSettingsState().copyWith(mapType: MapType.minimal)],
+      expect: () => [
+        const MapSettingsState().copyWith(mapType: MapType.minimal),
+      ],
       verify: (_) {
         expect(prefs.getInt('map_type'), MapType.minimal.index);
       },
@@ -96,7 +98,9 @@ void main() {
       'setMapTheme updates state and saves to prefs',
       build: () => mapSettingsCubit,
       act: (cubit) => cubit.setMapTheme(ThemeMode.light),
-      expect: () => [const MapSettingsState().copyWith(themeMode: ThemeMode.light)],
+      expect: () => [
+        const MapSettingsState().copyWith(themeMode: ThemeMode.light),
+      ],
       verify: (_) {
         expect(prefs.getInt('map_theme_mode'), ThemeMode.light.index);
       },
@@ -106,9 +110,16 @@ void main() {
       'setAirportFilter updates state and saves to prefs',
       build: () => mapSettingsCubit,
       act: (cubit) => cubit.setAirportFilter(AirportFilter.regional),
-      expect: () => [const MapSettingsState().copyWith(airportFilter: AirportFilter.regional)],
+      expect: () => [
+        const MapSettingsState().copyWith(
+          airportFilter: AirportFilter.regional,
+        ),
+      ],
       verify: (_) {
-        expect(prefs.getInt('map_airport_filter'), AirportFilter.regional.index);
+        expect(
+          prefs.getInt('map_airport_filter'),
+          AirportFilter.regional.index,
+        );
       },
     );
 
@@ -116,7 +127,9 @@ void main() {
       'setStationFilter updates state and saves to prefs',
       build: () => mapSettingsCubit,
       act: (cubit) => cubit.setStationFilter(StationFilter.subway),
-      expect: () => [const MapSettingsState().copyWith(stationFilter: StationFilter.subway)],
+      expect: () => [
+        const MapSettingsState().copyWith(stationFilter: StationFilter.subway),
+      ],
       verify: (_) {
         expect(prefs.getInt('map_station_filter'), StationFilter.subway.index);
       },
@@ -126,7 +139,9 @@ void main() {
       'setDistanceUnit updates state and saves to prefs',
       build: () => mapSettingsCubit,
       act: (cubit) => cubit.setDistanceUnit(DistanceUnit.imperial),
-      expect: () => [const MapSettingsState().copyWith(distanceUnit: DistanceUnit.imperial)],
+      expect: () => [
+        const MapSettingsState().copyWith(distanceUnit: DistanceUnit.imperial),
+      ],
       verify: (_) {
         expect(prefs.getInt('map_distance_unit'), DistanceUnit.imperial.index);
       },

@@ -37,10 +37,7 @@ class PulseBloc extends Bloc<PulseEvent, PulseState> {
     }
   }
 
-  Future<void> _onLogContact(
-    LogContact event,
-    Emitter<PulseState> emit,
-  ) async {
+  Future<void> _onLogContact(LogContact event, Emitter<PulseState> emit) async {
     final current = state;
     if (current is! PulseLoaded) return;
 
@@ -76,10 +73,7 @@ class PulseBloc extends Bloc<PulseEvent, PulseState> {
     }
   }
 
-  Future<void> _onSetCadence(
-    SetCadence event,
-    Emitter<PulseState> emit,
-  ) async {
+  Future<void> _onSetCadence(SetCadence event, Emitter<PulseState> emit) async {
     final current = state;
     if (current is! PulseLoaded) return;
 
@@ -94,8 +88,7 @@ class PulseBloc extends Bloc<PulseEvent, PulseState> {
 
     try {
       final saved = await _apiService.updatePerson(updated);
-      final finalPeople = List<Person>.from(current.people)
-        ..[index] = saved;
+      final finalPeople = List<Person>.from(current.people)..[index] = saved;
       emit(current.copyWith(people: finalPeople));
     } catch (e) {
       emit(

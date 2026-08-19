@@ -26,10 +26,7 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
-      home: BlocProvider.value(
-        value: authBloc,
-        child: const RegisterScreen(),
-      ),
+      home: BlocProvider.value(value: authBloc, child: const RegisterScreen()),
     );
   }
 
@@ -52,7 +49,10 @@ void main() {
     testWidgets('shows error for invalid email', (tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Email *'), 'invalid-email');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email *'),
+        'invalid-email',
+      );
       final button = find.widgetWithText(FilledButton, 'Create Account');
       await tester.ensureVisible(button);
       await tester.tap(button);
@@ -64,8 +64,14 @@ void main() {
     testWidgets('shows error for password mismatch', (tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Password *'), 'password123');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Confirm Password *'), 'password456');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Password *'),
+        'password123',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm Password *'),
+        'password456',
+      );
       final button = find.widgetWithText(FilledButton, 'Create Account');
       await tester.ensureVisible(button);
       await tester.tap(button);
@@ -74,13 +80,27 @@ void main() {
       expect(find.text('Passwords do not match'), findsOneWidget);
     });
 
-    testWidgets('dispatches RegisterRequested on valid form submission', (tester) async {
+    testWidgets('dispatches RegisterRequested on valid form submission', (
+      tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Username *'), 'testuser');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Email *'), 'test@example.com');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Password *'), 'password123');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Confirm Password *'), 'password123');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Username *'),
+        'testuser',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email *'),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Password *'),
+        'password123',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm Password *'),
+        'password123',
+      );
 
       final button = find.widgetWithText(FilledButton, 'Create Account');
       await tester.ensureVisible(button);
@@ -90,7 +110,9 @@ void main() {
       verify(() => authBloc.add(any(that: isA<RegisterRequested>()))).called(1);
     });
 
-    testWidgets('shows loading indicator when state is AuthLoading', (tester) async {
+    testWidgets('shows loading indicator when state is AuthLoading', (
+      tester,
+    ) async {
       when(() => authBloc.state).thenReturn(AuthLoading());
 
       await tester.pumpWidget(createWidgetUnderTest());
@@ -107,7 +129,7 @@ void main() {
 
       controller.add(const AuthError(message: 'Registration failed'));
       // Need to pump enough to show snackbar
-      await tester.pump(); 
+      await tester.pump();
 
       expect(find.text('Registration failed'), findsOneWidget);
       await controller.close();
