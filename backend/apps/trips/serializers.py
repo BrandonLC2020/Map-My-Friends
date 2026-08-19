@@ -55,8 +55,12 @@ class TripStopSerializer(serializers.Serializer):
     people = serializers.ListField(
         source="person_ids", child=serializers.CharField(), required=False
     )
-    airport = serializers.IntegerField(source="airport_id", required=False, allow_null=True)
-    station = serializers.IntegerField(source="station_id", required=False, allow_null=True)
+    airport = serializers.IntegerField(
+        source="airport_id", required=False, allow_null=True
+    )
+    station = serializers.IntegerField(
+        source="station_id", required=False, allow_null=True
+    )
     snapshot_address = serializers.CharField(read_only=True, allow_blank=True)
     snapshot_metadata = serializers.DictField(read_only=True)
 
@@ -68,9 +72,7 @@ class TripStopSerializer(serializers.Serializer):
         # dereferences it unguarded — one bad stop breaks the whole Trips tab.
         location = ret.pop("location", None)
         if not location:
-            raise serializers.ValidationError(
-                {"location": ["This field is required."]}
-            )
+            raise serializers.ValidationError({"location": ["This field is required."]})
         ret.update(location)
         return ret
 
@@ -85,7 +87,9 @@ class TripLegSerializer(serializers.Serializer):
     departure_time = serializers.DateTimeField(required=False, allow_null=True)
     arrival_time = serializers.DateTimeField(required=False, allow_null=True)
     transport_type = serializers.ChoiceField(choices=TRANSPORT_CHOICES, required=False)
-    booking_reference = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    booking_reference = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
     ticket_data = serializers.DictField(required=False)
 
 

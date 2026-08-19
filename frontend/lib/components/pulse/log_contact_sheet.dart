@@ -16,7 +16,7 @@ class LogContactSheet extends StatefulWidget {
   final Person person;
   final ContactRecency recency;
   final void Function(ContactChannel channel, DateTime date, String? note)
-      onLog;
+  onLog;
   final void Function(int cadenceDays) onSetCadence;
 
   const LogContactSheet({
@@ -32,7 +32,7 @@ class LogContactSheet extends StatefulWidget {
     required Person person,
     required ContactRecency recency,
     required void Function(ContactChannel channel, DateTime date, String? note)
-        onLog,
+    onLog,
     required void Function(int cadenceDays) onSetCadence,
   }) {
     return showModalBottomSheet<void>(
@@ -67,7 +67,8 @@ class _LogContactSheetState extends State<LogContactSheet> {
   void initState() {
     super.initState();
     _date = DateUtils.dateOnly(DateTime.now());
-    _cadence = widget.person.contactCadenceDays ??
+    _cadence =
+        widget.person.contactCadenceDays ??
         ContactRecency.defaultCadenceForTag(widget.person.relationshipTag);
   }
 
@@ -140,7 +141,8 @@ class _LogContactSheetState extends State<LogContactSheet> {
             Text('Log contact', style: theme.textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              'with ${widget.person.firstName} ${widget.person.lastName}'.trim(),
+              'with ${widget.person.firstName} ${widget.person.lastName}'
+                  .trim(),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -192,8 +194,7 @@ class _LogContactSheetState extends State<LogContactSheet> {
                   label: _dateLabel != 'Today' && _dateLabel != 'Yesterday'
                       ? _dateLabel
                       : 'Pick date…',
-                  selected:
-                      _dateLabel != 'Today' && _dateLabel != 'Yesterday',
+                  selected: _dateLabel != 'Today' && _dateLabel != 'Yesterday',
                   icon: Icons.calendar_today,
                   onTap: _pickDate,
                 ),
@@ -286,8 +287,7 @@ class _ChannelOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = channel.markerColor;
-    final borderColor =
-        selected ? accent : theme.colorScheme.outlineVariant;
+    final borderColor = selected ? accent : theme.colorScheme.outlineVariant;
     final fg = selected ? accent : theme.colorScheme.onSurfaceVariant;
 
     return Semantics(
@@ -305,10 +305,7 @@ class _ChannelOption extends StatelessWidget {
                 ? accent.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: borderColor,
-              width: selected ? 1.5 : 1,
-            ),
+            border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
           ),
           child: Column(
             children: [
@@ -352,7 +349,9 @@ class _DateChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? primary.withValues(alpha: 0.14) : Colors.transparent,
+          color: selected
+              ? primary.withValues(alpha: 0.14)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected ? primary : theme.colorScheme.outlineVariant,

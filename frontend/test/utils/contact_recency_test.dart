@@ -2,11 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_my_friends/models/person.dart';
 import 'package:map_my_friends/utils/contact_recency.dart';
 
-Person _person({
-  String tag = 'FRIEND',
-  int? cadence,
-  DateTime? lastContacted,
-}) {
+Person _person({String tag = 'FRIEND', int? cadence, DateTime? lastContacted}) {
   return Person(
     id: '1',
     firstName: 'Test',
@@ -51,9 +47,9 @@ void main() {
 
   group('level bands (cadence 30)', () {
     ContactRecency at(int daysAgo) => ContactRecency.forPerson(
-          _person(lastContacted: now.subtract(Duration(days: daysAgo))),
-          now: now,
-        );
+      _person(lastContacted: now.subtract(Duration(days: daysAgo))),
+      now: now,
+    );
 
     test('fresh below half a cadence', () {
       expect(at(0).level, RecencyLevel.fresh);
@@ -105,10 +101,7 @@ void main() {
     });
 
     test('future or same-day contact reads as today with zero days', () {
-      final r = ContactRecency.forPerson(
-        _person(lastContacted: now),
-        now: now,
-      );
+      final r = ContactRecency.forPerson(_person(lastContacted: now), now: now);
       expect(r.daysSince, 0);
       expect(r.lastContactPhrase, 'Contacted today');
     });

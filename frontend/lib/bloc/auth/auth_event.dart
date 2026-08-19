@@ -69,4 +69,3 @@ class Auth0LoginRequested extends AuthEvent {
   @override
   List<Object?> get props => [connection];
 }
-

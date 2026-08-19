@@ -1,3 +1,12 @@
+@Tags(['golden'])
+library;
+
+// Golden images only match the platform that generated them: text
+// antialiasing differs between macOS and Linux, which shows up here as a
+// sub-4% pixel diff with identical layout. These are tagged so CI skips them
+// (`flutter test --exclude-tags golden`) and they stay useful locally, where
+// they are the check on what the UI actually looks like.
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +22,6 @@ import 'package:map_my_friends/bloc/profile/profile_bloc.dart';
 import 'package:map_my_friends/bloc/profile/profile_event.dart';
 import 'package:map_my_friends/bloc/profile/profile_state.dart';
 import 'package:map_my_friends/bloc/station/station_bloc.dart';
-import 'package:map_my_friends/bloc/station/station_event.dart';
 import 'package:map_my_friends/bloc/station/station_state.dart';
 import 'package:map_my_friends/bloc/trip/trip_bloc.dart';
 import 'package:map_my_friends/bloc/trip/trip_event.dart';
@@ -21,11 +29,17 @@ import 'package:map_my_friends/bloc/trip/trip_state.dart';
 import 'package:map_my_friends/screens/map/map_screen.dart';
 
 class MockLocationBloc extends Mock implements LocationBloc {}
+
 class MockPeopleBloc extends Mock implements PeopleBloc {}
+
 class MockMapSettingsCubit extends Mock implements MapSettingsCubit {}
+
 class MockProfileBloc extends Mock implements ProfileBloc {}
+
 class MockAirportBloc extends Mock implements AirportBloc {}
+
 class MockStationBloc extends Mock implements StationBloc {}
+
 class MockTripBloc extends Mock implements TripBloc {}
 
 void main() {
@@ -56,30 +70,41 @@ void main() {
     tripBloc = MockTripBloc();
 
     when(() => locationBloc.state).thenReturn(const LocationLoaded());
-    when(() => locationBloc.stream).thenAnswer((_) => Stream<LocationState>.empty());
+    when(
+      () => locationBloc.stream,
+    ).thenAnswer((_) => Stream<LocationState>.empty());
     when(() => locationBloc.close()).thenAnswer((_) => Future.value());
 
     when(() => peopleBloc.state).thenReturn(const PeopleLoaded([]));
-    when(() => peopleBloc.stream).thenAnswer((_) => Stream<PeopleState>.empty());
+    when(
+      () => peopleBloc.stream,
+    ).thenAnswer((_) => Stream<PeopleState>.empty());
     when(() => peopleBloc.close()).thenAnswer((_) => Future.value());
 
     when(() => mapSettingsCubit.state).thenReturn(const MapSettingsState());
-    when(() => mapSettingsCubit.stream).thenAnswer((_) => Stream<MapSettingsState>.empty());
+    when(
+      () => mapSettingsCubit.stream,
+    ).thenAnswer((_) => Stream<MapSettingsState>.empty());
     when(() => mapSettingsCubit.close()).thenAnswer((_) => Future.value());
 
-    when(() => profileBloc.state).thenReturn(ProfileLoaded(
-      username: 'test',
-      email: 'test@test.com',
-    ));
-    when(() => profileBloc.stream).thenAnswer((_) => Stream<ProfileState>.empty());
+    when(
+      () => profileBloc.state,
+    ).thenReturn(ProfileLoaded(username: 'test', email: 'test@test.com'));
+    when(
+      () => profileBloc.stream,
+    ).thenAnswer((_) => Stream<ProfileState>.empty());
     when(() => profileBloc.close()).thenAnswer((_) => Future.value());
 
     when(() => airportBloc.state).thenReturn(const MapAirportsLoaded([]));
-    when(() => airportBloc.stream).thenAnswer((_) => Stream<AirportState>.empty());
+    when(
+      () => airportBloc.stream,
+    ).thenAnswer((_) => Stream<AirportState>.empty());
     when(() => airportBloc.close()).thenAnswer((_) => Future.value());
 
     when(() => stationBloc.state).thenReturn(const MapStationsLoaded([]));
-    when(() => stationBloc.stream).thenAnswer((_) => Stream<StationState>.empty());
+    when(
+      () => stationBloc.stream,
+    ).thenAnswer((_) => Stream<StationState>.empty());
     when(() => stationBloc.close()).thenAnswer((_) => Future.value());
 
     when(() => tripBloc.state).thenReturn(const TripState());

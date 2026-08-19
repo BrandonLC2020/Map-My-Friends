@@ -23,7 +23,9 @@ class StationReferenceTests(SimpleTestCase):
         self.assertEqual(len(reference.get_nearby(41.8781, -87.6298, count=3)), 3)
 
     def test_get_nearby_sorted_ascending(self):
-        distances = [s.distance_km for s in reference.get_nearby(41.8781, -87.6298, count=5)]
+        distances = [
+            s.distance_km for s in reference.get_nearby(41.8781, -87.6298, count=5)
+        ]
         self.assertTrue(all(d is not None for d in distances))
         self.assertEqual(distances, sorted(distances))
 
@@ -58,7 +60,9 @@ class NearestStationsEndpointTests(APITestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_returns_geojson_features(self):
-        response = self.client.get("/api/stations/nearest/?lat=41.8781&lon=-87.6298&count=3")
+        response = self.client.get(
+            "/api/stations/nearest/?lat=41.8781&lon=-87.6298&count=3"
+        )
         self.assertEqual(response.status_code, 200)
         feature = response.data["features"][0]
         self.assertEqual(feature["type"], "Feature")

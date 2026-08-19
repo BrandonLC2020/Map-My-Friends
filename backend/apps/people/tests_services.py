@@ -32,7 +32,9 @@ class GeocodeAddressTests(SimpleTestCase):
     @patch("apps.people.services.time.sleep")
     @patch("apps.people.services.TimezoneFinder")
     @patch("apps.people.services.Nominatim")
-    def test_retries_on_timeout_then_succeeds(self, mock_nominatim, mock_tf, mock_sleep):
+    def test_retries_on_timeout_then_succeeds(
+        self, mock_nominatim, mock_tf, mock_sleep
+    ):
         from geopy.exc import GeocoderTimedOut
 
         mock_nominatim.return_value.geocode.side_effect = [
@@ -63,7 +65,9 @@ class GeocodeAddressTests(SimpleTestCase):
     @patch("apps.people.services.time.sleep")
     @patch("apps.people.services.TimezoneFinder")
     @patch("apps.people.services.Nominatim")
-    def test_retries_three_times_when_not_found(self, mock_nominatim, mock_tf, mock_sleep):
+    def test_retries_three_times_when_not_found(
+        self, mock_nominatim, mock_tf, mock_sleep
+    ):
         mock_nominatim.return_value.geocode.return_value = None
 
         with self.assertRaises(ValidationError):

@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # ratchet:actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d70b7726615b00ec5279dbf67efbe7f373ecd457 # ratchet:docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # ratchet:docker/setup-buildx-action@v3
 
       - name: Start Docker Compose Services
         run: |
@@ -95,15 +95,21 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # ratchet:actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ef37599044d62c05007421453 # ratchet:actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # ratchet:actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@389658ec876356784534ef0cd06e987c4f420e6f # ratchet:subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # ratchet:subosito/flutter-action@v2
         with:
           channel: 'stable'
+          # Pinned to the SDK this project is developed and tested against.
+          # Floating on latest stable meant CI and the production web build
+          # used a Flutter nobody had run: it broke version solving on the
+          # exact intl pin, and dart format disagreed with local output.
+          # Bump this deliberately, together with the team's SDK.
+          flutter-version: '3.41.7'
           cache: true
 
       - name: Install Dependencies
@@ -116,7 +122,11 @@ jobs:
         run: flutter analyze
 
       - name: Run Unit Tests
-        run: flutter test
+        # Golden images only match the platform that generated them — text
+        # antialiasing differs between macOS and Linux, which shows up as a
+        # sub-4%% pixel diff with identical layout. They stay a local tool;
+        # run them with `flutter test --tags golden`.
+        run: flutter test --exclude-tags golden
 
   # -----------------------------------------------------------------
   # INFRASTRUCTURE VALIDATION
@@ -132,7 +142,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # ratchet:actions/checkout@v4
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@a967c87c27e34748c3ae0b2d71192e42ef998246 # ratchet:hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # ratchet:hashicorp/setup-terraform@v3
 
       - name: Format Check
         run: terraform fmt -check -recursive

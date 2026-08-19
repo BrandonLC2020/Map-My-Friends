@@ -34,7 +34,9 @@ class TripRepositoryTests(FirestoreTestMixin, SimpleTestCase):
         self.assertIsNone(self.trips.get_for_owner(trip.id, "owner-b"))
 
     def test_dates_default_from_legacy_date_field(self):
-        trip = self.trips.create("owner-a", {"name": "T", "date": "2026-09-01", "status": "DRAFT"})
+        trip = self.trips.create(
+            "owner-a", {"name": "T", "date": "2026-09-01", "status": "DRAFT"}
+        )
         self.assertEqual(trip.start_date, "2026-09-01")
         self.assertEqual(trip.end_date, "2026-09-01")
 
@@ -47,29 +49,45 @@ class TripRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_duplicate_sequence_order_rejected(self):
         trip = self.trips.create("owner-a", TRIP_DATA)
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        )
         with self.assertRaises(DuplicateSequenceOrder):
-            self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 3.0, "lng": 4.0})
+            self.trips.add_stop(
+                trip.id, "owner-a", {"sequence_order": 1, "lat": 3.0, "lng": 4.0}
+            )
 
     def test_add_stop_for_wrong_owner_returns_none(self):
         trip = self.trips.create("owner-a", TRIP_DATA)
         self.assertIsNone(
-            self.trips.add_stop(trip.id, "owner-b", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+            self.trips.add_stop(
+                trip.id, "owner-b", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+            )
         )
 
     def test_generate_legs_links_consecutive_stops(self):
         trip = self.trips.create("owner-a", TRIP_DATA)
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0})
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 3, "lat": 5.0, "lng": 6.0})
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        )
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0}
+        )
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 3, "lat": 5.0, "lng": 6.0}
+        )
 
         legs = self.trips.generate_legs(trip.id, "owner-a")
         self.assertEqual(len(legs), 2)
 
     def test_generate_legs_is_idempotent(self):
         trip = self.trips.create("owner-a", TRIP_DATA)
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0})
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        )
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 2, "lat": 3.0, "lng": 4.0}
+        )
 
         self.trips.generate_legs(trip.id, "owner-a")
         legs = self.trips.generate_legs(trip.id, "owner-a")
@@ -90,7 +108,9 @@ class TripRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_delete_removes_trip_and_children(self):
         trip = self.trips.create("owner-a", TRIP_DATA)
-        self.trips.add_stop(trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0})
+        self.trips.add_stop(
+            trip.id, "owner-a", {"sequence_order": 1, "lat": 1.0, "lng": 2.0}
+        )
         self.assertTrue(self.trips.delete(trip.id, "owner-a"))
         self.assertIsNone(self.trips.get_for_owner(trip.id, "owner-a"))
 
@@ -233,7 +253,9 @@ class TripNestedContractTests(FirestoreTestMixin, APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["stops"]), 1)
-        self.assertEqual(response.data["stops"][0]["location"]["coordinates"], [2.3522, 48.8566])
+        self.assertEqual(
+            response.data["stops"][0]["location"]["coordinates"], [2.3522, 48.8566]
+        )
 
     def test_stop_without_location_is_rejected(self):
         response = self.client.post(

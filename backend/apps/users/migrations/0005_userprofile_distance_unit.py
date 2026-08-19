@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0004_alter_userprofile_phone_number'),
+        ("users", "0004_alter_userprofile_phone_number"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='distance_unit',
-            field=models.CharField(choices=[('metric', 'Metric (km)'), ('imperial', 'Imperial (miles)')], default='metric', help_text='Preferred distance unit for UI displays', max_length=10),
+            model_name="userprofile",
+            name="distance_unit",
+            field=models.CharField(
+                choices=[("metric", "Metric (km)"), ("imperial", "Imperial (miles)")],
+                default="metric",
+                help_text="Preferred distance unit for UI displays",
+                max_length=10,
+            ),
         ),
     ]

@@ -17,7 +17,9 @@ class ContactLogSerializer(serializers.Serializer):
     person = serializers.CharField(source="person_id")
     channel = serializers.ChoiceField(choices=CHANNEL_CHOICES)
     contacted_at = serializers.DateTimeField()
-    note = serializers.CharField(max_length=280, required=False, allow_null=True, allow_blank=True)
+    note = serializers.CharField(
+        max_length=280, required=False, allow_null=True, allow_blank=True
+    )
     created_at = serializers.DateTimeField(read_only=True)
 
 
@@ -30,25 +32,35 @@ class PersonSerializer(GeoFeatureSerializer):
     city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     state = serializers.CharField(max_length=100, required=False, allow_blank=True)
     country = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    street = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+    street = serializers.CharField(
+        max_length=255, required=False, allow_null=True, allow_blank=True
+    )
     # Dart's DateTime.toIso8601String() yields "1990-01-02T00:00:00.000",
     # which DRF's default DateField input_formats reject (400). Accept the
     # datetime forms the client actually sends alongside plain dates.
     birthday = serializers.DateField(
         required=False,
         allow_null=True,
-        input_formats=['iso-8601', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S'],
+        input_formats=["iso-8601", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"],
     )
-    phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    phone_number = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True
+    )
     profile_image = serializers.SerializerMethodField()
     lat = serializers.FloatField(read_only=True)
     lng = serializers.FloatField(read_only=True)
     timezone = serializers.CharField(read_only=True, allow_null=True)
     pin_color = serializers.CharField(max_length=20, required=False)
     pin_style = serializers.ChoiceField(choices=PIN_STYLE_CHOICES, required=False)
-    pin_icon_type = serializers.ChoiceField(choices=PIN_ICON_TYPE_CHOICES, required=False)
-    pin_emoji = serializers.CharField(max_length=10, required=False, allow_null=True, allow_blank=True)
-    contact_cadence_days = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    pin_icon_type = serializers.ChoiceField(
+        choices=PIN_ICON_TYPE_CHOICES, required=False
+    )
+    pin_emoji = serializers.CharField(
+        max_length=10, required=False, allow_null=True, allow_blank=True
+    )
+    contact_cadence_days = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
     preferred_airport = serializers.IntegerField(required=False, allow_null=True)
     preferred_station = serializers.IntegerField(required=False, allow_null=True)
     preferred_airport_detail = serializers.SerializerMethodField()
@@ -59,7 +71,9 @@ class PersonSerializer(GeoFeatureSerializer):
     def get_profile_image(self, obj):
         from apps.common.storage import upload_url
 
-        return upload_url(getattr(obj, "profile_image", None), self.context.get("request"))
+        return upload_url(
+            getattr(obj, "profile_image", None), self.context.get("request")
+        )
 
     def get_preferred_airport_detail(self, obj):
         if not obj.preferred_airport:
@@ -86,7 +100,9 @@ class PersonSerializer(GeoFeatureSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         request = self.context.get("request")
-        is_authenticated = bool(request and request.user and request.user.is_authenticated)
+        is_authenticated = bool(
+            request and request.user and request.user.is_authenticated
+        )
         if not is_authenticated:
             ret["properties"].pop("last_contacted_at", None)
             ret["properties"].pop("last_contact_channel", None)

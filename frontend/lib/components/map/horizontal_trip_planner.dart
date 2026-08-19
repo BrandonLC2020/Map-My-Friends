@@ -8,6 +8,7 @@ import '../../models/trip.dart';
 import '../../utils/app_theme.dart';
 import '../shared/glass_container.dart';
 import '../shared/thermal_response.dart';
+import '../../utils/window_size.dart';
 
 class HorizontalTripPlanner extends StatelessWidget {
   const HorizontalTripPlanner({super.key});
@@ -22,13 +23,15 @@ class HorizontalTripPlanner extends StatelessWidget {
 
         final theme = Theme.of(context);
         final scheme = theme.colorScheme;
-        final isDesktop = MediaQuery.of(context).size.width >= 600;
-        final bottomInset = MediaQuery.of(context).padding.bottom;
+        final window = MapWindow.of(context);
+        final bottomInset = window.usesBar
+            ? MediaQuery.of(context).padding.bottom
+            : 0.0;
 
         return Positioned(
-          bottom: isDesktop ? 24 : 112 + bottomInset,
-          left: isDesktop ? 24 : 16,
-          right: isDesktop ? 24 : 16,
+          bottom: 24 + window.navBarInset + bottomInset,
+          left: window.edgeInset,
+          right: window.edgeInset,
           child: GlassContainer(
             height: 140,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -83,7 +86,9 @@ class HorizontalTripPlanner extends StatelessWidget {
                                     color: color,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       width: 1,
                                     ),
                                   ),
@@ -147,7 +152,9 @@ class HorizontalTripPlanner extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.2),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           width: 0.5,
                                         ),
                                       ),

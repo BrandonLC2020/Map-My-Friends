@@ -1,11 +1,12 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import TripViewSet, TripLegViewSet
+
+from .views import TripLegViewSet, TripViewSet
 
 router = DefaultRouter()
-router.register(r'legs', TripLegViewSet, basename='tripleg')
-router.register(r'', TripViewSet, basename='trip')
+router.register(r"legs", TripLegViewSet, basename="tripleg")
+router.register(r"", TripViewSet, basename="trip")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

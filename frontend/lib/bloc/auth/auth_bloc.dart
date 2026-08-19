@@ -117,7 +117,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      final tokens = await _authService.loginWithAuth0(connection: event.connection);
+      final tokens = await _authService.loginWithAuth0(
+        connection: event.connection,
+      );
       emit(
         Authenticated(
           accessToken: tokens['access']!,
@@ -130,4 +132,3 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 }
-

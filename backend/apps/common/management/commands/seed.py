@@ -18,22 +18,43 @@ DEMO_PASSWORD = "demo12345!"
 
 SAMPLE_PEOPLE = [
     {
-        "tag": "FRIEND", "first_name": "Ada", "last_name": "Lovelace",
-        "city": "London", "state": "England", "country": "UK",
-        "lat": 51.5074, "lng": -0.1278, "timezone": "Europe/London",
-        "pin_color": "#F44336", "contact_cadence_days": 30,
+        "tag": "FRIEND",
+        "first_name": "Ada",
+        "last_name": "Lovelace",
+        "city": "London",
+        "state": "England",
+        "country": "UK",
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "timezone": "Europe/London",
+        "pin_color": "#F44336",
+        "contact_cadence_days": 30,
     },
     {
-        "tag": "FAMILY", "first_name": "Grace", "last_name": "Hopper",
-        "city": "New York", "state": "NY", "country": "USA",
-        "lat": 40.7128, "lng": -74.0060, "timezone": "America/New_York",
-        "pin_color": "#2196F3", "contact_cadence_days": 14,
+        "tag": "FAMILY",
+        "first_name": "Grace",
+        "last_name": "Hopper",
+        "city": "New York",
+        "state": "NY",
+        "country": "USA",
+        "lat": 40.7128,
+        "lng": -74.0060,
+        "timezone": "America/New_York",
+        "pin_color": "#2196F3",
+        "contact_cadence_days": 14,
     },
     {
-        "tag": "FRIEND", "first_name": "Alan", "last_name": "Turing",
-        "city": "Chicago", "state": "IL", "country": "USA",
-        "lat": 41.8781, "lng": -87.6298, "timezone": "America/Chicago",
-        "pin_color": "#4CAF50", "contact_cadence_days": 60,
+        "tag": "FRIEND",
+        "first_name": "Alan",
+        "last_name": "Turing",
+        "city": "Chicago",
+        "state": "IL",
+        "country": "USA",
+        "lat": 41.8781,
+        "lng": -87.6298,
+        "timezone": "America/Chicago",
+        "pin_color": "#4CAF50",
+        "contact_cadence_days": 60,
     },
 ]
 
@@ -72,21 +93,31 @@ class Command(BaseCommand):
             self.stdout.write(f"  person: {person.first_name} {person.last_name}")
 
         logs_repo.create(
-            owner_key, created_people[0].id,
-            {"channel": "CALL", "contacted_at": "2026-07-10T18:00:00+00:00",
-             "note": "Caught up"},
+            owner_key,
+            created_people[0].id,
+            {
+                "channel": "CALL",
+                "contacted_at": "2026-07-10T18:00:00+00:00",
+                "note": "Caught up",
+            },
         )
         logs_repo.create(
-            owner_key, created_people[1].id,
-            {"channel": "VIDEO", "contacted_at": "2026-07-20T15:30:00+00:00",
-             "note": None},
+            owner_key,
+            created_people[1].id,
+            {
+                "channel": "VIDEO",
+                "contacted_at": "2026-07-20T15:30:00+00:00",
+                "note": None,
+            },
         )
 
         trip = TripRepository().create(
             owner_key,
             {
-                "name": "Summer visit", "date": "2026-08-01",
-                "start_date": "2026-08-01", "end_date": "2026-08-10",
+                "name": "Summer visit",
+                "date": "2026-08-01",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-10",
                 "status": "DRAFT",
             },
         )

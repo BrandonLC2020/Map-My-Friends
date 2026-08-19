@@ -31,10 +31,10 @@ class TripViewSet(viewsets.ViewSet):
     def _split_payload(validated):
         """Separate the nested children from the trip's own fields."""
         data = dict(validated)
-        stops = data.pop('stops', None)
-        legs = data.pop('legs', None)
+        stops = data.pop("stops", None)
+        legs = data.pop("legs", None)
         payload = {
-            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            k: (v.isoformat() if hasattr(v, "isoformat") else v)
             for k, v in data.items()
         }
         return payload, stops, legs
@@ -73,13 +73,14 @@ class TripViewSet(viewsets.ViewSet):
             self.repository.replace_stops(pk, owner_key, stops)
         if legs:
             for leg in legs:
-                leg_id = leg.get('id')
+                leg_id = leg.get("id")
                 if not leg_id:
                     continue
                 leg_payload = {
-                    k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+                    k: (v.isoformat() if hasattr(v, "isoformat") else v)
                     for k, v in leg.items()
-                    if k not in ('id', 'trip_id', 'departure_stop_id', 'arrival_stop_id')
+                    if k
+                    not in ("id", "trip_id", "departure_stop_id", "arrival_stop_id")
                 }
                 if leg_payload:
                     self.repository.update_leg(pk, leg_id, owner_key, leg_payload)
@@ -92,55 +93,65 @@ class TripViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get', 'post'], url_path='stops')
+    @action(detail=True, methods=["get", "post"], url_path="stops")
     def stops(self, request, pk=None):
         owner_key = owner_key_for(request)
-        if request.method == 'GET':
+        if request.method == "GET":
             return Response(
-                TripStopSerializer(self.repository.list_stops(pk, owner_key), many=True).data
+                TripStopSerializer(
+                    self.repository.list_stops(pk, owner_key), many=True
+                ).data
             )
 
         serializer = TripStopSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            stop = self.repository.add_stop(pk, owner_key, dict(serializer.validated_data))
+            stop = self.repository.add_stop(
+                pk, owner_key, dict(serializer.validated_data)
+            )
         except DuplicateSequenceOrder as exc:
-            return Response({'sequence_order': [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"sequence_order": [str(exc)]}, status=status.HTTP_400_BAD_REQUEST
+            )
         if stop is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(TripStopSerializer(stop).data, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def calculate_route(self, request):
-        coordinates = request.data.get('coordinates')
+        coordinates = request.data.get("coordinates")
 
         if not coordinates or not isinstance(coordinates, list):
             return Response(
-                {'error': 'Missing or invalid "coordinates" in payload. Expected a list of [lon, lat].'},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": 'Missing or invalid "coordinates" in payload. Expected a list of [lon, lat].'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Validate structure: list of lists with 2 numeric values
         for coord in coordinates:
             if not isinstance(coord, list) or len(coord) != 2:
                 return Response(
-                    {'error': 'Each coordinate must be a list of two numbers: [longitude, latitude].'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": "Each coordinate must be a list of two numbers: [longitude, latitude]."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
                 float(coord[0])
                 float(coord[1])
             except (ValueError, TypeError):
                 return Response(
-                    {'error': 'Coordinates must be numeric values.'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Coordinates must be numeric values."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         try:
             geometry = OSRMService.get_route(coordinates)
             return Response(geometry, status=status.HTTP_200_OK)
         except RoutingError as e:
-            return Response({'error': str(e)}, status=e.status_code)
+            return Response({"error": str(e)}, status=e.status_code)
 
 
 class TripLegViewSet(viewsets.ViewSet):
@@ -179,42 +190,44 @@ class TripLegViewSet(viewsets.ViewSet):
         serializer = TripLegSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         payload = {
-            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            k: (v.isoformat() if hasattr(v, "isoformat") else v)
             for k, v in serializer.validated_data.items()
         }
         updated = self.repository.update_leg(leg.trip_id, pk, owner_key, payload)
         return Response(TripLegSerializer(updated).data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def smart_lookup(self, request, pk=None):
         owner_key = owner_key_for(request)
         leg = self._find_leg(pk, owner_key)
         if leg is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        identifier = request.data.get('identifier', leg.booking_reference)
+        identifier = request.data.get("identifier", leg.booking_reference)
         if not identifier:
-            return Response({'error': 'Missing identifier'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Missing identifier"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         data = {}
-        if leg.transport_type == 'FLIGHT':
+        if leg.transport_type == "FLIGHT":
             data = TransportLookupService.lookup_flight(identifier)
-        elif leg.transport_type == 'TRAIN':
+        elif leg.transport_type == "TRAIN":
             data = TransportLookupService.lookup_train(identifier)
 
         if data:
             ticket_data = dict(leg.ticket_data)
             ticket_data.update(data)
-            payload = {'ticket_data': ticket_data}
-            if 'departure' in data and 'time' in data['departure']:
-                payload['departure_time'] = data['departure']['time']
-            if 'arrival' in data and 'time' in data['arrival']:
-                payload['arrival_time'] = data['arrival']['time']
+            payload = {"ticket_data": ticket_data}
+            if "departure" in data and "time" in data["departure"]:
+                payload["departure_time"] = data["departure"]["time"]
+            if "arrival" in data and "time" in data["arrival"]:
+                payload["arrival_time"] = data["arrival"]["time"]
 
             updated = self.repository.update_leg(leg.trip_id, pk, owner_key, payload)
             return Response(TripLegSerializer(updated).data)
 
         return Response(
-            {'message': 'No data found for this identifier'},
+            {"message": "No data found for this identifier"},
             status=status.HTTP_404_NOT_FOUND,
         )

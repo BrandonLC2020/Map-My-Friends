@@ -53,7 +53,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         'emits [AuthLoading, Unauthenticated] when no tokens are stored',
         build: () {
-          when(() => authService.getStoredTokens()).thenAnswer((_) async => null);
+          when(
+            () => authService.getStoredTokens(),
+          ).thenAnswer((_) async => null);
           return authBloc;
         },
         act: (bloc) => bloc.add(CheckAuthStatus()),
@@ -63,7 +65,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         'emits [AuthLoading, Unauthenticated] when an error occurs',
         build: () {
-          when(() => authService.getStoredTokens()).thenThrow(Exception('Error'));
+          when(
+            () => authService.getStoredTokens(),
+          ).thenThrow(Exception('Error'));
           return authBloc;
         },
         act: (bloc) => bloc.add(CheckAuthStatus()),
@@ -100,15 +104,18 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         'emits [AuthLoading, AuthError] on failed login',
         build: () {
-          when(() => authService.login('testuser', 'password')).thenThrow(
-            Exception('Invalid credentials'),
-          );
+          when(
+            () => authService.login('testuser', 'password'),
+          ).thenThrow(Exception('Invalid credentials'));
           return authBloc;
         },
         act: (bloc) => bloc.add(
           const LoginRequested(username: 'testuser', password: 'password'),
         ),
-        expect: () => [AuthLoading(), const AuthError(message: 'Invalid credentials')],
+        expect: () => [
+          AuthLoading(),
+          const AuthError(message: 'Invalid credentials'),
+        ],
       );
     });
 
@@ -158,7 +165,10 @@ void main() {
             passwordConfirm: 'password',
           ),
         ),
-        expect: () => [AuthLoading(), const AuthError(message: 'Registration failed')],
+        expect: () => [
+          AuthLoading(),
+          const AuthError(message: 'Registration failed'),
+        ],
       );
     });
 
@@ -170,7 +180,9 @@ void main() {
           return authBloc;
         },
         act: (bloc) => bloc.add(LogoutRequested()),
-        expect: () => [const Unauthenticated(message: 'You have been logged out.')],
+        expect: () => [
+          const Unauthenticated(message: 'You have been logged out.'),
+        ],
       );
     });
   });

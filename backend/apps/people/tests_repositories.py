@@ -58,7 +58,9 @@ class PersonRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_update_by_wrong_owner_returns_none(self):
         person = self.people.create("owner-a", PERSON_DATA)
-        self.assertIsNone(self.people.update(person.id, "owner-b", {"first_name": "Nope"}))
+        self.assertIsNone(
+            self.people.update(person.id, "owner-b", {"first_name": "Nope"})
+        )
 
     def test_delete_removes_document(self):
         person = self.people.create("owner-a", PERSON_DATA)
@@ -99,18 +101,21 @@ class ContactLogRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_list_is_scoped_to_owner(self):
         self.logs.create(
-            "owner-a", self.person_a.id,
+            "owner-a",
+            self.person_a.id,
             {"channel": "CALL", "contacted_at": "2026-07-01T12:00:00+00:00"},
         )
         self.logs.create(
-            "owner-b", self.person_b.id,
+            "owner-b",
+            self.person_b.id,
             {"channel": "VIDEO", "contacted_at": "2026-07-02T12:00:00+00:00"},
         )
         self.assertEqual(len(self.logs.list_for_owner("owner-a")), 1)
 
     def test_person_filter_scoped_to_owner(self):
         self.logs.create(
-            "owner-a", self.person_a.id,
+            "owner-a",
+            self.person_a.id,
             {"channel": "CALL", "contacted_at": "2026-07-01T12:00:00+00:00"},
         )
         # Filtering by another owner's person yields nothing, not a leak.
@@ -120,11 +125,13 @@ class ContactLogRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_logs_ordered_most_recent_first(self):
         self.logs.create(
-            "owner-a", self.person_a.id,
+            "owner-a",
+            self.person_a.id,
             {"channel": "CALL", "contacted_at": "2026-07-01T12:00:00+00:00"},
         )
         self.logs.create(
-            "owner-a", self.person_a.id,
+            "owner-a",
+            self.person_a.id,
             {"channel": "VIDEO", "contacted_at": "2026-07-05T12:00:00+00:00"},
         )
         logs = self.logs.list_for_owner("owner-a", person_id=self.person_a.id)
@@ -132,7 +139,8 @@ class ContactLogRepositoryTests(FirestoreTestMixin, SimpleTestCase):
 
     def test_person_carries_recency_summary(self):
         self.logs.create(
-            "owner-a", self.person_a.id,
+            "owner-a",
+            self.person_a.id,
             {"channel": "VIDEO", "contacted_at": "2026-07-05T12:00:00+00:00"},
         )
         person = self.people.get_for_owner(self.person_a.id, "owner-a")
@@ -155,9 +163,7 @@ class OwnershipReassignmentTests(FirestoreTestMixin, SimpleTestCase):
         self.people = PersonRepository()
 
     def test_create_ignores_owner_key_in_data(self):
-        person = self.people.create(
-            "owner-a", {**PERSON_DATA, "owner_key": "owner-b"}
-        )
+        person = self.people.create("owner-a", {**PERSON_DATA, "owner_key": "owner-b"})
         self.assertEqual(person.owner_key, "owner-a")
 
     def test_update_cannot_reassign_ownership(self):
@@ -165,7 +171,9 @@ class OwnershipReassignmentTests(FirestoreTestMixin, SimpleTestCase):
         self.people.update(person.id, "owner-a", {"owner_key": "owner-b"})
 
         # Still owned by owner-a, and never visible to owner-b.
-        self.assertEqual(self.people.get_for_owner(person.id, "owner-a").owner_key, "owner-a")
+        self.assertEqual(
+            self.people.get_for_owner(person.id, "owner-a").owner_key, "owner-a"
+        )
         self.assertIsNone(self.people.get_for_owner(person.id, "owner-b"))
 
     def test_update_cannot_make_record_public(self):

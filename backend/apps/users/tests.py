@@ -1,4 +1,3 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
 from rest_framework.test import APITestCase
 
@@ -23,7 +22,9 @@ class UserProfileRepositoryTests(FirestoreTestMixin, APITestCase):
     def test_update_persists(self):
         repo = UserProfileRepository()
         repo.get_or_create("owner-a")
-        updated = repo.update("owner-a", {"city": "Chicago", "distance_unit": "imperial"})
+        updated = repo.update(
+            "owner-a", {"city": "Chicago", "distance_unit": "imperial"}
+        )
         self.assertEqual(updated.city, "Chicago")
         self.assertEqual(updated.distance_unit, "imperial")
 

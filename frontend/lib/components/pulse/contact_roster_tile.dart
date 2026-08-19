@@ -3,6 +3,7 @@ import '../../models/contact_log.dart';
 import '../../models/person.dart';
 import '../../utils/contact_recency.dart';
 import '../shared/thermal_response.dart';
+import '../../utils/app_theme.dart';
 
 /// A single row in the Keep-in-Touch roster: avatar with a thermal status orb,
 /// the person's name in a contrast-safe recency ink, a status chip, the last
@@ -38,7 +39,7 @@ class ContactRosterTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ThermalResponse(
         onTap: onTap,
-        borderRadius: 16,
+        borderRadius: MapGlass.radiusMd,
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -149,8 +150,7 @@ class _Avatar extends StatelessWidget {
           CircleAvatar(
             radius: 26,
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            backgroundImage:
-                imageUrl != null ? NetworkImage(imageUrl!) : null,
+            backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
             child: imageUrl == null
                 ? Text(
                     initials,
@@ -242,7 +242,9 @@ class _CadenceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final track = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
+    final track = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.08);
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: Stack(

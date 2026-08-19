@@ -43,7 +43,8 @@ class ContactLog {
     return ContactLog(
       id: json['id'].toString(),
       personId: json['person'].toString(),
-      channel: ContactChannel.fromApi(json['channel'] as String?) ??
+      channel:
+          ContactChannel.fromApi(json['channel'] as String?) ??
           ContactChannel.message,
       contactedAt: DateTime.parse(json['contacted_at'] as String).toLocal(),
       note: json['note'] as String?,

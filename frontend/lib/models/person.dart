@@ -168,10 +168,12 @@ class Person {
     if (birthday != null) data['birthday'] = birthday!.toIso8601String();
     if (phoneNumber != null) data['phone_number'] = phoneNumber;
     if (pinEmoji != null) data['pin_emoji'] = pinEmoji;
-    if (preferredAirportId != null)
+    if (preferredAirportId != null) {
       data['preferred_airport'] = preferredAirportId;
-    if (preferredStationId != null)
+    }
+    if (preferredStationId != null) {
       data['preferred_station'] = preferredStationId;
+    }
     // last_contacted_at / last_contact_channel are server-derived (read-only),
     // so they are intentionally never sent back.
     if (contactCadenceDays != null) {

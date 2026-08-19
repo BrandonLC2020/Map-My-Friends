@@ -85,7 +85,8 @@ class AuthService {
       final mockUsername = connection == 'google-oauth2'
           ? 'google_user'
           : (connection == 'apple' ? 'apple_user' : 'auth0_user');
-      final mockToken = 'mock_auth0_jwt_token_${mockUsername}_${DateTime.now().millisecondsSinceEpoch}';
+      final mockToken =
+          'mock_auth0_jwt_token_${mockUsername}_${DateTime.now().millisecondsSinceEpoch}';
 
       await _storage.write(key: _accessTokenKey, value: mockToken);
       await _storage.write(key: _refreshTokenKey, value: 'mock_refresh_token');
@@ -99,18 +100,21 @@ class AuthService {
     }
 
     try {
-      final credentials = await _auth0.webAuthentication(scheme: 'demo').login(
-        audience: ApiConfig.auth0Audience,
-        scopes: {'openid', 'profile', 'email', 'offline_access'},
-        parameters: connection != null ? {'connection': connection} : {},
-      );
+      final credentials = await _auth0
+          .webAuthentication(scheme: 'demo')
+          .login(
+            audience: ApiConfig.auth0Audience,
+            scopes: {'openid', 'profile', 'email', 'offline_access'},
+            parameters: connection != null ? {'connection': connection} : {},
+          );
 
       final accessToken = credentials.accessToken;
       final refreshToken = credentials.refreshToken ?? '';
 
       // Extract username/nickname from user claims
       final userProfile = credentials.user;
-      final username = userProfile.nickname ?? userProfile.name ?? userProfile.email ?? '';
+      final username =
+          userProfile.nickname ?? userProfile.name ?? userProfile.email ?? '';
 
       await _storage.write(key: _accessTokenKey, value: accessToken);
       await _storage.write(key: _refreshTokenKey, value: refreshToken);
@@ -125,7 +129,6 @@ class AuthService {
       throw Exception('Auth0 Login failed: $e');
     }
   }
-
 
   Future<void> register({
     required String username,

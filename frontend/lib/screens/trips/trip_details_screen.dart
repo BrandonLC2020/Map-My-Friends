@@ -5,8 +5,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import '../../models/trip.dart';
 import '../../components/shared/glass_container.dart';
+import '../../utils/app_theme.dart';
 import '../../services/routing_service.dart';
 import '../../bloc/map/map_settings_cubit.dart';
+import '../../utils/window_size.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -29,18 +31,29 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // This route draws glass in four places — the back button, the header, and
+    // one surface per stop and per leg in the timeline. Grouping them means the
+    // engine samples the backdrop once for the whole screen instead of once per
+    // row, which is what keeps a long itinerary inside the GPU budget.
+    return BackdropGroup(child: _buildContent(context));
+  }
+
+  Widget _buildContent(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context);
-    final isWide = size.size.width > 600;
+    final isWide = MapWindow(size.size).isWide;
 
     Widget buildLeadingButton() {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: GlassContainer(
           padding: EdgeInsets.zero,
-          borderRadius: 12,
+          borderRadius: MapGlass.radiusMd,
           child: IconButton(
-            icon: Icon(Icons.adaptive.arrow_back, color: theme.colorScheme.onSurface),
+            icon: Icon(
+              Icons.adaptive.arrow_back,
+              color: theme.colorScheme.onSurface,
+            ),
             tooltip: 'Back',
             onPressed: () => Navigator.pop(context),
           ),
@@ -70,9 +83,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     const SizedBox(height: 20),
                     _buildHeader(context),
                     const SizedBox(height: 16),
-                    Expanded(
-                      child: _buildStopsList(context, isWide: true),
-                    ),
+                    Expanded(child: _buildStopsList(context, isWide: true)),
                   ],
                 ),
               ),
@@ -89,7 +100,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     bottom: 0,
                     child: Container(
                       width: 1,
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                 ],
@@ -150,19 +163,23 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
             String tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
             if (settingsState.mapType == MapType.satellite) {
-              tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+              tileUrl =
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
             } else if (settingsState.mapType == MapType.minimal) {
               tileUrl = isDark
                   ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
                   : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
             } else if (isDark) {
-              tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+              tileUrl =
+                  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
             } else {
               final locale = Localizations.localeOf(context).languageCode;
               if (locale == 'de') {
-                tileUrl = 'https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png';
+                tileUrl =
+                    'https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png';
               } else if (locale == 'fr') {
-                tileUrl = 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
+                tileUrl =
+                    'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
               }
             }
 
@@ -193,7 +210,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     polylines: [
                       Polyline(
                         points: points,
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.7),
                         strokeWidth: 5,
                       ),
                     ],
@@ -256,7 +275,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     ),
                   ),
                 ),
-                 _buildStatusBadge(context, widget.trip.status),
+                _buildStatusBadge(context, widget.trip.status),
               ],
             ),
             const SizedBox(height: 8),
@@ -311,9 +330,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       timelineItems.add(widget.trip.stops[i]);
       // Find leg that starts at this stop
       final leg = widget.trip.legs
-          .where(
-            (l) => l.departureStopId == widget.trip.stops[i].id,
-          )
+          .where((l) => l.departureStopId == widget.trip.stops[i].id)
           .firstOrNull;
       if (leg != null) {
         timelineItems.add(leg);
@@ -334,11 +351,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       itemBuilder: (context, index) {
         final item = timelineItems[index];
         if (item is TripStop) {
-          return _buildStopItem(
-            context,
-            item,
-            widget.trip.stops.indexOf(item),
-          );
+          return _buildStopItem(context, item, widget.trip.stops.indexOf(item));
         } else if (item is TripLeg) {
           return _buildLegItem(context, item);
         }
@@ -394,7 +407,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 onTap: () => _showLegDetails(context, leg),
                 child: GlassContainer(
                   padding: const EdgeInsets.all(8),
-                  borderRadius: 20,
+                  borderRadius: 20, // pill: half the 40px timeline dot
                   child: Icon(
                     transportIcon,
                     color: onSurface.withValues(alpha: 0.7),
@@ -443,7 +456,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       final peopleData = stop.snapshotMetadata!['people'];
       if (peopleData != null) {
         if (peopleData is List) {
-          name = peopleData.map((p) => p is Map ? p['name'] : p.toString()).join(', ');
+          name = peopleData
+              .map((p) => p is Map ? p['name'] : p.toString())
+              .join(', ');
         } else {
           name = peopleData.toString();
         }
@@ -468,7 +483,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: GlassContainer(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        borderRadius: 12,
+        borderRadius: MapGlass.radiusMd,
         child: Row(
           children: [
             Container(
@@ -613,10 +628,7 @@ class _LegDetailsSheet extends StatelessWidget {
           ),
           Text(
             value,
-            style: TextStyle(
-              color: onSurface,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
           ),
         ],
       ),

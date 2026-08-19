@@ -13,9 +13,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-OURAIRPORTS_CSV_URL = (
-    "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv"
-)
+OURAIRPORTS_CSV_URL = "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv"
 
 ALLOWED_TYPES = {"large_airport", "medium_airport"}
 
@@ -83,4 +81,6 @@ class Command(BaseCommand):
             json.dump(rows, handle, ensure_ascii=False, indent=1)
             handle.write("\n")
 
-        self.stdout.write(self.style.SUCCESS(f"Wrote {len(rows)} airports to {OUTPUT_PATH}"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Wrote {len(rows)} airports to {OUTPUT_PATH}")
+        )

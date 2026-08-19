@@ -51,7 +51,8 @@ class ContactRecency {
 
   factory ContactRecency.forPerson(Person person, {DateTime? now}) {
     final cadence =
-        person.contactCadenceDays ?? defaultCadenceForTag(person.relationshipTag);
+        person.contactCadenceDays ??
+        defaultCadenceForTag(person.relationshipTag);
     return ContactRecency.fromValues(
       lastContactedAt: person.lastContactedAt,
       cadenceDays: cadence,

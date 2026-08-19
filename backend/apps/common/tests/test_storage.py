@@ -6,7 +6,9 @@ from apps.common.storage import save_upload, upload_url
 
 class StorageTests(SimpleTestCase):
     def test_save_upload_returns_prefixed_name(self):
-        upload = SimpleUploadedFile("avatar.png", b"fake-image-bytes", content_type="image/png")
+        upload = SimpleUploadedFile(
+            "avatar.png", b"fake-image-bytes", content_type="image/png"
+        )
         name = save_upload(upload, prefix="profile_images")
         self.assertTrue(name.startswith("profile_images/"))
         self.assertTrue(name.endswith(".png"))
