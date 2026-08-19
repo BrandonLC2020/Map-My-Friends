@@ -84,6 +84,52 @@ class MapGlass {
   }
 }
 
+/// LLC Interaction Physics — the constants in
+/// `llc-standards/context/interaction-physics.md`, and the two-phase Thermal
+/// Glow they drive.
+///
+/// The spec asks for three things that only fit together once you notice they
+/// describe different parts of one gesture: a 50ms excitation, a 300ms
+/// dissipation, and a spring for "all state returns" (DESIGN.md §6). The
+/// spring is not the glow. Energy blooms and cools on a curve; the *surface*
+/// is what yields under the touch and springs back.
+class MapMotion {
+  const MapMotion._();
+
+  /// Phase 1 — the strike. Intent converts to energy.
+  static const Duration excitation = Duration(milliseconds: 50);
+
+  /// Phase 2 — the cooling cycle.
+  static const Duration dissipation = Duration(milliseconds: 300);
+
+  /// `interaction-physics.md` §Animation Curvature: velocity highest at the
+  /// start, trailing off. Quart.out or Quint.out, and nothing else — the
+  /// component previously used easeOutExpo, which is neither.
+  static const Curve strike = Curves.easeOutQuart;
+
+  static const double springMass = 1.0;
+  static const double springStiffness = 180.0;
+  static const double springDamping = 12.0;
+
+  /// The return to neutral. Damping 12 against stiffness 180 sits at a ratio
+  /// of ~0.45 — underdamped on purpose, so the surface arrives with one
+  /// slight overshoot rather than easing to a stop. That overshoot is the
+  /// "sharp, authoritative return" the spec asks for; a critically damped
+  /// spring would read as soft.
+  static const SpringDescription returnSpring = SpringDescription(
+    mass: springMass,
+    stiffness: springStiffness,
+    damping: springDamping,
+  );
+
+  /// How far a surface yields under contact, as a fraction of its size.
+  ///
+  /// Small on purpose: these wrap 44pt controls and map pills, and PRODUCT.md
+  /// asks for a precision instrument, not a toy. At 4% a 44pt control moves
+  /// under two logical pixels — felt more than seen, which is the point.
+  static const double pressDepth = 0.04;
+}
+
 /// The DESIGN.md spacing scale.
 ///
 /// Layout reads as intentional when gaps come from a scale rather than from

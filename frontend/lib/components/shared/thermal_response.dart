@@ -1,6 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
+
 import '../../utils/app_theme.dart';
 
+/// The machine coming alive under the user's touch.
+///
+/// One gesture, two materials. Energy transfers from the finger into the
+/// surface as a Thermal Glow — a 50ms strike, then a 300ms cooling cycle. The
+/// surface itself has mass: it yields under the contact and springs back to
+/// neutral when released, at the stiffness and damping
+/// `llc-standards/context/interaction-physics.md` calibrates for
+/// high-precision hardware.
+///
+/// Keeping those on separate clocks is the whole design. The glow is thermal
+/// and belongs on a decelerating curve; the displacement is mechanical and
+/// belongs on a spring. Driving both from one controller would force the glow
+/// to oscillate with the surface, which reads as a flicker rather than as heat.
 class ThermalResponse extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -10,7 +25,7 @@ class ThermalResponse extends StatefulWidget {
     super.key,
     required this.child,
     this.onTap,
-    this.borderRadius = 8.0,
+    this.borderRadius = MapGlass.radiusSm,
   });
 
   @override
@@ -18,76 +33,122 @@ class ThermalResponse extends StatefulWidget {
 }
 
 class _ThermalResponseState extends State<ThermalResponse>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _glowAnimation;
+    with TickerProviderStateMixin {
+  /// Heat: 0 at rest, 1 at full excitation.
+  late final AnimationController _heat;
+  late final Animation<double> _glow;
+
+  /// Displacement: 0 at rest, 1 fully depressed. Unbounded because the return
+  /// spring overshoots past neutral, and a clamped controller would flatten
+  /// exactly the overshoot that makes the return read as authoritative.
+  late final AnimationController _press;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    _heat = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: MapMotion.dissipation,
+      reverseDuration: MapMotion.dissipation,
+    );
+    _glow = CurvedAnimation(
+      parent: _heat,
+      curve: MapMotion.strike,
+      reverseCurve: MapMotion.strike,
     );
 
-    _glowAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutExpo,
-    );
+    _press = AnimationController.unbounded(vsync: this);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _heat.dispose();
+    _press.dispose();
     super.dispose();
   }
 
-  void _handleTapDown() {
-    _controller.animateTo(1.0, duration: const Duration(milliseconds: 50));
+  /// Spatial movement is what reduced-motion settings are about. The glow is
+  /// colour and luminosity, not displacement, and it is the part that confirms
+  /// the tap landed — so it survives while the yield does not.
+  bool get _allowsDisplacement => !MediaQuery.disableAnimationsOf(context);
+
+  void _strike() {
+    _heat.animateTo(1.0, duration: MapMotion.excitation);
+    if (_allowsDisplacement) {
+      _press.animateTo(
+        1.0,
+        duration: MapMotion.excitation,
+        curve: MapMotion.strike,
+      );
+    }
   }
 
-  void _handleTapUp() {
-    _controller.reverse();
-  }
-
-  void _handleTapCancel() {
-    _controller.reverse();
+  void _release() {
+    _heat.reverse();
+    if (!_allowsDisplacement) {
+      _press.value = 0.0;
+      return;
+    }
+    // Carry the current velocity into the simulation so an interrupted press
+    // continues from the motion already underway rather than restarting.
+    _press.animateWith(
+      SpringSimulation(
+        MapMotion.returnSpring,
+        _press.value,
+        0.0,
+        _press.velocity,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     Widget content = AnimatedBuilder(
-      animation: _glowAnimation,
+      animation: Listenable.merge([_glow, _press]),
+      // The wrapped subtree is passed through rather than rebuilt: only the
+      // glow's decoration and the surface's transform change per frame.
+      child: widget.child,
       builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            if (_glowAnimation.value > 0)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: MapPalette.thermalCore.withValues(
-                          alpha: 0.5 * _glowAnimation.value,
+        final heat = _glow.value;
+        final scale = 1.0 - _press.value * MapMotion.pressDepth;
+
+        return Transform.scale(
+          scale: scale,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (heat > 0)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          widget.borderRadius,
                         ),
-                        blurRadius: 20 * _glowAnimation.value,
-                        spreadRadius: 5 * _glowAnimation.value,
+                        boxShadow: [
+                          BoxShadow(
+                            color: MapPalette.thermalCore.withValues(
+                              alpha: 0.5 * heat,
+                            ),
+                            blurRadius: 20 * heat,
+                            spreadRadius: 5 * heat,
+                          ),
+                          BoxShadow(
+                            color: MapPalette.thermalCorona.withValues(
+                              alpha: 0.3 * heat,
+                            ),
+                            blurRadius: 40 * heat,
+                            spreadRadius: 10 * heat,
+                          ),
+                        ],
                       ),
-                      BoxShadow(
-                        color: MapPalette.thermalCorona.withValues(
-                          alpha: 0.3 * _glowAnimation.value,
-                        ),
-                        blurRadius: 40 * _glowAnimation.value,
-                        spreadRadius: 10 * _glowAnimation.value,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            widget.child,
-          ],
+              child!,
+            ],
+          ),
         );
       },
     );
@@ -101,9 +162,9 @@ class _ThermalResponseState extends State<ThermalResponse>
     }
 
     return Listener(
-      onPointerDown: (_) => _handleTapDown(),
-      onPointerUp: (_) => _handleTapUp(),
-      onPointerCancel: (_) => _handleTapCancel(),
+      onPointerDown: (_) => _strike(),
+      onPointerUp: (_) => _release(),
+      onPointerCancel: (_) => _release(),
       behavior: HitTestBehavior.translucent,
       child: content,
     );
