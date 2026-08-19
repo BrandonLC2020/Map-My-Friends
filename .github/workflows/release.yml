@@ -55,6 +55,12 @@ jobs:
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # ratchet:subosito/flutter-action@v2
         with:
           channel: 'stable'
+          # Pinned to the SDK this project is developed and tested against.
+          # Floating on latest stable meant CI and the production web build
+          # used a Flutter nobody had run: it broke version solving on the
+          # exact intl pin, and dart format disagreed with local output.
+          # Bump this deliberately, together with the team's SDK.
+          flutter-version: '3.41.7'
           cache: true
 
       - name: Install Dependencies
