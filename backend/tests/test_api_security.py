@@ -359,7 +359,8 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         # List logs - should only see log_a
         response = self.client.get(self.logs_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data.get("results", response.data)
+        data = response.data
+        results = data["results"] if isinstance(data, dict) else data
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["note"], "Call with A")
 
@@ -375,13 +376,15 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         # Querying with Person A (owned) - should return logs
         response = self.client.get(self.logs_url, {"person": self.person_a.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data.get("results", response.data)
+        data = response.data
+        results = data["results"] if isinstance(data, dict) else data
         self.assertEqual(len(results), 1)
 
         # Querying with Person B (not owned) - should return empty list (since queryset filters by person owner)
         response = self.client.get(self.logs_url, {"person": self.person_b.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data.get("results", response.data)
+        data = response.data
+        results = data["results"] if isinstance(data, dict) else data
         self.assertEqual(len(results), 0)
 
     def test_cannot_create_log_for_other_user_person(self):
@@ -409,7 +412,8 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check GeoJSON structure
-        features = response.data.get("features", [])
+        data = response.data
+        features = data["features"] if isinstance(data, dict) else []
         self.assertGreater(len(features), 0)
         for feature in features:
             properties = feature["properties"]
@@ -421,7 +425,8 @@ class ContactLogSecurityTests(FirestoreTestMixin, APITestCase):
         response = self.client.get(self.people_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        features = response.data.get("features", [])
+        data = response.data
+        features = data["features"] if isinstance(data, dict) else []
         # User A owns person_a. person_public has no owner so User A shouldn't see it (queryset filters owner=user_a).
         self.assertEqual(len(features), 1)
         properties = features[0]["properties"]

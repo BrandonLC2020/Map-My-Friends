@@ -1,3 +1,12 @@
+@Tags(['golden'])
+library;
+
+// Golden images only match the platform that generated them: text
+// antialiasing differs between macOS and Linux, which shows up here as a
+// sub-4% pixel diff with identical layout. These are tagged so CI skips them
+// (`flutter test --exclude-tags golden`) and they stay useful locally, where
+// they are the check on what the UI actually looks like.
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

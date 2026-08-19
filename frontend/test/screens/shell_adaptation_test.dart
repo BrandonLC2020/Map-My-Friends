@@ -203,6 +203,7 @@ void main() {
         find.byType(MainScreen),
         matchesGoldenFile('goldens/shell_${entry.key}.png'),
       );
-    });
+      // Platform-specific: see the note in map_responsive_golden_test.dart.
+    }, tags: 'golden');
   }
 }

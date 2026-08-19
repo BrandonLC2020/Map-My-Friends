@@ -122,7 +122,11 @@ jobs:
         run: flutter analyze
 
       - name: Run Unit Tests
-        run: flutter test
+        # Golden images only match the platform that generated them — text
+        # antialiasing differs between macOS and Linux, which shows up as a
+        # sub-4%% pixel diff with identical layout. They stay a local tool;
+        # run them with `flutter test --tags golden`.
+        run: flutter test --exclude-tags golden
 
   # -----------------------------------------------------------------
   # INFRASTRUCTURE VALIDATION
