@@ -36,14 +36,38 @@ void main() {
 
   PulseLoaded sampleState() {
     final people = [
-      _p('1', 'Marco', 'Rossi', 'FRIEND', now.subtract(const Duration(days: 3)),
-          'MESSAGE'),
-      _p('2', 'Sara', 'Lin', 'FRIEND', now.subtract(const Duration(days: 12)),
-          'CALL'),
-      _p('3', 'Dev', 'Patel', 'FAMILY', now.subtract(const Duration(days: 31)),
-          'VIDEO'),
-      _p('4', 'Mom', '', 'FAMILY', now.subtract(const Duration(days: 48)),
-          'CALL'),
+      _p(
+        '1',
+        'Marco',
+        'Rossi',
+        'FRIEND',
+        now.subtract(const Duration(days: 3)),
+        'MESSAGE',
+      ),
+      _p(
+        '2',
+        'Sara',
+        'Lin',
+        'FRIEND',
+        now.subtract(const Duration(days: 12)),
+        'CALL',
+      ),
+      _p(
+        '3',
+        'Dev',
+        'Patel',
+        'FAMILY',
+        now.subtract(const Duration(days: 31)),
+        'VIDEO',
+      ),
+      _p(
+        '4',
+        'Mom',
+        '',
+        'FAMILY',
+        now.subtract(const Duration(days: 48)),
+        'CALL',
+      ),
       _p('5', 'Noah', 'Kim', 'FRIEND', null, null),
     ];
     final logs = [
@@ -89,11 +113,12 @@ void main() {
       debugShowCheckedModeBanner: false,
       theme: testTheme(Brightness.light),
       darkTheme: testTheme(Brightness.dark),
-      themeMode:
-          brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      themeMode: brightness == Brightness.dark
+          ? ThemeMode.dark
+          : ThemeMode.light,
       home: BlocProvider<PulseBloc>.value(
         value: bloc,
-        child: const PulseScreen(),
+        child: PulseScreen(now: now),
       ),
     );
   }
@@ -105,8 +130,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final bloc = MockPulseBloc();
-    whenListen(bloc, const Stream<PulseState>.empty(),
-        initialState: sampleState());
+    whenListen(
+      bloc,
+      const Stream<PulseState>.empty(),
+      initialState: sampleState(),
+    );
 
     await tester.pumpWidget(harness(bloc, brightness: Brightness.light));
     await tester.pumpAndSettle();
@@ -124,8 +152,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final bloc = MockPulseBloc();
-    whenListen(bloc, const Stream<PulseState>.empty(),
-        initialState: sampleState());
+    whenListen(
+      bloc,
+      const Stream<PulseState>.empty(),
+      initialState: sampleState(),
+    );
 
     await tester.pumpWidget(harness(bloc, brightness: Brightness.dark));
     await tester.pumpAndSettle();

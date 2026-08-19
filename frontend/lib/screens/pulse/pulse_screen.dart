@@ -15,7 +15,11 @@ import '../../utils/window_size.dart';
 /// color-codes each person by how overdue a touchpoint is, along the app's
 /// thermal spectrum. Loads via [PulseBloc].
 class PulseScreen extends StatefulWidget {
-  const PulseScreen({super.key});
+  /// Injectable clock. Production leaves this null; tests pin it so the
+  /// calendar's "today" and every recency band stop moving under the golden.
+  final DateTime? now;
+
+  const PulseScreen({super.key, this.now});
 
   @override
   State<PulseScreen> createState() => _PulseScreenState();
@@ -26,10 +30,12 @@ class _PulseScreenState extends State<PulseScreen> {
   DateTime? _selectedDay;
   int _lastNonce = 0;
 
+  DateTime get _now => widget.now ?? DateTime.now();
+
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
+    final now = _now;
     _displayedMonth = DateTime(now.year, now.month);
     context.read<PulseBloc>().add(LoadPulse());
   }
@@ -147,7 +153,7 @@ class _PulseScreenState extends State<PulseScreen> {
   }
 
   Widget _buildLoaded(BuildContext context, PulseLoaded state) {
-    final now = DateTime.now();
+    final now = _now;
 
     // Pair each person with recency, sorted most-overdue first.
     final entries = [
@@ -194,6 +200,7 @@ class _PulseScreenState extends State<PulseScreen> {
                         const SizedBox(height: 16),
                         _CalendarCard(
                           child: PulseCalendar(
+                            now: widget.now,
                             displayedMonth: _displayedMonth,
                             selectedDay: _selectedDay,
                             logsByDay: logsByDay,

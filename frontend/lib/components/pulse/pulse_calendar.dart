@@ -20,6 +20,11 @@ class PulseCalendar extends StatelessWidget {
   final VoidCallback onNextMonth;
   final ValueChanged<DateTime> onSelectDay;
 
+  /// Injectable clock for "today". Production leaves this null; tests pin it,
+  /// because a calendar that reads the wall clock cannot be captured in a
+  /// golden — the highlighted cell moves every day and the month every month.
+  final DateTime? now;
+
   const PulseCalendar({
     super.key,
     required this.displayedMonth,
@@ -28,6 +33,7 @@ class PulseCalendar extends StatelessWidget {
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onSelectDay,
+    this.now,
   });
 
   /// Normalizes a timestamp to a midnight date key for bucketing/lookup.
@@ -37,7 +43,7 @@ class PulseCalendar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(now ?? DateTime.now());
 
     final year = displayedMonth.year;
     final month = displayedMonth.month;
