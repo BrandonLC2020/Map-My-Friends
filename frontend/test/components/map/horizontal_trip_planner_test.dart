@@ -41,14 +41,20 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Stack(
-            children: [
-              BlocProvider<TripBloc>.value(
-                value: tripBloc,
-                child: const HorizontalTripPlanner(),
-              ),
-            ],
+        // HorizontalTripPlanner is map chrome: in production it renders inside
+        // MapScreen's BackdropGroup, which is what lets its glass share a single
+        // backdrop sample. The fragment test has to supply that ancestor, the
+        // same way a fragment using Ink has to supply a Material.
+        home: BackdropGroup(
+          child: Scaffold(
+            body: Stack(
+              children: [
+                BlocProvider<TripBloc>.value(
+                  value: tripBloc,
+                  child: const HorizontalTripPlanner(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -68,14 +74,20 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Stack(
-            children: [
-              BlocProvider<TripBloc>.value(
-                value: tripBloc,
-                child: const HorizontalTripPlanner(),
-              ),
-            ],
+        // HorizontalTripPlanner is map chrome: in production it renders inside
+        // MapScreen's BackdropGroup, which is what lets its glass share a single
+        // backdrop sample. The fragment test has to supply that ancestor, the
+        // same way a fragment using Ink has to supply a Material.
+        home: BackdropGroup(
+          child: Scaffold(
+            body: Stack(
+              children: [
+                BlocProvider<TripBloc>.value(
+                  value: tripBloc,
+                  child: const HorizontalTripPlanner(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -94,14 +106,20 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Stack(
-            children: [
-              BlocProvider<TripBloc>.value(
-                value: tripBloc,
-                child: const HorizontalTripPlanner(),
-              ),
-            ],
+        // HorizontalTripPlanner is map chrome: in production it renders inside
+        // MapScreen's BackdropGroup, which is what lets its glass share a single
+        // backdrop sample. The fragment test has to supply that ancestor, the
+        // same way a fragment using Ink has to supply a Material.
+        home: BackdropGroup(
+          child: Scaffold(
+            body: Stack(
+              children: [
+                BlocProvider<TripBloc>.value(
+                  value: tripBloc,
+                  child: const HorizontalTripPlanner(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

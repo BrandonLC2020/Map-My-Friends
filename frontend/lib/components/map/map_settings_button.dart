@@ -4,6 +4,7 @@ import '../../bloc/map/local_map_settings_cubit.dart';
 import '../shared/glass_container.dart';
 import '../shared/thermal_response.dart';
 import 'map_settings_modal.dart';
+import '../../utils/app_theme.dart';
 
 class MapSettingsButton extends StatelessWidget {
   const MapSettingsButton({super.key});
@@ -17,9 +18,9 @@ class MapSettingsButton extends StatelessWidget {
       top: topPadding + 16,
       child: GlassContainer(
         padding: const EdgeInsets.all(8),
-        borderRadius: 30,
+        borderRadius: MapGlass.radiusLg,
         child: ThermalResponse(
-          borderRadius: 30,
+          borderRadius: MapGlass.radiusLg,
           onTap: () {
             showModalBottomSheet(
               context: context,

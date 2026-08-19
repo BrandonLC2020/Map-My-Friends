@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../shared/glass_container.dart';
 import '../shared/thermal_response.dart';
+import '../../utils/app_theme.dart';
 
 class MapControls extends StatelessWidget {
   final MapController mapController;
@@ -100,7 +101,7 @@ class MapControls extends StatelessWidget {
               right: isDesktop ? 24 : 16,
               child: GlassContainer(
                 padding: const EdgeInsets.all(8),
-                borderRadius: 30, // Rounded for D-pad feel
+                borderRadius: MapGlass.radiusLg, // Rounded for D-pad feel
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -154,8 +155,11 @@ class MapControls extends StatelessWidget {
                   : (isDesktop ? 192 : 280 + bottomInset),
               right: isDesktop ? 24 : 16,
               child: GlassContainer(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                borderRadius: 30,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 8,
+                ),
+                borderRadius: MapGlass.radiusLg,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

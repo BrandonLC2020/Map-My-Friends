@@ -29,6 +29,80 @@ class MapPalette {
   static const Color thermalCorona = Color(0xFFFF9500);
 }
 
+/// Refractive Glass material constants. See DESIGN.md §4–5 and the LLC
+/// `refractive-glass.md` Tier 3 template.
+///
+/// The tint band is the load-bearing part. Below [tintMin] the surface stops
+/// separating from what it floats over; above [tintMax] it stops reading as
+/// glass and starts reading as a tinted card — the flat-UI register PRODUCT.md
+/// lists as an anti-reference. Dark mode is where that ceiling matters most,
+/// because DESIGN.md §6 asks for "pristine glass in a void", not dark blue
+/// software.
+///
+/// Legibility in dark mode is therefore bought at the *edge*, not in the fill:
+/// [edgeDark] carries more than [edgeLight] precisely because [tintDark] is
+/// only marginally higher than [tintLight].
+class MapGlass {
+  const MapGlass._();
+
+  /// Backdrop blur sigma. The LLC standard refractive look.
+  static const double blurSigma = 20.0;
+
+  /// Fill opacity band for the Tier 3 material. The *composed* value —
+  /// base tint plus [sheen] — is what must stay inside it.
+  static const double tintMin = 0.05;
+  static const double tintMax = 0.15;
+
+  /// Top-left lift that gives the surface a direction of light.
+  static const double sheen = 0.03;
+
+  /// Base fill per appearance.
+  static const double tintLight = 0.10;
+  static const double tintDark = 0.12;
+
+  /// The precision edge (DESIGN.md §5).
+  static const double edgeLight = 0.20;
+  static const double edgeDark = 0.28;
+  static const double edgeWidth = 0.5;
+
+  /// Radii on the DESIGN.md scale: sm 8 / md 16 / lg 30.
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 16.0;
+  static const double radiusLg = 30.0;
+
+  /// Selection inside glass chrome (DESIGN.md §5, Navigation): a background
+  /// lift, never a solid colour fill. Dark carries more because a white lift
+  /// on a dark pane reads weaker than a black lift on a light one.
+  static const double selectionLiftDark = 0.15;
+  static const double selectionLiftLight = 0.08;
+
+  /// The selection lift resolved for [brightness].
+  static Color selectionLift(Brightness brightness) {
+    return brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: selectionLiftDark)
+        : Colors.black.withValues(alpha: selectionLiftLight);
+  }
+}
+
+/// The DESIGN.md spacing scale.
+///
+/// Layout reads as intentional when gaps come from a scale rather than from
+/// whatever number looked right in the moment. Tight groups take [xs]–[sm];
+/// distinct groups take [md]–[lg].
+class MapSpacing {
+  const MapSpacing._();
+
+  static const double xs = 8.0;
+  static const double sm = 16.0;
+  static const double md = 24.0;
+  static const double lg = 32.0;
+
+  /// Interior padding for a full-surface glass panel — an empty state, a
+  /// dialog body. Deliberately above [lg]: these panels earn their calm from
+  /// the air around their content.
+  static const double panel = 40.0;
+}
+
 class AppTheme {
   // Brand Colors
   static const Color _brandColor = Color(0xFF3F51B5);

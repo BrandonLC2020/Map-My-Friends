@@ -6,7 +6,9 @@ import '../../bloc/trip/trip_event.dart';
 import '../../bloc/trip/trip_state.dart';
 import '../../models/trip.dart';
 import '../../components/shared/glass_container.dart';
+import '../../components/shared/glass_empty_state.dart';
 import 'trip_details_screen.dart';
+import '../../utils/app_theme.dart';
 
 class TripsScreen extends StatelessWidget {
   final VoidCallback onNavigateToMap;
@@ -79,38 +81,46 @@ class TripsScreen extends StatelessWidget {
             .where((t) => t.status == TripStatus.cancelled)
             .toList();
 
-        return ListView(
+        // Flatten to section headers + cards so the list can virtualise.
+        // A plain ListView built every card eagerly, which meant one live
+        // glass surface per trip in the user's whole history — off-screen
+        // ones included. ListView.builder holds that to the visible window.
+        final rows = <_TripRow>[
+          if (booked.isNotEmpty) ..._sectionRows('Booked', booked),
+          if (drafts.isNotEmpty) ..._sectionRows('Drafts', drafts),
+          if (cancelled.isNotEmpty) ..._sectionRows('Cancelled', cancelled),
+        ];
+
+        return ListView.builder(
           padding: const EdgeInsets.only(bottom: 100),
-          children: [
-            if (booked.isNotEmpty) _buildSection(context, 'Booked', booked),
-            if (drafts.isNotEmpty) _buildSection(context, 'Drafts', drafts),
-            if (cancelled.isNotEmpty)
-              _buildSection(context, 'Cancelled', cancelled),
-          ],
+          itemCount: rows.length,
+          itemBuilder: (context, index) {
+            final row = rows[index];
+            return row.trip == null
+                ? _buildSectionHeader(context, row.title!)
+                : _buildTripCard(context, row.trip!);
+          },
         );
       },
     );
   }
 
-  Widget _buildSection(BuildContext context, String title, List<Trip> trips) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
+  List<_TripRow> _sectionRows(String title, List<Trip> trips) {
+    return [_TripRow.header(title), ...trips.map(_TripRow.card)];
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: onSurface,
-            ),
-          ),
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
         ),
-        ...trips.map((trip) => _buildTripCard(context, trip)),
-      ],
+      ),
     );
   }
 
@@ -124,7 +134,7 @@ class TripsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: GlassContainer(
         padding: EdgeInsets.zero,
-        borderRadius: 16,
+        borderRadius: MapGlass.radiusMd,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
@@ -134,7 +144,10 @@ class TripsScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _getStatusColor(context, trip.status).withValues(alpha: 0.2),
+              color: _getStatusColor(
+                context,
+                trip.status,
+              ).withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -154,7 +167,10 @@ class TripsScreen extends StatelessWidget {
             style: TextStyle(color: onSurface.withValues(alpha: 0.7)),
           ),
           trailing: PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: onSurface.withValues(alpha: 0.7)),
+            icon: Icon(
+              Icons.more_vert,
+              color: onSurface.withValues(alpha: 0.7),
+            ),
             onSelected: (value) => _handleMenuAction(context, value, trip),
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'load', child: Text('View on Map')),
@@ -187,54 +203,12 @@ class TripsScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-
-    return Center(
-      child: GlassContainer(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.route_outlined,
-              size: 64,
-              color: onSurface.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Trips Yet',
-              style: TextStyle(
-                color: onSurface,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Plan your first route on the map!',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: onSurface.withValues(alpha: 0.7)),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: onNavigateToMap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Start Planning'),
-            ),
-          ],
-        ),
-      ),
+    return GlassEmptyState(
+      icon: Icons.route_outlined,
+      title: 'No Trips Yet',
+      message: 'Plan your first route on the map!',
+      actionLabel: 'Start Planning',
+      onAction: onNavigateToMap,
     );
   }
 
@@ -270,9 +244,9 @@ class TripsScreen extends StatelessWidget {
                     onChanged: (v) {
                       context.read<TripBloc>().add(
                         SaveTrip(
-                          name: trip.name, 
-                          startDate: trip.startDate, 
-                          endDate: trip.endDate, 
+                          name: trip.name,
+                          startDate: trip.startDate,
+                          endDate: trip.endDate,
                           status: v!,
                         ),
                       );
@@ -343,4 +317,13 @@ class TripsScreen extends StatelessWidget {
         return isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
     }
   }
+}
+
+/// One row in the flattened trips list: either a section header or a trip card.
+class _TripRow {
+  final String? title;
+  final Trip? trip;
+
+  const _TripRow.header(this.title) : trip = null;
+  const _TripRow.card(this.trip) : title = null;
 }

@@ -8,7 +8,7 @@ import '../../utils/contact_recency.dart';
 import '../../components/pulse/pulse_calendar.dart';
 import '../../components/pulse/contact_roster_tile.dart';
 import '../../components/pulse/log_contact_sheet.dart';
-import '../../components/shared/glass_container.dart';
+import '../../components/shared/glass_empty_state.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -35,15 +35,19 @@ class _PulseScreenState extends State<PulseScreen> {
 
   void _previousMonth() {
     setState(() {
-      _displayedMonth =
-          DateTime(_displayedMonth.year, _displayedMonth.month - 1);
+      _displayedMonth = DateTime(
+        _displayedMonth.year,
+        _displayedMonth.month - 1,
+      );
     });
   }
 
   void _nextMonth() {
     setState(() {
-      _displayedMonth =
-          DateTime(_displayedMonth.year, _displayedMonth.month + 1);
+      _displayedMonth = DateTime(
+        _displayedMonth.year,
+        _displayedMonth.month + 1,
+      );
     });
   }
 
@@ -150,8 +154,9 @@ class _PulseScreenState extends State<PulseScreen> {
         (person: p, recency: ContactRecency.forPerson(p, now: now)),
     ]..sort((a, b) => b.recency.overdueRatio.compareTo(a.recency.overdueRatio));
 
-    final attentionCount =
-        entries.where((e) => e.recency.isAttentionNeeded).length;
+    final attentionCount = entries
+        .where((e) => e.recency.isAttentionNeeded)
+        .length;
     final logsByDay = _bucketLogs(state.logs);
     final selectedLogs = _selectedDay == null
         ? const <ContactLog>[]
@@ -220,8 +225,7 @@ class _PulseScreenState extends State<PulseScreen> {
                       return ContactRosterTile(
                         person: entry.person,
                         recency: entry.recency,
-                        onTap: () =>
-                            _openLogSheet(entry.person, entry.recency),
+                        onTap: () => _openLogSheet(entry.person, entry.recency),
                       );
                     },
                   ),
@@ -521,42 +525,12 @@ class _EmptyPeopleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: GlassContainer(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.favorite_outline,
-                size: 64,
-                color: onSurface.withValues(alpha: 0.2),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No one to keep up with yet',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Add friends and family on the People tab, then come back here '
-                'to track when you last called, video chatted, or messaged.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return const GlassEmptyState(
+      icon: Icons.favorite_outline,
+      title: 'No one to keep up with yet',
+      message:
+          'Add friends and family on the People tab, then come back here to '
+          'track when you last called, video chatted, or messaged.',
     );
   }
 }

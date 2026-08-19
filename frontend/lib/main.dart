@@ -23,6 +23,7 @@ import 'screens/profile/me_screen.dart';
 import 'screens/trips/trips_screen.dart';
 import 'utils/app_theme.dart';
 import 'components/shared/glass_container.dart';
+import 'components/shared/nav_label.dart';
 import 'bloc/theme/theme_cubit.dart';
 
 import 'package:timezone/data/latest.dart' as tz;
@@ -191,131 +192,140 @@ class _MainScreenState extends State<MainScreen> {
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 600;
 
-          return Scaffold(
-            extendBodyBehindAppBar: true,
-            // Removed AppBar as requested
-            body: Stack(
-              children: [
-                // Content Layer
-                Positioned.fill(child: _getScreen(_selectedIndex)),
+          // One backdrop sample for the whole shell: the nav chrome and every
+          // glass surface the active screen draws share it, so the screen costs
+          // a single BackdropFilter layer rather than one per panel.
+          // Scoped to the shell, not the app, so route transitions never
+          // overlap two screens on the same backdrop key.
+          return BackdropGroup(
+            child: Scaffold(
+              extendBodyBehindAppBar: true,
+              // Removed AppBar as requested
+              body: Stack(
+                children: [
+                  // Content Layer
+                  Positioned.fill(child: _getScreen(_selectedIndex)),
 
-                // Glass Navigation Rail (Desktop)
-                if (isDesktop)
-                  Positioned(
-                    left: 24 + MediaQuery.of(context).padding.left,
-                    top: 24 + MediaQuery.of(context).padding.top,
-                    child: GlassContainer(
-                      width: 80,
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 24),
-                          // App Logo
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.asset(
-                              'assets/Map-My-Friends-Default-1024x1024@1x.png',
-                              width: 48,
-                              height: 48,
+                  // Glass Navigation Rail (Desktop)
+                  if (isDesktop)
+                    Positioned(
+                      left: 24 + MediaQuery.of(context).padding.left,
+                      top: 24 + MediaQuery.of(context).padding.top,
+                      child: GlassContainer(
+                        width: 80,
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 24),
+                            // App Logo
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                MapGlass.radiusMd,
+                              ),
+                              child: Image.asset(
+                                'assets/Map-My-Friends-Default-1024x1024@1x.png',
+                                width: 48,
+                                height: 48,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 32),
+                            const SizedBox(height: 32),
 
-                          _buildGlassNavItem(
-                            icon: Icons.map_outlined,
-                            selectedIcon: Icons.map,
-                            label: 'Map',
-                            index: 0,
-                            isSelected: _selectedIndex == 0,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGlassNavItem(
-                            icon: Icons.people_outline,
-                            selectedIcon: Icons.people,
-                            label: 'People',
-                            index: 1,
-                            isSelected: _selectedIndex == 1,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGlassNavItem(
-                            icon: Icons.monitor_heart_outlined,
-                            selectedIcon: Icons.monitor_heart,
-                            label: 'Pulse',
-                            index: 2,
-                            isSelected: _selectedIndex == 2,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGlassNavItem(
-                            icon: Icons.route_outlined,
-                            selectedIcon: Icons.route,
-                            index: 3,
-                            isSelected: _selectedIndex == 3,
-                            label: 'Trips',
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGlassNavItem(
-                            icon: Icons.person_outline,
-                            selectedIcon: Icons.person,
-                            label: 'Me',
-                            index: 4,
-                            isSelected: _selectedIndex == 4,
-                          ),
-                        ],
+                            _buildGlassNavItem(
+                              icon: Icons.map_outlined,
+                              selectedIcon: Icons.map,
+                              label: 'Map',
+                              index: 0,
+                              isSelected: _selectedIndex == 0,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildGlassNavItem(
+                              icon: Icons.people_outline,
+                              selectedIcon: Icons.people,
+                              label: 'People',
+                              index: 1,
+                              isSelected: _selectedIndex == 1,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildGlassNavItem(
+                              icon: Icons.monitor_heart_outlined,
+                              selectedIcon: Icons.monitor_heart,
+                              label: 'Pulse',
+                              index: 2,
+                              isSelected: _selectedIndex == 2,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildGlassNavItem(
+                              icon: Icons.route_outlined,
+                              selectedIcon: Icons.route,
+                              index: 3,
+                              isSelected: _selectedIndex == 3,
+                              label: 'Trips',
+                            ),
+                            const SizedBox(height: 24),
+                            _buildGlassNavItem(
+                              icon: Icons.person_outline,
+                              selectedIcon: Icons.person,
+                              label: 'Me',
+                              index: 4,
+                              isSelected: _selectedIndex == 4,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                // Glass Bottom Navigation (Mobile)
-                if (!isDesktop)
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 16 + MediaQuery.of(context).padding.bottom,
-                    child: GlassContainer(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 16,
-                      ),
-                      borderRadius: 30,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildGlassNavItemMobile(
-                            icon: Icons.map,
-                            label: 'Map',
-                            index: 0,
-                            isSelected: _selectedIndex == 0,
-                          ),
-                          _buildGlassNavItemMobile(
-                            icon: Icons.people,
-                            label: 'People',
-                            index: 1,
-                            isSelected: _selectedIndex == 1,
-                          ),
-                          _buildGlassNavItemMobile(
-                            icon: Icons.monitor_heart,
-                            label: 'Pulse',
-                            index: 2,
-                            isSelected: _selectedIndex == 2,
-                          ),
-                          _buildGlassNavItemMobile(
-                            icon: Icons.route,
-                            label: 'Trips',
-                            index: 3,
-                            isSelected: _selectedIndex == 3,
-                          ),
-                          _buildGlassNavItemMobile(
-                            icon: Icons.person,
-                            label: 'Me',
-                            index: 4,
-                            isSelected: _selectedIndex == 4,
-                          ),
-                        ],
+                  // Glass Bottom Navigation (Mobile)
+                  if (!isDesktop)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 16 + MediaQuery.of(context).padding.bottom,
+                      child: GlassContainer(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        borderRadius: MapGlass.radiusLg,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildGlassNavItemMobile(
+                              icon: Icons.map,
+                              label: 'Map',
+                              index: 0,
+                              isSelected: _selectedIndex == 0,
+                            ),
+                            _buildGlassNavItemMobile(
+                              icon: Icons.people,
+                              label: 'People',
+                              index: 1,
+                              isSelected: _selectedIndex == 1,
+                            ),
+                            _buildGlassNavItemMobile(
+                              icon: Icons.monitor_heart,
+                              label: 'Pulse',
+                              index: 2,
+                              isSelected: _selectedIndex == 2,
+                            ),
+                            _buildGlassNavItemMobile(
+                              icon: Icons.route,
+                              label: 'Trips',
+                              index: 3,
+                              isSelected: _selectedIndex == 3,
+                            ),
+                            _buildGlassNavItemMobile(
+                              icon: Icons.person,
+                              label: 'Me',
+                              index: 4,
+                              isSelected: _selectedIndex == 4,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -331,7 +341,6 @@ class _MainScreenState extends State<MainScreen> {
     required bool isSelected,
   }) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final selectedColor = theme.colorScheme.primary;
     final unselectedColor = theme.colorScheme.onSurfaceVariant;
 
@@ -342,17 +351,15 @@ class _MainScreenState extends State<MainScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _onItemTapped(index),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(MapGlass.radiusMd),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: 60,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: isSelected
                 ? BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
+                    color: MapGlass.selectionLift(theme.brightness),
+                    borderRadius: BorderRadius.circular(MapGlass.radiusMd),
                   )
                 : const BoxDecoration(),
             child: Column(
@@ -363,11 +370,13 @@ class _MainScreenState extends State<MainScreen> {
                   size: 24,
                 ),
                 const SizedBox(height: 4),
-                Text(
+                NavLabel(
                   label,
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     color: isSelected ? selectedColor : unselectedColor,
                   ),
                 ),
@@ -386,7 +395,6 @@ class _MainScreenState extends State<MainScreen> {
     required bool isSelected,
   }) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final selectedColor = theme.colorScheme.primary;
     final unselectedColor = theme.colorScheme.onSurfaceVariant;
 
@@ -396,16 +404,14 @@ class _MainScreenState extends State<MainScreen> {
         label: '$label Tab',
         child: InkWell(
           onTap: () => _onItemTapped(index),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(MapGlass.radiusMd),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
             decoration: isSelected
                 ? BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
+                    color: MapGlass.selectionLift(theme.brightness),
+                    borderRadius: BorderRadius.circular(MapGlass.radiusMd),
                   )
                 : const BoxDecoration(),
             child: Column(
@@ -417,7 +423,7 @@ class _MainScreenState extends State<MainScreen> {
                   size: 24,
                 ),
                 const SizedBox(height: 4),
-                Text(
+                NavLabel(
                   label,
                   style: TextStyle(
                     fontSize: 11,

@@ -9,7 +9,9 @@ class MapSettingsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    // A pushed bottom sheet: it sits above the map's own glass chrome, so it
+    // must own its backdrop sample rather than share the shell's key.
+    return GlassContainer.isolated(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
