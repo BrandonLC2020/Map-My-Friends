@@ -19,6 +19,7 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../settings/settings_screen.dart';
+import '../../utils/window_size.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -260,7 +261,9 @@ class _MeScreenState extends State<MeScreen> {
           ],
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final isDesktop = constraints.maxWidth >= 600;
+              final isDesktop = MapWindow(
+                Size(constraints.maxWidth, constraints.maxHeight),
+              ).isWide;
 
               return Center(
                 child: ConstrainedBox(
@@ -808,14 +811,18 @@ class _MeScreenState extends State<MeScreen> {
                                   label: Text(
                                     'Logout',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.error,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: Theme.of(context).colorScheme.error,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                       width: 2,
                                     ),
                                     shape: RoundedRectangleBorder(

@@ -11,6 +11,7 @@ import '../../components/map/custom_map_marker.dart';
 import '../../components/shared/nearby_airports_section.dart';
 import '../../components/shared/nearby_stations_section.dart';
 import 'add_edit_person_screen.dart';
+import '../../utils/window_size.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
   final String personId;
@@ -68,7 +69,9 @@ class PersonDetailsScreen extends StatelessWidget {
           ),
           body: LayoutBuilder(
             builder: (context, constraints) {
-              final isDesktop = constraints.maxWidth >= 600;
+              final isDesktop = MapWindow(
+                Size(constraints.maxWidth, constraints.maxHeight),
+              ).isWide;
               return Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -98,8 +101,12 @@ class PersonDetailsScreen extends StatelessWidget {
                           icon: const Icon(Icons.add_location_alt_outlined),
                           label: const Text('Add to Trip Planner'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

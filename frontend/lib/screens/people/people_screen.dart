@@ -5,6 +5,7 @@ import 'add_edit_person_screen.dart';
 import 'person_details_screen.dart';
 import '../../components/people/person_card.dart';
 import '../../components/shared/glass_empty_state.dart';
+import '../../utils/window_size.dart';
 
 class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});
@@ -24,7 +25,9 @@ class PeopleScreen extends StatelessWidget {
               }
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth >= 600;
+                  final isDesktop = MapWindow(
+                    Size(constraints.maxWidth, constraints.maxHeight),
+                  ).isWide;
 
                   if (isDesktop) {
                     // Desktop: Grid layout
@@ -95,7 +98,9 @@ class PeopleScreen extends StatelessWidget {
       ),
       floatingActionButton: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 600;
+          final isDesktop = MapWindow(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          ).isWide;
           return Padding(
             padding: EdgeInsets.only(bottom: isDesktop ? 0 : 90),
             child: FloatingActionButton(

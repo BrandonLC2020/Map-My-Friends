@@ -8,6 +8,7 @@ import '../../components/shared/glass_container.dart';
 import '../../utils/app_theme.dart';
 import '../../services/routing_service.dart';
 import '../../bloc/map/map_settings_cubit.dart';
+import '../../utils/window_size.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -40,7 +41,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   Widget _buildContent(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context);
-    final isWide = size.size.width > 600;
+    final isWide = MapWindow(size.size).isWide;
 
     Widget buildLeadingButton() {
       return Padding(

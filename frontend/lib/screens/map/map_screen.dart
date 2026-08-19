@@ -31,6 +31,7 @@ import '../../components/map/horizontal_trip_planner.dart';
 import '../../components/shared/thermal_response.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/window_size.dart';
 
 // Spatial tokens per DESIGN.md §5: floating chrome lives at 20px inset; the
 // compass clears the settings button (~75px tall plus its inset) with a
@@ -857,30 +858,43 @@ class _MapScreenState extends State<MapScreen> {
                                       },
                                     ),
 
-                                    RichAttributionWidget(
-                                      alignment:
-                                          AttributionAlignment.bottomLeft,
-                                      attributions: [
-                                        TextSourceAttribution(
-                                          'OpenStreetMap contributors',
-                                          onTap: () => launchUrl(
-                                            Uri.parse(
-                                              'https://openstreetmap.org/copyright',
-                                            ),
-                                          ),
-                                        ),
-                                        if (settingsState.mapType ==
-                                                MapType.minimal ||
-                                            _isDark(context, settingsState))
+                                    // Tile attribution is a licence term, not
+                                    // decoration, so it has to clear the
+                                    // floating navigation rather than sit
+                                    // behind its glass. RichAttributionWidget
+                                    // aligns itself internally, so the offset
+                                    // has to come from outside it.
+                                    Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: MapWindow.of(
+                                          context,
+                                        ).navBarInset,
+                                      ),
+                                      child: RichAttributionWidget(
+                                        alignment:
+                                            AttributionAlignment.bottomLeft,
+                                        attributions: [
                                           TextSourceAttribution(
-                                            '© CartoDB',
+                                            'OpenStreetMap contributors',
                                             onTap: () => launchUrl(
                                               Uri.parse(
-                                                'https://carto.com/attributions',
+                                                'https://openstreetmap.org/copyright',
                                               ),
                                             ),
                                           ),
-                                      ],
+                                          if (settingsState.mapType ==
+                                                  MapType.minimal ||
+                                              _isDark(context, settingsState))
+                                            TextSourceAttribution(
+                                              '© CartoDB',
+                                              onTap: () => launchUrl(
+                                                Uri.parse(
+                                                  'https://carto.com/attributions',
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

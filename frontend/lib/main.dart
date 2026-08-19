@@ -22,6 +22,7 @@ import 'screens/pulse/pulse_screen.dart';
 import 'screens/profile/me_screen.dart';
 import 'screens/trips/trips_screen.dart';
 import 'utils/app_theme.dart';
+import 'utils/window_size.dart';
 import 'components/shared/glass_container.dart';
 import 'components/shared/nav_label.dart';
 import 'bloc/theme/theme_cubit.dart';
@@ -190,7 +191,12 @@ class _MainScreenState extends State<MainScreen> {
       ],
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 600;
+          // Both axes, not just width: see MapWindow. A phone in landscape is
+          // wider than a tablet in portrait, and it is the one place a rail
+          // cannot fit.
+          final window = MapWindow(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          );
 
           // One backdrop sample for the whole shell: the nav chrome and every
           // glass surface the active screen draws share it, so the screen costs
@@ -207,7 +213,7 @@ class _MainScreenState extends State<MainScreen> {
                   Positioned.fill(child: _getScreen(_selectedIndex)),
 
                   // Glass Navigation Rail (Desktop)
-                  if (isDesktop)
+                  if (window.usesRail)
                     Positioned(
                       left: 24 + MediaQuery.of(context).padding.left,
                       top: 24 + MediaQuery.of(context).padding.top,
@@ -276,7 +282,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
 
                   // Glass Bottom Navigation (Mobile)
-                  if (!isDesktop)
+                  if (window.usesBar)
                     Positioned(
                       left: 16,
                       right: 16,

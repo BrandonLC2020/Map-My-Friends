@@ -17,6 +17,7 @@ import '../../components/map/custom_map_marker.dart';
 import '../../models/airport.dart';
 import '../../models/station.dart';
 import '../../services/api_service.dart';
+import '../../utils/window_size.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -398,7 +399,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 600;
+          final isDesktop = MapWindow(
+            Size(constraints.maxWidth, constraints.maxHeight),
+          ).isWide;
 
           String? timeString;
           if (widget.person?.timezone != null &&

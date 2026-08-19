@@ -9,6 +9,7 @@ import '../../components/pulse/pulse_calendar.dart';
 import '../../components/pulse/contact_roster_tile.dart';
 import '../../components/pulse/log_contact_sheet.dart';
 import '../../components/shared/glass_empty_state.dart';
+import '../../utils/window_size.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -164,7 +165,9 @@ class _PulseScreenState extends State<PulseScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 600;
+        final isDesktop = MapWindow(
+          Size(constraints.maxWidth, constraints.maxHeight),
+        ).isWide;
         final horizontalPadding = isDesktop ? 24.0 : 0.0;
 
         return Center(
