@@ -5,7 +5,9 @@ from apps.common.geo import haversine_km
 
 class HaversineTests(SimpleTestCase):
     def test_zero_distance(self):
-        self.assertAlmostEqual(haversine_km(41.8781, -87.6298, 41.8781, -87.6298), 0.0, places=6)
+        self.assertAlmostEqual(
+            haversine_km(41.8781, -87.6298, 41.8781, -87.6298), 0.0, places=6
+        )
 
     def test_known_distance_chicago_to_midway(self):
         # Downtown Chicago -> Midway International is roughly 14-16 km.

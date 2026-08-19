@@ -95,11 +95,13 @@ class TripRepository:
         legs: list = []
         if with_children:
             stops = [
-                self._hydrate_stop(d, doc.id) for d in doc.reference.collection(STOPS).stream()
+                self._hydrate_stop(d, doc.id)
+                for d in doc.reference.collection(STOPS).stream()
             ]
             stops.sort(key=lambda s: s.sequence_order)
             legs = [
-                self._hydrate_leg(d, doc.id) for d in doc.reference.collection(LEGS).stream()
+                self._hydrate_leg(d, doc.id)
+                for d in doc.reference.collection(LEGS).stream()
             ]
         return TripRecord(
             id=doc.id,
@@ -200,8 +202,7 @@ class TripRepository:
         if ref is None:
             return []
         stops = [
-            self._hydrate_stop(doc, trip_id)
-            for doc in ref.collection(STOPS).stream()
+            self._hydrate_stop(doc, trip_id) for doc in ref.collection(STOPS).stream()
         ]
         stops.sort(key=lambda s: s.sequence_order)
         return stops
@@ -210,9 +211,13 @@ class TripRepository:
         ref = self._owned_ref(trip_id, owner_key)
         if ref is None:
             return []
-        return [self._hydrate_leg(doc, trip_id) for doc in ref.collection(LEGS).stream()]
+        return [
+            self._hydrate_leg(doc, trip_id) for doc in ref.collection(LEGS).stream()
+        ]
 
-    def add_stop(self, trip_id: str, owner_key: str, data: dict) -> TripStopRecord | None:
+    def add_stop(
+        self, trip_id: str, owner_key: str, data: dict
+    ) -> TripStopRecord | None:
         trip_ref = self._owned_ref(trip_id, owner_key)
         if trip_ref is None:
             return None

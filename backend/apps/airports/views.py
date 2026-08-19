@@ -20,16 +20,18 @@ class NearestAirportsView(APIView):
 
     def get(self, request):
         try:
-            lat = float(request.query_params.get('lat'))
-            lon = float(request.query_params.get('lon'))
+            lat = float(request.query_params.get("lat"))
+            lon = float(request.query_params.get("lon"))
         except (TypeError, ValueError):
             return Response(
-                {'error': 'lat and lon query parameters are required and must be numbers.'},
+                {
+                    "error": "lat and lon query parameters are required and must be numbers."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            count = int(request.query_params.get('count', 3))
+            count = int(request.query_params.get("count", 3))
             count = min(max(count, 1), 10)  # Clamp between 1 and 10
         except (TypeError, ValueError):
             count = 3

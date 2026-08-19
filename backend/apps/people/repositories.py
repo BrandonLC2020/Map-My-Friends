@@ -101,7 +101,9 @@ class PersonRepository:
         query = self._collection().where("owner_key", "==", owner_key)
         return [self._hydrate(doc) for doc in query.stream()]
 
-    def get_for_owner(self, person_id: str, owner_key: str | None) -> PersonRecord | None:
+    def get_for_owner(
+        self, person_id: str, owner_key: str | None
+    ) -> PersonRecord | None:
         doc = self._collection().document(person_id).get()
         if not doc.exists:
             return None
@@ -119,7 +121,9 @@ class PersonRepository:
         ref.set(payload)
         return self._hydrate(ref.get())
 
-    def update(self, person_id: str, owner_key: str | None, data: dict) -> PersonRecord | None:
+    def update(
+        self, person_id: str, owner_key: str | None, data: dict
+    ) -> PersonRecord | None:
         ref = self._collection().document(person_id)
         doc = ref.get()
         if not doc.exists or (doc.to_dict() or {}).get("owner_key") != owner_key:
@@ -190,7 +194,9 @@ class ContactLogRepository:
         records.sort(key=lambda r: r.contacted_at, reverse=True)
         return records
 
-    def get_for_owner(self, log_id: str, owner_key: str | None) -> ContactLogRecord | None:
+    def get_for_owner(
+        self, log_id: str, owner_key: str | None
+    ) -> ContactLogRecord | None:
         for record in self.list_for_owner(owner_key):
             if record.id == log_id:
                 return record
@@ -213,7 +219,9 @@ class ContactLogRepository:
         ref.set(payload)
         return self._hydrate(ref.get(), person_id)
 
-    def update(self, log_id: str, owner_key: str | None, data: dict) -> ContactLogRecord | None:
+    def update(
+        self, log_id: str, owner_key: str | None, data: dict
+    ) -> ContactLogRecord | None:
         existing = self.get_for_owner(log_id, owner_key)
         if existing is None:
             return None

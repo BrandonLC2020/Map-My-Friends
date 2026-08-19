@@ -7,10 +7,10 @@ from . import reference
 from .serializers import StationSerializer
 
 VALID_STATION_TYPES = {
-    'major_station',
-    'regional_station',
-    'commuter_rail_station',
-    'subway_station',
+    "major_station",
+    "regional_station",
+    "commuter_rail_station",
+    "subway_station",
 }
 
 
@@ -28,23 +28,27 @@ class NearestStationsView(APIView):
 
     def get(self, request):
         try:
-            lat = float(request.query_params.get('lat'))
-            lon = float(request.query_params.get('lon'))
+            lat = float(request.query_params.get("lat"))
+            lon = float(request.query_params.get("lon"))
         except (TypeError, ValueError):
             return Response(
-                {'error': 'lat and lon query parameters are required and must be numbers.'},
+                {
+                    "error": "lat and lon query parameters are required and must be numbers."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            count = int(request.query_params.get('count', 3))
+            count = int(request.query_params.get("count", 3))
             count = min(max(count, 1), 10)
         except (TypeError, ValueError):
             count = 3
 
-        station_type = request.query_params.get('station_type')
+        station_type = request.query_params.get("station_type")
         if station_type not in VALID_STATION_TYPES:
             station_type = None
 
-        stations = reference.get_nearby(lat, lon, count=count, station_type=station_type)
+        stations = reference.get_nearby(
+            lat, lon, count=count, station_type=station_type
+        )
         return Response(StationSerializer(stations, many=True).data)

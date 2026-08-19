@@ -124,8 +124,11 @@ class ContactLogEndpointTests(FirestoreTestMixin, APITestCase):
         self.client.force_authenticate(user=self.user)
         created = self.client.post(
             "/api/contact-logs/",
-            {"person": self.person.id, "channel": "CALL",
-             "contacted_at": "2026-07-01T12:00:00Z"},
+            {
+                "person": self.person.id,
+                "channel": "CALL",
+                "contacted_at": "2026-07-01T12:00:00Z",
+            },
             format="json",
         )
         self.assertEqual(created.status_code, 201)
@@ -135,8 +138,11 @@ class ContactLogEndpointTests(FirestoreTestMixin, APITestCase):
         self.client.force_authenticate(user=self.other)
         response = self.client.post(
             "/api/contact-logs/",
-            {"person": self.person.id, "channel": "CALL",
-             "contacted_at": "2026-07-01T12:00:00Z"},
+            {
+                "person": self.person.id,
+                "channel": "CALL",
+                "contacted_at": "2026-07-01T12:00:00Z",
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 400)
@@ -145,8 +151,11 @@ class ContactLogEndpointTests(FirestoreTestMixin, APITestCase):
         self.client.force_authenticate(user=self.user)
         self.client.post(
             "/api/contact-logs/",
-            {"person": self.person.id, "channel": "CALL",
-             "contacted_at": "2026-07-01T12:00:00Z"},
+            {
+                "person": self.person.id,
+                "channel": "CALL",
+                "contacted_at": "2026-07-01T12:00:00Z",
+            },
             format="json",
         )
         self.client.force_authenticate(user=self.other)

@@ -30,7 +30,9 @@ class UserProfileSerializer(serializers.Serializer):
     pin_emoji = serializers.CharField(
         max_length=10, required=False, allow_null=True, allow_blank=True
     )
-    distance_unit = serializers.ChoiceField(choices=["metric", "imperial"], required=False)
+    distance_unit = serializers.ChoiceField(
+        choices=["metric", "imperial"], required=False
+    )
 
     def _request_user(self):
         request = self.context.get("request")
@@ -57,45 +59,61 @@ class UserProfileSerializer(serializers.Serializer):
     def get_profile_image(self, obj):
         from apps.common.storage import upload_url
 
-        return upload_url(getattr(obj, "profile_image", None), self.context.get("request"))
+        return upload_url(
+            getattr(obj, "profile_image", None), self.context.get("request")
+        )
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
     password_confirm = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
     # Honeypot field
-    first_name_hp = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    first_name_hp = serializers.CharField(
+        required=False, allow_blank=True, write_only=True
+    )
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password_confirm', 'first_name', 'last_name', 'first_name_hp')
+        fields = (
+            "username",
+            "email",
+            "password",
+            "password_confirm",
+            "first_name",
+            "last_name",
+            "first_name_hp",
+        )
 
     def validate(self, attrs):
-        if attrs.get('first_name_hp'):
+        if attrs.get("first_name_hp"):
             # If honeypot is filled, it's a bot.
             # We raise a generic error to not reveal it's a honeypot.
             raise serializers.ValidationError({"detail": "Invalid request."})
 
-        if attrs['password'] != attrs['password_confirm']:
+        if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError({"password": "Passwords do not match."})
-        
-        if User.objects.filter(email=attrs['email']).exists():
-            raise serializers.ValidationError({"email": "A user with this email already exists."})
-        
+
+        if User.objects.filter(email=attrs["email"]).exists():
+            raise serializers.ValidationError(
+                {"email": "A user with this email already exists."}
+            )
+
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
-        validated_data.pop('first_name_hp', None)
+        validated_data.pop("password_confirm")
+        validated_data.pop("first_name_hp", None)
         user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
         )
         return user
 
@@ -106,10 +124,12 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
     password_confirm = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
+        if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError({"password": "Passwords do not match."})
         return attrs

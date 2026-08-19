@@ -6,8 +6,8 @@ from .views import ContactLogViewSet
 # people router, whose r'' registration would otherwise treat 'contact-logs' as
 # a person primary key.
 router = DefaultRouter()
-router.register(r'', ContactLogViewSet, basename='contactlog')
+router.register(r"", ContactLogViewSet, basename="contactlog")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

@@ -22,14 +22,14 @@ class PersonViewSet(viewsets.ViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ["list", "retrieve"]:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_throttles(self):
-        if self.action == 'create':
+        if self.action == "create":
             # Stricter throttling for creating people due to geocoding costs
             return [UserRateThrottle()]
         return super().get_throttles()
@@ -40,17 +40,17 @@ class PersonViewSet(viewsets.ViewSet):
 
     def list(self, request):
         people = self.repository.list_for_owner(owner_key_for(request))
-        serializer = PersonSerializer(people, many=True, context={'request': request})
+        serializer = PersonSerializer(people, many=True, context={"request": request})
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
         person = self.repository.get_for_owner(pk, owner_key_for(request))
         if person is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(PersonSerializer(person, context={'request': request}).data)
+        return Response(PersonSerializer(person, context={"request": request}).data)
 
     def create(self, request):
-        serializer = PersonSerializer(data=request.data, context={'request': request})
+        serializer = PersonSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         payload = self._serialize_dates(dict(serializer.validated_data))
         payload = self._apply_geocoding(payload)
@@ -58,7 +58,7 @@ class PersonViewSet(viewsets.ViewSet):
 
         person = self.repository.create(owner_key_for(request), payload)
         return Response(
-            PersonSerializer(person, context={'request': request}).data,
+            PersonSerializer(person, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -70,18 +70,18 @@ class PersonViewSet(viewsets.ViewSet):
 
     def _write_update(self, request, pk, partial):
         serializer = PersonSerializer(
-            data=request.data, partial=partial, context={'request': request}
+            data=request.data, partial=partial, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         payload = self._serialize_dates(dict(serializer.validated_data))
-        if any(k in payload for k in ('city', 'state', 'country', 'street')):
+        if any(k in payload for k in ("city", "state", "country", "street")):
             payload = self._apply_geocoding(payload)
         payload = self._apply_upload(request, payload)
 
         person = self.repository.update(pk, owner_key_for(request), payload)
         if person is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(PersonSerializer(person, context={'request': request}).data)
+        return Response(PersonSerializer(person, context={"request": request}).data)
 
     def destroy(self, request, pk=None):
         if not self.repository.delete(pk, owner_key_for(request)):
@@ -97,26 +97,26 @@ class PersonViewSet(viewsets.ViewSet):
         same conversion.
         """
         return {
-            k: (v.isoformat() if hasattr(v, 'isoformat') else v)
+            k: (v.isoformat() if hasattr(v, "isoformat") else v)
             for k, v in payload.items()
         }
 
     def _apply_geocoding(self, payload):
         lat, lng, timezone = geocode_address(
-            payload.get('city', ''),
-            payload.get('state', ''),
-            payload.get('country', ''),
-            payload.get('street'),
+            payload.get("city", ""),
+            payload.get("state", ""),
+            payload.get("country", ""),
+            payload.get("street"),
         )
-        payload['lat'] = lat
-        payload['lng'] = lng
-        payload['timezone'] = timezone
+        payload["lat"] = lat
+        payload["lng"] = lng
+        payload["timezone"] = timezone
         return payload
 
     def _apply_upload(self, request, payload):
-        uploaded = request.FILES.get('profile_image')
+        uploaded = request.FILES.get("profile_image")
         if uploaded is not None:
-            payload['profile_image'] = save_upload(uploaded, prefix='profile_images')
+            payload["profile_image"] = save_upload(uploaded, prefix="profile_images")
         return payload
 
 
@@ -134,7 +134,7 @@ class ContactLogViewSet(viewsets.ViewSet):
 
     def list(self, request):
         logs = self.repository.list_for_owner(
-            owner_key_for(request), person_id=request.query_params.get('person')
+            owner_key_for(request), person_id=request.query_params.get("person")
         )
         return Response(ContactLogSerializer(logs, many=True).data)
 
@@ -148,15 +148,15 @@ class ContactLogViewSet(viewsets.ViewSet):
         serializer = ContactLogSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         payload = dict(serializer.validated_data)
-        person_id = payload.pop('person_id')
-        payload['contacted_at'] = payload['contacted_at'].isoformat()
+        person_id = payload.pop("person_id")
+        payload["contacted_at"] = payload["contacted_at"].isoformat()
 
         log = self.repository.create(owner_key_for(request), person_id, payload)
         if log is None:
             # The person is absent or belongs to another owner. 400 mirrors the
             # previous queryset-restricted PrimaryKeyRelatedField behaviour.
             return Response(
-                {'person': ['Invalid person.']}, status=status.HTTP_400_BAD_REQUEST
+                {"person": ["Invalid person."]}, status=status.HTTP_400_BAD_REQUEST
             )
         return Response(ContactLogSerializer(log).data, status=status.HTTP_201_CREATED)
 
@@ -170,9 +170,9 @@ class ContactLogViewSet(viewsets.ViewSet):
         serializer = ContactLogSerializer(data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         payload = dict(serializer.validated_data)
-        payload.pop('person_id', None)
-        if 'contacted_at' in payload:
-            payload['contacted_at'] = payload['contacted_at'].isoformat()
+        payload.pop("person_id", None)
+        if "contacted_at" in payload:
+            payload["contacted_at"] = payload["contacted_at"].isoformat()
 
         log = self.repository.update(pk, owner_key_for(request), payload)
         if log is None:
