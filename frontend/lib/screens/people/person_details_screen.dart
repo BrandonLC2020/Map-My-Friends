@@ -18,6 +18,8 @@ import '../../components/shared/glass_inlay.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../components/shared/thermal_response.dart';
 import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_header.dart';
+import '../../components/shared/thermal_button.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
   final String personId;
@@ -31,7 +33,7 @@ class PersonDetailsScreen extends StatelessWidget {
         if (state is! PeopleLoaded) {
           // Fallback if accessed while not loaded, though rare
           return AmbientScaffold(
-            appBar: AppBar(title: const Text('Person Details')),
+            header: const GlassHeader(title: 'Person Details'),
             body: const PulseIndicator(),
           );
         }
@@ -41,7 +43,7 @@ class PersonDetailsScreen extends StatelessWidget {
 
         if (personIndex == -1) {
           return AmbientScaffold(
-            appBar: AppBar(title: const Text('Person Not Found')),
+            header: const GlassHeader(title: 'Person Not Found'),
             body: const Center(child: Text('This person no longer exists.')),
           );
         }
@@ -49,11 +51,13 @@ class PersonDetailsScreen extends StatelessWidget {
         final person = state.people[personIndex];
 
         return AmbientScaffold(
-          appBar: AppBar(
-            title: Text('${person.firstName} ${person.lastName}'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
+          header: GlassHeader(
+            title: '${person.firstName} ${person.lastName}',
+            subtitle: person.relationshipTag,
+            actions: <HeaderAction>[
+              HeaderAction(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -63,13 +67,28 @@ class PersonDetailsScreen extends StatelessWidget {
                   );
                 },
               ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  context.read<PeopleBloc>().add(DeletePerson(person.id));
-                  Navigator.pop(context);
+              HeaderAction(
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                // Deleting a person was a single unconfirmed tap on an icon
+                // sitting next to Edit. It is the only irreversible action on
+                // this surface and now reads like one.
+                onPressed: () async {
+                  final peopleBloc = context.read<PeopleBloc>();
+                  final navigator = Navigator.of(context);
+                  final confirmed = await GlassDialog.confirm(
+                    context,
+                    title: 'Delete ${person.firstName}?',
+                    message:
+                        'This removes them from your map, your trips, and '
+                        'your contact history. It cannot be undone.',
+                    confirmLabel: 'Delete',
+                    tone: ThermalButtonTone.danger,
+                  );
+                  if (!confirmed) return;
+                  peopleBloc.add(DeletePerson(person.id));
+                  navigator.pop();
                 },
-                color: Theme.of(context).colorScheme.error,
               ),
             ],
           ),

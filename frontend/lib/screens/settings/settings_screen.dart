@@ -7,6 +7,7 @@ import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_header.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,7 +15,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AmbientScaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      header: const GlassHeader(title: 'Settings'),
       body: BlocListener<LocationBloc, LocationState>(
         listener: (context, state) {
           if (state is LocationPermissionDenied) {

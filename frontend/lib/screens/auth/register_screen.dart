@@ -6,6 +6,7 @@ import '../../bloc/auth/auth_state.dart';
 import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_header.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -66,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isLoading = context.watch<AuthBloc>().state is AuthLoading;
     return AmbientScaffold(
       appearance: Brightness.dark,
-      appBar: AppBar(title: const Text('Create Account')),
+      header: const GlassHeader(title: 'Create Account'),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is RegistrationSuccess) {

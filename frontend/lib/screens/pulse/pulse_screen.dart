@@ -14,6 +14,7 @@ import '../../utils/app_theme.dart';
 import '../../components/shared/glass_container.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_header.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -111,38 +112,42 @@ class _PulseScreenState extends State<PulseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('Keep in Touch'), centerTitle: true),
-      body: SafeArea(
-        child: BlocConsumer<PulseBloc, PulseState>(
-          listenWhen: (prev, curr) =>
-              curr is PulseLoaded && curr.actionNonce != _lastNonce,
-          listener: (context, state) {
-            if (state is PulseLoaded) {
-              _lastNonce = state.actionNonce;
-              if (state.actionError != null) {
-                GlassToast.failure(context, state.actionError!);
-              }
-            }
-          },
-          builder: (context, state) {
-            if (state is PulseLoading || state is PulseInitial) {
-              return const PulseIndicator();
-            }
-            if (state is PulseError) {
-              return _ErrorView(
-                message: state.message,
-                onRetry: () => context.read<PulseBloc>().add(LoadPulse()),
-              );
-            }
-            if (state is PulseLoaded) {
-              if (state.people.isEmpty) {
-                return const _EmptyPeopleView();
-              }
-              return _buildLoaded(context, state);
-            }
-            return const SizedBox.shrink();
-          },
-        ),
+      body: Column(
+        children: <Widget>[
+          const GlassHeader(title: 'Keep in Touch', showBack: false),
+          Expanded(
+            child: BlocConsumer<PulseBloc, PulseState>(
+              listenWhen: (prev, curr) =>
+                  curr is PulseLoaded && curr.actionNonce != _lastNonce,
+              listener: (context, state) {
+                if (state is PulseLoaded) {
+                  _lastNonce = state.actionNonce;
+                  if (state.actionError != null) {
+                    GlassToast.failure(context, state.actionError!);
+                  }
+                }
+              },
+              builder: (context, state) {
+                if (state is PulseLoading || state is PulseInitial) {
+                  return const PulseIndicator();
+                }
+                if (state is PulseError) {
+                  return _ErrorView(
+                    message: state.message,
+                    onRetry: () => context.read<PulseBloc>().add(LoadPulse()),
+                  );
+                }
+                if (state is PulseLoaded) {
+                  if (state.people.isEmpty) {
+                    return const _EmptyPeopleView();
+                  }
+                  return _buildLoaded(context, state);
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

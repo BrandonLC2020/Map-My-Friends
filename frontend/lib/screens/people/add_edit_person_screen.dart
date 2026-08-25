@@ -22,6 +22,7 @@ import '../../utils/app_theme.dart';
 import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_header.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -363,8 +364,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return AmbientScaffold(
-      appBar: AppBar(
-        title: Text(widget.person != null ? l10n.editPerson : l10n.addPerson),
+      header: GlassHeader(
+        title: widget.person != null ? l10n.editPerson : l10n.addPerson,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
