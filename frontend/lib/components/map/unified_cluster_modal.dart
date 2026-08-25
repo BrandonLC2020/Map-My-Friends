@@ -34,9 +34,7 @@ class UnifiedClusterModal extends StatelessWidget {
                 items.length == 1
                     ? '1 Item Here'
                     : '${items.length} Items Here',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               if (onZoom != null && items.length > 1)
                 TextButton.icon(
@@ -100,7 +98,7 @@ class UnifiedClusterModal extends StatelessWidget {
           title: Text('${p.firstName} ${p.lastName}'),
           subtitle: Text(
             p.relationshipTag,
-            style: const TextStyle(fontSize: 12),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -206,7 +204,7 @@ class UnifiedClusterModal extends StatelessWidget {
       title: Text(a.name),
       subtitle: Text(
         '${a.iataCode} • ${a.city}, ${a.country}',
-        style: const TextStyle(fontSize: 12),
+        style: Theme.of(context).textTheme.bodySmall,
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -278,7 +276,7 @@ class UnifiedClusterModal extends StatelessWidget {
       title: Text(s.name),
       subtitle: Text(
         '$label • ${s.city ?? "Unknown City"}',
-        style: const TextStyle(fontSize: 12),
+        style: Theme.of(context).textTheme.bodySmall,
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

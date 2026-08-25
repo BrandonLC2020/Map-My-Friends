@@ -14,6 +14,7 @@ class PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     String? timeString;
     if (person.timezone != null && person.timezone!.isNotEmpty) {
       try {
@@ -36,17 +37,26 @@ class PersonCard extends StatelessWidget {
           children: [
             Text(
               '${person.firstName} ${person.lastName}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              // titleMedium, not a hand-set 16/bold: this line silently lost
+              // Montserrat the moment it stopped reading from the scale.
+              style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            Text('${person.city}, ${person.state}'),
-            const SizedBox(height: 4),
+            Text(
+              '${person.city}, ${person.state}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: MapSpacing.xs),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   person.relationshipTag,
-                  style: TextStyle(color: Theme.of(context).primaryColor),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
                 if (timeString != null)
                   Row(
@@ -54,14 +64,17 @@ class PersonCard extends StatelessWidget {
                       Icon(
                         Icons.access_time,
                         size: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         timeString,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],

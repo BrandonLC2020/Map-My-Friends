@@ -322,8 +322,7 @@ class _MeScreenState extends State<MeScreen> {
                               const SizedBox(height: 32),
                               Text(
                                 'Personal Info',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 16),
                               Row(
@@ -388,8 +387,7 @@ class _MeScreenState extends State<MeScreen> {
                               const SizedBox(height: 32),
                               Text(
                                 'My Address',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 16),
 
@@ -441,8 +439,7 @@ class _MeScreenState extends State<MeScreen> {
                               const SizedBox(height: 32),
                               Text(
                                 'Preferences',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 16),
                               Text(

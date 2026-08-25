@@ -441,11 +441,13 @@ class _MainScreenState extends State<MainScreen> {
                 const SizedBox(height: 4),
                 NavLabel(
                   label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? selectedColor : unselectedColor,
-                  ),
+                  style: (theme.textTheme.labelSmall ?? const TextStyle())
+                      .copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected ? selectedColor : unselectedColor,
+                      ),
                 ),
               ],
             ),

@@ -301,12 +301,7 @@ class _SummaryHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                headline,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(headline, style: theme.textTheme.titleLarge),
               const SizedBox(height: 2),
               Text(
                 sub,

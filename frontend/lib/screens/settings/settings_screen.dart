@@ -28,12 +28,7 @@ class SettingsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24.0),
           children: [
-            Text(
-              'Appearance',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Text('Appearance', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             BlocBuilder<ThemeCubit, ThemeMode>(
               builder: (context, themeMode) {
@@ -66,9 +61,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               'Default Map Settings',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             BlocBuilder<MapSettingsCubit, MapSettingsState>(
@@ -182,12 +175,7 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 32),
-            Text(
-              'Location',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Text('Location', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             BlocBuilder<LocationBloc, LocationState>(
               builder: (context, state) {

@@ -48,10 +48,7 @@ class TripsScreen extends StatelessWidget {
       children: [
         Text(
           'My Trips',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: onSurface,
-          ),
+          style: theme.textTheme.headlineLarge?.copyWith(color: onSurface),
         ),
         const SizedBox(height: 8),
         Text(
