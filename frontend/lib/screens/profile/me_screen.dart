@@ -294,7 +294,9 @@ class _MeScreenState extends State<MeScreen> {
                                                   ? null
                                                   : _showImageSourceDialog,
                                               borderRadius:
-                                                  BorderRadius.circular(20),
+                                                  BorderRadius.circular(
+                                                    MapGlass.radiusMd,
+                                                  ),
                                               child: Padding(
                                                 padding: const EdgeInsets.all(
                                                   8.0,

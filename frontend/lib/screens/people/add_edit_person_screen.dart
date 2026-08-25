@@ -415,7 +415,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -595,7 +597,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                 setState(() => _birthday = date);
                               }
                             },
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(
+                              MapGlass.radiusSm,
+                            ),
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Birthday (Optional)',
@@ -751,7 +755,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                     color: MapGlass.inlayFillStrong(
                                       Theme.of(context).brightness,
                                     ),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(
+                                      MapGlass.radiusSm,
+                                    ),
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
@@ -771,7 +777,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                               onPressed: _isSaving ? null : _save,
                               style: FilledButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusSm,
+                                  ),
                                 ),
                               ),
                               child: _isSaving

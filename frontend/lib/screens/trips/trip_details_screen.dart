@@ -305,7 +305,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(MapGlass.radiusMd),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(

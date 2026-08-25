@@ -195,7 +195,7 @@ class SettingsScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(MapGlass.radiusSm),
                     ),
                   ),
                 );

@@ -185,6 +185,13 @@ class MapGlass {
   static const double radiusMd = 16.0;
   static const double radiusLg = 30.0;
 
+  /// A fully rounded end, for small status chips only.
+  ///
+  /// Named so it reads as the one deliberate exception to the scale rather
+  /// than as a magic number. A pill is for a chip; a panel or an action that
+  /// reaches for this shape has mistaken a label for a surface.
+  static const double radiusPill = 999.0;
+
   /// Selection inside glass chrome (DESIGN.md §5, Navigation): a background
   /// lift, never a solid colour fill. Dark carries more because a white lift
   /// on a dark pane reads weaker than a black lift on a light one.

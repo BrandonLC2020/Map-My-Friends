@@ -420,7 +420,7 @@ class _DayLogChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(MapGlass.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

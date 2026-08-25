@@ -131,7 +131,9 @@ class PersonDetailsScreen extends StatelessWidget {
                             ).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                MapGlass.radiusSm,
+                              ),
                             ),
                           ),
                         ),
@@ -190,7 +192,7 @@ class PersonDetailsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(MapGlass.radiusMd),
           ),
           child: Text(
             person.relationshipTag,

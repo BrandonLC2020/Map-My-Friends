@@ -120,7 +120,7 @@ class BaseBottomSheet extends StatelessWidget {
           GlassInlay(
             strong: true,
             edge: false,
-            borderRadius: 999,
+            borderRadius: MapGlass.radiusPill,
             padding: const EdgeInsets.all(12),
             child: Icon(icon, color: color, size: 32),
           ),

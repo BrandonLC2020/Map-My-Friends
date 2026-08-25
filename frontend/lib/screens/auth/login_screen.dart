@@ -107,14 +107,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(
+                                  MapGlass.radiusMd,
+                                ),
                                 border: Border.all(
                                   color: Colors.white.withValues(alpha: 0.15),
                                   width: 1.0,
                                 ),
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(19),
+                                borderRadius: BorderRadius.circular(
+                                  MapGlass.radiusMd,
+                                ),
                                 child: Image.asset(
                                   'assets/Map-My-Friends-Default-1024x1024@1x.png',
                                   width: 80,
@@ -176,17 +180,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderSide: BorderSide(
                                     color: Colors.white.withValues(alpha: 0.15),
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: const BorderSide(
                                     color: MapPalette.defaultPin,
                                     width: 1.5,
                                   ), // Evening Indigo
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white.withValues(alpha: 0.02),
@@ -226,17 +236,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderSide: BorderSide(
                                     color: Colors.white.withValues(alpha: 0.15),
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: const BorderSide(
                                     color: MapPalette.defaultPin,
                                     width: 1.5,
                                   ), // Evening Indigo
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -312,7 +328,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ), // Evening Indigo
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(
+                                      MapGlass.radiusMd,
+                                    ),
                                   ),
                                 ),
                                 child: isLoading
@@ -416,7 +434,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white.withValues(alpha: 0.12),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
@@ -454,7 +474,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white.withValues(alpha: 0.12),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    MapGlass.radiusMd,
+                                  ),
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
@@ -480,7 +502,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white.withValues(alpha: 0.12),
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(
+                              MapGlass.radiusMd,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
@@ -527,7 +551,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: _devAccent.withValues(alpha: 0.4),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(
+                                MapGlass.radiusMd,
+                              ),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),

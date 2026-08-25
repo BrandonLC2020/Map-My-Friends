@@ -145,7 +145,9 @@ class _NearbyAirportsSectionState extends State<NearbyAirportsSection> {
                                 color: MapGlass.inlayFillStrong(
                                   Theme.of(context).brightness,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  MapGlass.radiusSm,
+                                ),
                               ),
                               child: Text(
                                 UnitConverter.formatDistance(

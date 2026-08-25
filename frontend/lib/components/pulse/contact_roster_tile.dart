@@ -44,7 +44,7 @@ class ContactRosterTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: MapGlass.inlayFill(theme.brightness),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(MapGlass.radiusMd),
             border: Border.all(color: MapGlass.inlayEdge(theme.brightness)),
           ),
           child: Row(
@@ -209,7 +209,7 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: vivid.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(MapGlass.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
