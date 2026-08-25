@@ -8,6 +8,7 @@ import '../../components/shared/glass_container.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../../utils/app_theme.dart';
+import '../../services/api_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,41 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  /// Amber, not the Aurora Pink accent: the DEV affordance should read as
+  /// scaffolding rather than as part of the product surface.
+  static const Color _devAccent = Color(0xFFFFB300);
+
+  @override
+  void initState() {
+    super.initState();
+    // A failed DEV auto-login errors before this screen is built, so the
+    // BlocListener below - which only fires on state *changes* - would never
+    // see it. Surface that one already-settled error on first frame.
+    final state = context.read<AuthBloc>().state;
+    if (state is AuthError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showAuthError(state.message);
+      });
+    }
+  }
+
+  void _showAuthError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.openSans(
+            color: Colors.white,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        backgroundColor: const Color(0xFFFF3B30), // Thermal core red
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -49,22 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: GoogleFonts.openSans(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  backgroundColor: const Color(0xFFFF3B30), // Thermal core red
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
+              _showAuthError(state.message);
             }
           },
           child: Container(
@@ -515,6 +536,70 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ),
+
+                          // ── Local development bypass ──────────────────
+                          // Compiled out entirely when devLoginEnabled is
+                          // false, which a release build guarantees. The
+                          // collection-if folds away with it, so neither the
+                          // button nor the credentials reach a shipped binary.
+                          if (ApiConfig.devLoginEnabled) ...[
+                            const SizedBox(height: 16),
+                            OutlinedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      context.read<AuthBloc>().add(
+                                        const DevLoginRequested(),
+                                      );
+                                    },
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: _devAccent.withValues(
+                                  alpha: 0.06,
+                                ),
+                                side: BorderSide(
+                                  color: _devAccent.withValues(alpha: 0.4),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.developer_mode,
+                                    size: 18,
+                                    color: _devAccent,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'DEV Sign In (${ApiConfig.devUsername})',
+                                    style: GoogleFonts.montserrat(
+                                      fontWeight: FontWeight.w600,
+                                      color: _devAccent,
+                                      fontSize: 13,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Local development only — signs in as the seeded '
+                              'user. Requires `make up && make seed`.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.openSans(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
+                            ),
+                          ],
+
                           const SizedBox(height: 28),
 
                           // Register Link
