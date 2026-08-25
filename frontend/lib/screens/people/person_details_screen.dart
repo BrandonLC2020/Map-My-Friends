@@ -12,6 +12,9 @@ import '../../components/shared/nearby_airports_section.dart';
 import '../../components/shared/nearby_stations_section.dart';
 import 'add_edit_person_screen.dart';
 import '../../utils/window_size.dart';
+import '../../utils/app_theme.dart';
+import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/glass_inlay.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
   final String personId;
@@ -24,7 +27,7 @@ class PersonDetailsScreen extends StatelessWidget {
       builder: (context, state) {
         if (state is! PeopleLoaded) {
           // Fallback if accessed while not loaded, though rare
-          return Scaffold(
+          return AmbientScaffold(
             appBar: AppBar(title: const Text('Person Details')),
             body: const Center(child: CircularProgressIndicator()),
           );
@@ -34,7 +37,7 @@ class PersonDetailsScreen extends StatelessWidget {
         final personIndex = state.people.indexWhere((p) => p.id == personId);
 
         if (personIndex == -1) {
-          return Scaffold(
+          return AmbientScaffold(
             appBar: AppBar(title: const Text('Person Not Found')),
             body: const Center(child: Text('This person no longer exists.')),
           );
@@ -42,7 +45,7 @@ class PersonDetailsScreen extends StatelessWidget {
 
         final person = state.people[personIndex];
 
-        return Scaffold(
+        return AmbientScaffold(
           appBar: AppBar(
             title: Text('${person.firstName} ${person.lastName}'),
             actions: [
@@ -141,9 +144,9 @@ class PersonDetailsScreen extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 64,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest,
+          backgroundColor: MapGlass.inlayFillStrong(
+            Theme.of(context).brightness,
+          ),
           backgroundImage: person.profileImageUrl != null
               ? NetworkImage(person.profileImageUrl!)
               : null,
@@ -313,13 +316,8 @@ class PersonDetailsScreen extends StatelessWidget {
     required String content,
     VoidCallback? onTap,
   }) {
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return GlassInlay(
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -330,7 +328,7 @@ class PersonDetailsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: MapGlass.inlayFillStrong(Theme.of(context).brightness),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

@@ -100,9 +100,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     bottom: 0,
                     child: Container(
                       width: 1,
-                      color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: MapGlass.inlayEdge(
+                        theme.brightness,
+                      ).withValues(alpha: 0.5),
                     ),
                   ),
                 ],

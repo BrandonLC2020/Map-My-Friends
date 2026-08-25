@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/person.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:intl/intl.dart';
+import '../shared/glass_inlay.dart';
 
 class PersonCard extends StatelessWidget {
   final Person person;
@@ -22,7 +23,8 @@ class PersonCard extends StatelessWidget {
       }
     }
 
-    return Card(
+    return GlassInlay(
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
         child: Padding(

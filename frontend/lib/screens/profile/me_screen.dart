@@ -20,6 +20,7 @@ import '../../bloc/auth/auth_event.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../settings/settings_screen.dart';
 import '../../utils/window_size.dart';
+import '../../utils/app_theme.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -223,6 +224,7 @@ class _MeScreenState extends State<MeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(l10n.profile),
         actions: [
@@ -370,13 +372,6 @@ class _MeScreenState extends State<MeScreen> {
                                 controller: _phoneNumberController,
                                 decoration: InputDecoration(
                                   labelText: 'Phone Number',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLowest,
                                 ),
                                 initialCountryCode: 'US',
                                 onChanged: (phone) {
@@ -594,13 +589,6 @@ class _MeScreenState extends State<MeScreen> {
                                     setState(() => _pinStyle = val!),
                                 decoration: InputDecoration(
                                   labelText: 'Pin Shape',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLowest,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -629,13 +617,6 @@ class _MeScreenState extends State<MeScreen> {
                                     setState(() => _pinIconType = val!),
                                 decoration: InputDecoration(
                                   labelText: 'Inner Icon',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLowest,
                                 ),
                               ),
 
@@ -650,9 +631,9 @@ class _MeScreenState extends State<MeScreen> {
                                       width: 40,
                                       height: 40,
                                       decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.surfaceContainerHighest,
+                                        color: MapGlass.inlayFillStrong(
+                                          Theme.of(context).brightness,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       alignment: Alignment.center,
@@ -863,14 +844,14 @@ class _MeScreenState extends State<MeScreen> {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: MapGlass.inlayFillStrong(Theme.of(context).brightness),
           width: 4,
         ),
         shape: BoxShape.circle,
       ),
       child: CircleAvatar(
         radius: 64,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        backgroundColor: MapGlass.inlayFillStrong(Theme.of(context).brightness),
         backgroundImage: backgroundImage,
         child: backgroundImage == null
             ? Icon(

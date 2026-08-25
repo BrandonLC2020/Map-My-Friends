@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../components/shared/ambient_scaffold.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -61,7 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthBloc>().state is AuthLoading;
-    return Scaffold(
+    return AmbientScaffold(
+      appearance: Brightness.dark,
       appBar: AppBar(title: const Text('Create Account')),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {

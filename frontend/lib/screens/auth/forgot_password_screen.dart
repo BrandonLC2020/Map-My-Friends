@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../components/shared/ambient_scaffold.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -33,7 +34,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthBloc>().state is AuthLoading;
-    return Scaffold(
+    return AmbientScaffold(
+      appearance: Brightness.dark,
       appBar: AppBar(title: const Text('Reset Password')),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {

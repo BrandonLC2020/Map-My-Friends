@@ -5,6 +5,7 @@ import '../../models/contact_log.dart';
 import '../../models/person.dart';
 import '../../utils/contact_recency.dart';
 import '../shared/thermal_response.dart';
+import '../../utils/app_theme.dart';
 
 /// Bottom sheet for recording a touchpoint with [person]. Handles channel,
 /// date (with quick Today/Yesterday chips), an optional note, optional
@@ -287,7 +288,9 @@ class _ChannelOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = channel.markerColor;
-    final borderColor = selected ? accent : theme.colorScheme.outlineVariant;
+    final borderColor = selected
+        ? accent
+        : MapGlass.inlayEdge(theme.brightness);
     final fg = selected ? accent : theme.colorScheme.onSurfaceVariant;
 
     return Semantics(
@@ -354,7 +357,7 @@ class _DateChip extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? primary : theme.colorScheme.outlineVariant,
+            color: selected ? primary : MapGlass.inlayEdge(theme.brightness),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -404,7 +407,7 @@ class _CadenceEditor extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: MapGlass.inlayEdge(theme.brightness)),
       ),
       child: Column(
         children: [

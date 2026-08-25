@@ -3,13 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/location/location_bloc.dart';
 import '../../bloc/theme/theme_cubit.dart';
 import '../../bloc/map/map_settings_cubit.dart';
+import '../../components/shared/ambient_scaffold.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AmbientScaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: BlocListener<LocationBloc, LocationState>(
         listener: (context, state) {

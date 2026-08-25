@@ -65,6 +65,42 @@ class MapGlass {
   static const double edgeDark = 0.28;
   static const double edgeWidth = 0.5;
 
+  /// An **inlay**: a surface in the glass family that cannot afford a backdrop
+  /// sample.
+  ///
+  /// The GPU budget is per screen, not per widget — a form with nine fields
+  /// cannot spend nine `BackdropFilter` layers on them. An inlay is the same
+  /// material with the blur removed: the fill and the precision edge, nothing
+  /// else. It is what a chip, an avatar well, a field, or a list row is made
+  /// of, and it is why replacing Material's tonal roles everywhere costs no
+  /// frames. A floating panel is glass; something set *into* a panel is inlay.
+  static Color inlayFill(Brightness brightness) => brightness == Brightness.dark
+      ? Colors.white.withValues(alpha: 0.07)
+      : bodyLight.withValues(alpha: 0.05);
+
+  /// A deeper inlay, for a well that something else sits inside — an avatar
+  /// backing, a swatch, a selected segment.
+  static Color inlayFillStrong(Brightness brightness) =>
+      brightness == Brightness.dark
+      ? Colors.white.withValues(alpha: 0.13)
+      : bodyLight.withValues(alpha: 0.10);
+
+  /// The inlay's edge. Lighter than [edgeLight]/[edgeDark]: an inlay sits
+  /// inside a surface rather than floating above one, so it needs to separate,
+  /// not to catch the light.
+  static Color inlayEdge(Brightness brightness) => brightness == Brightness.dark
+      ? Colors.white.withValues(alpha: 0.14)
+      : bodyLight.withValues(alpha: 0.12);
+
+  /// The body of the material in the light appearance.
+  ///
+  /// A lens is only visible when it differs from what it floats over. Over the
+  /// [MapField] light ground the old white-on-white fill and white edge were
+  /// invisible — the panel existed in the widget tree and nowhere on screen.
+  /// Light glass is therefore the same void neutral the dark appearance is
+  /// made *of*, laid over daylight at low alpha: one material, two rooms.
+  static const Color bodyLight = Color(0xFF0F1020);
+
   /// Radii on the DESIGN.md scale: sm 8 / md 16 / lg 30.
   static const double radiusSm = 8.0;
   static const double radiusMd = 16.0;
@@ -82,6 +118,153 @@ class MapGlass {
         ? Colors.white.withValues(alpha: selectionLiftDark)
         : Colors.black.withValues(alpha: selectionLiftLight);
   }
+}
+
+/// The Ambient Field — the layer every glass surface refracts.
+///
+/// `GlassContainer` blurs what sits *behind* it, so a flat scaffold colour
+/// makes the material disappear: blurring one colour returns that colour. Every
+/// surface outside the Map therefore floats over this field instead, and the
+/// Map floats over live tiles, which is the same contract by other means.
+///
+/// Four soft masses drift on independent closed orbits. Closed is the load-
+/// bearing word — each mass completes a whole number of cycles per [cycle], so
+/// the composition is continuous when the controller wraps and never jumps.
+class MapField {
+  const MapField._();
+
+  /// One full composition cycle. Long enough that the field never appears to
+  /// be *playing*; it is weather, not animation.
+  static const Duration cycle = Duration(seconds: 120);
+
+  /// The drift is resampled this many times per cycle — about 30fps at
+  /// [cycle]'s length. Past this the masses move well under a pixel per frame,
+  /// so the extra repaints buy nothing and cost a full-screen re-blur of every
+  /// glass surface above the field.
+  static const int driftSteps = 3600;
+
+  /// Where the composition rests when motion is disabled. Chosen for the
+  /// still, not inherited from frame zero.
+  static const double stillPhase = 0.18;
+
+  /// The void (DESIGN.md §6): near-neutral, so the only chroma in the field
+  /// comes from the masses. A blue-grey ground here is how it becomes "dark
+  /// blue software".
+  static const List<Color> groundDark = <Color>[
+    Color(0xFF08080B),
+    Color(0xFF101018),
+    Color(0xFF08080B),
+  ];
+
+  /// Luminous daylight: the same composition in a lit room.
+  static const List<Color> groundLight = <Color>[
+    Color(0xFFF7F8FB),
+    Color(0xFFEDEFF5),
+    Color(0xFFF7F8FB),
+  ];
+
+  /// The ground colour a surface should assume when it needs one flat value —
+  /// a first frame, a high-contrast fallback, a platform window background.
+  static Color ground(Brightness brightness) =>
+      brightness == Brightness.dark ? groundDark[1] : groundLight[1];
+
+  static const List<FieldMass> masses = <FieldMass>[
+    // Indigo, the brand's structural colour, carries the largest mass.
+    FieldMass(
+      color: Color(0xFF3F51B5),
+      alphaDark: 0.22,
+      alphaLight: 0.16,
+      radiusFactor: 0.62,
+      center: Offset(0.28, 0.24),
+      amplitude: Offset(0.16, 0.13),
+      cyclesX: 1,
+      cyclesY: 2,
+      phaseX: 0.0,
+      phaseY: 0.35,
+    ),
+    FieldMass(
+      color: Color(0xFFFF4081),
+      alphaDark: 0.16,
+      alphaLight: 0.11,
+      radiusFactor: 0.48,
+      center: Offset(0.78, 0.68),
+      amplitude: Offset(0.14, 0.17),
+      cyclesX: 2,
+      cyclesY: 1,
+      phaseX: 0.52,
+      phaseY: 0.11,
+    ),
+    FieldMass(
+      color: Color(0xFF3F51B5),
+      alphaDark: 0.14,
+      alphaLight: 0.10,
+      radiusFactor: 0.54,
+      center: Offset(0.62, 0.18),
+      amplitude: Offset(0.19, 0.11),
+      cyclesX: 3,
+      cyclesY: 2,
+      phaseX: 0.27,
+      phaseY: 0.74,
+    ),
+    // Thermal corona, kept lowest: a trace of heat in the room, never a source.
+    FieldMass(
+      color: Color(0xFFFF9500),
+      alphaDark: 0.10,
+      alphaLight: 0.07,
+      radiusFactor: 0.44,
+      center: Offset(0.18, 0.82),
+      amplitude: Offset(0.13, 0.12),
+      cyclesX: 2,
+      cyclesY: 3,
+      phaseX: 0.66,
+      phaseY: 0.42,
+    ),
+  ];
+}
+
+/// One drifting luminous mass in the [MapField].
+///
+/// Position is a Lissajous figure rather than a circle: two independent whole-
+/// number frequencies per axis trace a path that reads as unrepeating at human
+/// timescales while still closing exactly at the end of the cycle.
+class FieldMass {
+  final Color color;
+
+  /// Peak alpha at the centre of the mass, per appearance.
+  final double alphaDark;
+  final double alphaLight;
+
+  /// Radius as a fraction of the surface's longest side.
+  final double radiusFactor;
+
+  /// Orbit centre and half-extent, both as fractions of the surface.
+  final Offset center;
+  final Offset amplitude;
+
+  /// Whole cycles per [MapField.cycle] on each axis. Integers keep the orbit
+  /// closed; a fractional value would snap the mass back on every wrap.
+  final int cyclesX;
+  final int cyclesY;
+
+  /// Starting offset into each axis, in turns.
+  final double phaseX;
+  final double phaseY;
+
+  const FieldMass({
+    required this.color,
+    required this.alphaDark,
+    required this.alphaLight,
+    required this.radiusFactor,
+    required this.center,
+    required this.amplitude,
+    required this.cyclesX,
+    required this.cyclesY,
+    required this.phaseX,
+    required this.phaseY,
+  });
+
+  double alpha(Brightness brightness) =>
+      brightness == Brightness.dark ? alphaDark : alphaLight;
 }
 
 /// LLC Interaction Physics — the constants in
@@ -261,7 +444,10 @@ class AppTheme {
         ),
     textTheme: _buildTextTheme(Colors.black87),
     iconTheme: const IconThemeData(color: Colors.black87, size: 24),
-    scaffoldBackgroundColor: Colors.grey[50],
+    // The flat ground of the Ambient Field. Screens that float over the field
+    // set `backgroundColor: Colors.transparent`; this is what a surface that
+    // forgets to degrades into — the field's average, not a foreign grey.
+    scaffoldBackgroundColor: MapField.groundLight[1],
     appBarTheme: AppBarTheme(
       centerTitle: true,
       elevation: 0,
@@ -299,31 +485,38 @@ class AppTheme {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
     ),
+    // A field is an inlay: the glass material minus the backdrop sample, so a
+    // form of nine inputs costs no blur passes. An opaque white fill here read
+    // as a sticker laid on the Ambient Field rather than a well cut into it.
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: MapGlass.inlayFill(Brightness.light),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusSm),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: MapGlass.inlayEdge(Brightness.light)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusSm),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: MapGlass.inlayEdge(Brightness.light)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: _brandColor, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: MapSpacing.sm,
+        vertical: MapSpacing.sm,
+      ),
     ),
     cardTheme: CardThemeData(
       // Depth is declared once, and as an edge — never a shadow (DESIGN.md
       // §4). A card is not glass, so it earns its separation from a hairline
       // outline rather than from refraction.
       elevation: 0,
+      color: MapGlass.inlayFill(Brightness.light),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusMd),
-        side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+        side: BorderSide(color: MapGlass.inlayEdge(Brightness.light)),
       ),
       margin: const EdgeInsets.symmetric(
         vertical: MapSpacing.xs,
@@ -347,6 +540,7 @@ class AppTheme {
         ),
     textTheme: _buildTextTheme(Colors.white),
     iconTheme: const IconThemeData(color: Colors.white, size: 24),
+    scaffoldBackgroundColor: MapField.groundDark[1],
     appBarTheme: const AppBarTheme(
       centerTitle: true,
       elevation: 0,
@@ -380,23 +574,33 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
+      fillColor: MapGlass.inlayFill(Brightness.dark),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        borderSide: BorderSide(color: MapGlass.inlayEdge(Brightness.dark)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        borderSide: BorderSide(color: MapGlass.inlayEdge(Brightness.dark)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusSm),
         borderSide: BorderSide(color: _brandColor, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: MapSpacing.sm,
+        vertical: MapSpacing.sm,
+      ),
     ),
     cardTheme: CardThemeData(
       // Depth is declared once, and as an edge — never a shadow (DESIGN.md
       // §4). A card is not glass, so it earns its separation from a hairline
       // outline rather than from refraction.
       elevation: 0,
+      color: MapGlass.inlayFill(Brightness.dark),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(MapGlass.radiusMd),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+        side: BorderSide(color: MapGlass.inlayEdge(Brightness.dark)),
       ),
       margin: const EdgeInsets.symmetric(
         vertical: MapSpacing.xs,

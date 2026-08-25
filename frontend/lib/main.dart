@@ -23,6 +23,7 @@ import 'screens/profile/me_screen.dart';
 import 'screens/trips/trips_screen.dart';
 import 'utils/app_theme.dart';
 import 'utils/window_size.dart';
+import 'components/shared/ambient_field.dart';
 import 'components/shared/glass_container.dart';
 import 'components/shared/nav_label.dart';
 import 'bloc/theme/theme_cubit.dart';
@@ -206,9 +207,18 @@ class _MainScreenState extends State<MainScreen> {
           return BackdropGroup(
             child: Scaffold(
               extendBodyBehindAppBar: true,
-              // Removed AppBar as requested
+              // Transparent so the field below is what every glass surface on
+              // every tab refracts. The shell owns exactly one field; tab
+              // screens are transparent over it, and only routes pushed on top
+              // of the shell bring their own (see AmbientScaffold).
+              backgroundColor: Colors.transparent,
               body: Stack(
                 children: [
+                  // The room. Painted first so the shared backdrop sample taken
+                  // by the chrome above includes it; it costs no filter layer
+                  // of its own.
+                  const Positioned.fill(child: AmbientField()),
+
                   // Content Layer
                   Positioned.fill(child: _getScreen(_selectedIndex)),
 

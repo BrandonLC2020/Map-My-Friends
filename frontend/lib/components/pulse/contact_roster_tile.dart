@@ -43,9 +43,9 @@ class ContactRosterTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLowest,
+            color: MapGlass.inlayFill(theme.brightness),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colorScheme.outlineVariant),
+            border: Border.all(color: MapGlass.inlayEdge(theme.brightness)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -149,7 +149,7 @@ class _Avatar extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            backgroundColor: MapGlass.inlayFillStrong(theme.brightness),
             backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
             child: imageUrl == null
                 ? Text(
@@ -171,7 +171,7 @@ class _Avatar extends StatelessWidget {
                 color: orbColor,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: theme.colorScheme.surfaceContainerLowest,
+                  color: MapGlass.inlayFill(theme.brightness),
                   width: 2.5,
                 ),
                 boxShadow: glow

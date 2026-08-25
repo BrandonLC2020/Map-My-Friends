@@ -5,6 +5,8 @@ import '../../bloc/station/station_event.dart';
 import '../../bloc/station/station_state.dart';
 import '../../bloc/map/map_settings_cubit.dart';
 import '../../utils/unit_converter.dart';
+import '../../utils/app_theme.dart';
+import 'glass_inlay.dart';
 
 /// A reusable widget that shows the nearest train stations to a given coordinate.
 /// Used on both PersonDetailsScreen and MeScreen.
@@ -80,18 +82,9 @@ class _NearbyStationsSectionState extends State<NearbyStationsSection> {
                 ),
                 const SizedBox(height: 8),
                 ...state.stations.map(
-                  (station) => Card(
-                    elevation: 0,
-                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                  (station) => Padding(
+                    padding: const EdgeInsets.only(bottom: MapSpacing.xs),
+                    child: GlassInlay(
                       child: Row(
                         children: [
                           Container(
@@ -140,9 +133,9 @@ class _NearbyStationsSectionState extends State<NearbyStationsSection> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
+                                color: MapGlass.inlayFillStrong(
+                                  Theme.of(context).brightness,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(

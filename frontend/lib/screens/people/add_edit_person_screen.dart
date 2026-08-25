@@ -18,6 +18,8 @@ import '../../models/airport.dart';
 import '../../models/station.dart';
 import '../../services/api_service.dart';
 import '../../utils/window_size.dart';
+import '../../utils/app_theme.dart';
+import '../../components/shared/ambient_scaffold.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -338,16 +340,16 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: MapGlass.inlayFillStrong(Theme.of(context).brightness),
                   width: 4,
                 ),
                 shape: BoxShape.circle,
               ),
               child: CircleAvatar(
                 radius: 64,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
+                backgroundColor: MapGlass.inlayFillStrong(
+                  Theme.of(context).brightness,
+                ),
                 backgroundImage: _selectedImageBytes != null
                     ? MemoryImage(_selectedImageBytes!)
                     : (_existingImageUrl != null
@@ -393,7 +395,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return AmbientScaffold(
       appBar: AppBar(
         title: Text(widget.person != null ? l10n.editPerson : l10n.addPerson),
       ),
@@ -530,17 +532,10 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                 setState(() => _tagController.text = val!),
                             decoration: InputDecoration(
                               labelText: 'Relationship Tag',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 16,
                               ),
-                              filled: true,
-                              fillColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLowest,
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -612,13 +607,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                             controller: _phoneController,
                             decoration: InputDecoration(
                               labelText: 'Phone Number (Optional)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLowest,
                             ),
                             initialCountryCode: 'US',
                             onChanged: (phone) {
@@ -643,13 +631,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Birthday (Optional)',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
                                 filled: true,
-                                fillColor: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerLowest,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 16,
@@ -756,16 +738,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                             ],
                             onChanged: (val) =>
                                 setState(() => _pinStyle = val!),
-                            decoration: InputDecoration(
-                              labelText: 'Pin Shape',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLowest,
-                            ),
+                            decoration: InputDecoration(labelText: 'Pin Shape'),
                           ),
                           const SizedBox(height: 16),
 
@@ -793,13 +766,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                 setState(() => _pinIconType = val!),
                             decoration: InputDecoration(
                               labelText: 'Inner Icon',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLowest,
                             ),
                           ),
 
@@ -814,9 +780,9 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainerHighest,
+                                    color: MapGlass.inlayFillStrong(
+                                      Theme.of(context).brightness,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   alignment: Alignment.center,
@@ -923,11 +889,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             decoration: InputDecoration(
               labelText: 'Preferred Airport',
               prefixIcon: const Icon(Icons.airplanemode_active),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
             ),
           ),
           const SizedBox(height: 16),
@@ -951,11 +912,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             decoration: InputDecoration(
               labelText: 'Preferred Train Station',
               prefixIcon: const Icon(Icons.train),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
             ),
           ),
           const SizedBox(height: 8),

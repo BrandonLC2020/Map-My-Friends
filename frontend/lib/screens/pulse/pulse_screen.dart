@@ -10,6 +10,8 @@ import '../../components/pulse/contact_roster_tile.dart';
 import '../../components/pulse/log_contact_sheet.dart';
 import '../../components/shared/glass_empty_state.dart';
 import '../../utils/window_size.dart';
+import '../../utils/app_theme.dart';
+import '../../components/shared/glass_container.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -110,6 +112,7 @@ class _PulseScreenState extends State<PulseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Keep in Touch'), centerTitle: true),
       body: SafeArea(
         child: BlocConsumer<PulseBloc, PulseState>(
@@ -333,14 +336,11 @@ class _CalendarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
+    // A month is this surface's panel, not a row inside one, so it earns a
+    // real backdrop sample rather than an inlay.
+    return GlassContainer(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, MapSpacing.sm),
+      borderRadius: MapGlass.radiusMd,
       child: child,
     );
   }
@@ -369,13 +369,10 @@ class _SelectedDayDetail extends StatelessWidget {
     final theme = Theme.of(context);
     final dateLabel = DateFormat.yMMMMEEEEd().format(day);
 
-    return Container(
+    return GlassContainer(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      padding: const EdgeInsets.all(MapSpacing.sm),
+      borderRadius: MapGlass.radiusMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
