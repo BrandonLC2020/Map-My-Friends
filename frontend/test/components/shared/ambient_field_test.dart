@@ -91,17 +91,18 @@ void main() {
   });
 
   group('accessibility', () {
-    testWidgets('reduced motion freezes the composition instead of removing it', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_host(disableAnimations: true));
+    testWidgets(
+      'reduced motion freezes the composition instead of removing it',
+      (tester) async {
+        await tester.pumpWidget(_host(disableAnimations: true));
 
-      // A repeating controller never settles. Reaching the settle means the
-      // drift really stopped — and the CustomPaint is still there, because
-      // the field is what makes the glass above it legible.
-      await tester.pumpAndSettle();
-      expect(find.byType(CustomPaint), findsWidgets);
-    });
+        // A repeating controller never settles. Reaching the settle means the
+        // drift really stopped — and the CustomPaint is still there, because
+        // the field is what makes the glass above it legible.
+        await tester.pumpAndSettle();
+        expect(find.byType(CustomPaint), findsWidgets);
+      },
+    );
 
     testWidgets('high contrast collapses to one flat ground', (tester) async {
       await tester.pumpWidget(_host(highContrast: true));

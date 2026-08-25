@@ -305,6 +305,17 @@ class MapMotion {
     damping: springDamping,
   );
 
+  /// Chromatic Pulse — the loading loop, and a deliberately separate motion
+  /// category from everything above.
+  ///
+  /// `chromatic-pulse.md` is explicit that this is a continuous idle-state loop
+  /// with no user input, so it uses a *symmetric* ease-in-out rather than the
+  /// brand's asymmetric slow-in/snap-out interaction curve, and must not reuse
+  /// the spring constants. Slow on purpose: it can run for the whole length of
+  /// a bad connection and must not feel frantic while it does.
+  static const Duration chromaticCycle = Duration(milliseconds: 3200);
+  static const Curve chromatic = Cubic(0.45, 0.0, 0.55, 1.0);
+
   /// How far a surface yields under contact, as a fraction of its size.
   ///
   /// Small on purpose: these wrap 44pt controls and map pills, and PRODUCT.md
@@ -460,6 +471,13 @@ class AppTheme {
       // same style in the brand colour, so the two appearances agree.
       titleTextStyle: _buildTextTheme(_brandColor).titleLarge,
     ),
+    // Material's expanding ink circle is the most recognisable thing about
+    // Material, and it is a different interaction language from Thermal Glow:
+    // a ripple travels *from* the touch point in the theme's primary, while
+    // this system's surfaces take on heat and yield under the finger. Removing
+    // the splash leaves the state overlay, which is retinted below so a press
+    // reads as the surface warming rather than as a wave crossing it.
+    splashFactory: NoSplash.splashFactory,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
@@ -467,6 +485,21 @@ class AppTheme {
         // bans drop shadows outright; a raised button is the Material default
         // leaking through, not a decision this system made.
         elevation: 0,
+        overlayColor: MapPalette.thermalCore,
+        padding: const EdgeInsets.symmetric(
+          horizontal: MapSpacing.md,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        elevation: 0,
+        overlayColor: MapPalette.thermalCore,
         padding: const EdgeInsets.symmetric(
           horizontal: MapSpacing.md,
           vertical: 12,
@@ -477,13 +510,22 @@ class AppTheme {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: TextButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: OutlinedButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: IconButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     // A field is an inlay: the glass material minus the backdrop sample, so a
     // form of nine inputs costs no blur passes. An opaque white fill here read
@@ -547,6 +589,13 @@ class AppTheme {
       scrolledUnderElevation: 0,
       backgroundColor: Colors.transparent,
     ),
+    // Material's expanding ink circle is the most recognisable thing about
+    // Material, and it is a different interaction language from Thermal Glow:
+    // a ripple travels *from* the touch point in the theme's primary, while
+    // this system's surfaces take on heat and yield under the finger. Removing
+    // the splash leaves the state overlay, which is retinted below so a press
+    // reads as the surface warming rather than as a wave crossing it.
+    splashFactory: NoSplash.splashFactory,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
@@ -554,6 +603,21 @@ class AppTheme {
         // bans drop shadows outright; a raised button is the Material default
         // leaking through, not a decision this system made.
         elevation: 0,
+        overlayColor: MapPalette.thermalCore,
+        padding: const EdgeInsets.symmetric(
+          horizontal: MapSpacing.md,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        elevation: 0,
+        overlayColor: MapPalette.thermalCore,
         padding: const EdgeInsets.symmetric(
           horizontal: MapSpacing.md,
           vertical: 12,
@@ -564,13 +628,22 @@ class AppTheme {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: TextButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: OutlinedButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(minimumSize: A11yConstants.minTouchSize),
+      style: IconButton.styleFrom(
+        minimumSize: A11yConstants.minTouchSize,
+        overlayColor: MapPalette.thermalCore,
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,

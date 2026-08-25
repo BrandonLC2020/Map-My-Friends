@@ -9,6 +9,7 @@ import '../../components/shared/glass_container.dart';
 import '../../components/shared/glass_empty_state.dart';
 import 'trip_details_screen.dart';
 import '../../utils/app_theme.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class TripsScreen extends StatelessWidget {
   final VoidCallback onNavigateToMap;
@@ -63,7 +64,7 @@ class TripsScreen extends StatelessWidget {
     return BlocBuilder<TripBloc, TripState>(
       builder: (context, state) {
         if (state.isLoading && state.userTrips.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const PulseIndicator();
         }
 
         if (state.userTrips.isEmpty) {

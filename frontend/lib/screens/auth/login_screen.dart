@@ -10,6 +10,7 @@ import 'forgot_password_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../services/api_config.dart';
 import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -325,12 +326,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 child: isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
+                                        child: ChromaticPulse(
+                                          colors: PulseIndicator.paletteOf(
+                                            context,
+                                          ),
+                                          borderRadius: 10.0,
                                         ),
                                       )
                                     : Text(

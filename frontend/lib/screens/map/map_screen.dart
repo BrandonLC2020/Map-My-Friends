@@ -32,6 +32,7 @@ import '../../components/shared/thermal_response.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/window_size.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 // Spatial tokens per DESIGN.md §5: floating chrome lives at 20px inset; the
 // compass clears the settings button (~75px tall plus its inset) with a
@@ -958,11 +959,9 @@ class _LocatingPill extends StatelessWidget {
               SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.colorScheme.primary,
-                  ),
+                child: ChromaticPulse(
+                  colors: PulseIndicator.paletteOf(context),
+                  borderRadius: 8,
                 ),
               ),
               const SizedBox(width: 12),

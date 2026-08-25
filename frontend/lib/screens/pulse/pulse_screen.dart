@@ -12,6 +12,7 @@ import '../../components/shared/glass_empty_state.dart';
 import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/glass_container.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -134,7 +135,7 @@ class _PulseScreenState extends State<PulseScreen> {
           },
           builder: (context, state) {
             if (state is PulseLoading || state is PulseInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return const PulseIndicator();
             }
             if (state is PulseError) {
               return _ErrorView(

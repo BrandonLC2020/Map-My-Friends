@@ -3,6 +3,8 @@ import '../../models/person.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:intl/intl.dart';
 import '../shared/glass_inlay.dart';
+import '../shared/thermal_response.dart';
+import '../../utils/app_theme.dart';
 
 class PersonCard extends StatelessWidget {
   final Person person;
@@ -23,57 +25,50 @@ class PersonCard extends StatelessWidget {
       }
     }
 
-    return GlassInlay(
-      padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '${person.firstName} ${person.lastName}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+    return ThermalResponse(
+      onTap: onTap,
+      borderRadius: MapGlass.radiusMd,
+      child: GlassInlay(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${person.firstName} ${person.lastName}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text('${person.city}, ${person.state}'),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  person.relationshipTag,
+                  style: TextStyle(color: Theme.of(context).primaryColor),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text('${person.city}, ${person.state}'),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    person.relationshipTag,
-                    style: TextStyle(color: Theme.of(context).primaryColor),
-                  ),
-                  if (timeString != null)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
+                if (timeString != null)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        timeString,
+                        style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          timeString,
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ],
-          ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

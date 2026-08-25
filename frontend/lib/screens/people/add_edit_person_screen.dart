@@ -20,6 +20,7 @@ import '../../services/api_service.dart';
 import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class AddEditPersonScreen extends StatefulWidget {
   final Person? person;
@@ -807,12 +808,14 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                                 ),
                               ),
                               child: _isSaving
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
+                                      child: ChromaticPulse(
+                                        colors: PulseIndicator.paletteOf(
+                                          context,
+                                        ),
+                                        borderRadius: 10.0,
                                       ),
                                     )
                                   : const Text(
@@ -867,7 +870,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         ),
         const SizedBox(height: 16),
         if (_isLoadingHubs)
-          const Center(child: CircularProgressIndicator())
+          const PulseIndicator()
         else ...[
           // Airport selection
           DropdownButtonFormField<Airport>(

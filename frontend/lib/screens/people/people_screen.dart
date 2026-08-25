@@ -6,6 +6,7 @@ import 'person_details_screen.dart';
 import '../../components/people/person_card.dart';
 import '../../components/shared/glass_empty_state.dart';
 import '../../utils/window_size.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});
@@ -19,7 +20,7 @@ class PeopleScreen extends StatelessWidget {
         child: BlocBuilder<PeopleBloc, PeopleState>(
           builder: (context, state) {
             if (state is PeopleLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const PulseIndicator();
             } else if (state is PeopleLoaded) {
               if (state.people.isEmpty) {
                 return _buildEmptyState(context);

@@ -7,6 +7,7 @@ import '../../bloc/map/map_settings_cubit.dart';
 import '../../utils/unit_converter.dart';
 import '../../utils/app_theme.dart';
 import 'glass_inlay.dart';
+import 'chromatic_pulse.dart';
 
 /// A reusable widget that shows the nearest train stations to a given coordinate.
 /// Used on both PersonDetailsScreen and MeScreen.
@@ -57,14 +58,8 @@ class _NearbyStationsSectionState extends State<NearbyStationsSection> {
         builder: (context, state) {
           if (state is StationLoading) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
+              padding: EdgeInsets.symmetric(vertical: MapSpacing.sm),
+              child: PulseIndicator(size: 24),
             );
           }
 

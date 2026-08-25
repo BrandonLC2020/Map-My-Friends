@@ -21,6 +21,7 @@ import '../../bloc/location/location_bloc.dart';
 import '../settings/settings_screen.dart';
 import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -316,14 +317,16 @@ class _MeScreenState extends State<MeScreen> {
                                             padding: const EdgeInsets.all(8.0),
                                             child:
                                                 profileState is ProfileUpdating
-                                                ? const SizedBox(
-                                                    width: 20,
+                                                ? SizedBox(
                                                     height: 20,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          color: Colors.white,
-                                                        ),
+                                                    width: 20,
+                                                    child: ChromaticPulse(
+                                                      colors:
+                                                          PulseIndicator.paletteOf(
+                                                            context,
+                                                          ),
+                                                      borderRadius: 10.0,
+                                                    ),
                                                   )
                                                 : Icon(
                                                     Icons.camera_alt,
@@ -717,12 +720,14 @@ class _MeScreenState extends State<MeScreen> {
                                     ),
                                   ),
                                   child: profileState is ProfileUpdating
-                                      ? const SizedBox(
-                                          width: 24,
+                                      ? SizedBox(
                                           height: 24,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
+                                          width: 24,
+                                          child: ChromaticPulse(
+                                            colors: PulseIndicator.paletteOf(
+                                              context,
+                                            ),
+                                            borderRadius: 12.0,
                                           ),
                                         )
                                       : const Text(

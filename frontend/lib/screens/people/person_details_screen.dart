@@ -15,6 +15,8 @@ import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/glass_inlay.dart';
+import '../../components/shared/chromatic_pulse.dart';
+import '../../components/shared/thermal_response.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
   final String personId;
@@ -29,7 +31,7 @@ class PersonDetailsScreen extends StatelessWidget {
           // Fallback if accessed while not loaded, though rare
           return AmbientScaffold(
             appBar: AppBar(title: const Text('Person Details')),
-            body: const Center(child: CircularProgressIndicator()),
+            body: const PulseIndicator(),
           );
         }
 
@@ -316,50 +318,50 @@ class PersonDetailsScreen extends StatelessWidget {
     required String content,
     VoidCallback? onTap,
   }) {
-    return GlassInlay(
-      padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: MapGlass.inlayFillStrong(Theme.of(context).brightness),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+    // The whole row is the tap target, so the whole row is what takes on heat
+    // and yields — not a ripple travelling across it from wherever the finger
+    // happened to land.
+    return ThermalResponse(
+      onTap: onTap,
+      borderRadius: MapGlass.radiusMd,
+      child: GlassInlay(
+        padding: const EdgeInsets.all(MapSpacing.sm),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MapGlass.inlayFillStrong(Theme.of(context).brightness),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 4),
-                    Text(content, style: Theme.of(context).textTheme.bodyLarge),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(content, style: Theme.of(context).textTheme.bodyLarge),
+                ],
               ),
-              if (onTap != null)
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-            ],
-          ),
+            ),
+            if (onTap != null)
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+          ],
         ),
       ),
     );

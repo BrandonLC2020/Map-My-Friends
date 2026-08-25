@@ -4,6 +4,7 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -289,12 +290,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: FilledButton(
                               onPressed: isLoading ? null : _register,
                               child: isLoading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
+                                      child: ChromaticPulse(
+                                        colors: PulseIndicator.paletteOf(
+                                          context,
+                                        ),
+                                        borderRadius: 10.0,
                                       ),
                                     )
                                   : const Text('Create Account'),

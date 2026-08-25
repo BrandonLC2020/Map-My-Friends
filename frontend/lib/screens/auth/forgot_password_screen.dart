@@ -4,6 +4,7 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/chromatic_pulse.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -125,12 +126,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             child: FilledButton(
                               onPressed: isLoading ? null : _resetPassword,
                               child: isLoading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
+                                      child: ChromaticPulse(
+                                        colors: PulseIndicator.paletteOf(
+                                          context,
+                                        ),
+                                        borderRadius: 10.0,
                                       ),
                                     )
                                   : const Text('Send Reset Link'),

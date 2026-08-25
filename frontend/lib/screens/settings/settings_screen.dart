@@ -4,6 +4,8 @@ import '../../bloc/location/location_bloc.dart';
 import '../../bloc/theme/theme_cubit.dart';
 import '../../bloc/map/map_settings_cubit.dart';
 import '../../components/shared/ambient_scaffold.dart';
+import '../../components/shared/chromatic_pulse.dart';
+import '../../utils/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -197,11 +199,9 @@ class SettingsScreen extends StatelessWidget {
             BlocBuilder<LocationBloc, LocationState>(
               builder: (context, state) {
                 if (state is LocationLoading) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    ),
+                  return const Padding(
+                    padding: EdgeInsets.all(MapSpacing.xs),
+                    child: PulseIndicator(size: 24),
                   );
                 }
                 return OutlinedButton.icon(
