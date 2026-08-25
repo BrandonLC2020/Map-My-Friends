@@ -16,6 +16,12 @@ import 'ambient_field.dart';
 /// applied. See [GlassContainer]'s notes on the shared backdrop sample.
 class AmbientScaffold extends StatelessWidget {
   final Widget body;
+
+  /// The surface's [GlassHeader], laid above the body. Prefer this to
+  /// [appBar]: a Material app bar inside this shell is a second navigation
+  /// chrome with its own material, type, and interaction feedback.
+  final Widget? header;
+
   final PreferredSizeWidget? appBar;
   final Widget? floatingActionButton;
   final bool? resizeToAvoidBottomInset;
@@ -34,6 +40,7 @@ class AmbientScaffold extends StatelessWidget {
   const AmbientScaffold({
     super.key,
     required this.body,
+    this.header,
     this.appBar,
     this.floatingActionButton,
     this.resizeToAvoidBottomInset,
@@ -54,7 +61,14 @@ class AmbientScaffold extends StatelessWidget {
               resizeToAvoidBottomInset: resizeToAvoidBottomInset,
               appBar: appBar,
               floatingActionButton: floatingActionButton,
-              body: body,
+              body: header == null
+                  ? body
+                  : Column(
+                      children: <Widget>[
+                        header!,
+                        Expanded(child: body),
+                      ],
+                    ),
             ),
           ),
         ],
