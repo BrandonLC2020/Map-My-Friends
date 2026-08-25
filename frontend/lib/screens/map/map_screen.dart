@@ -398,7 +398,24 @@ class _MapScreenState extends State<MapScreen> {
                                       userAgentPackageName:
                                           'com.mapmyfriends.app',
                                       tileProvider: kIsWeb
-                                          ? NetworkTileProvider()
+                                          // Zooming prunes a screenful of
+                                          // tiles at once, and this provider
+                                          // aborts their in-flight requests by
+                                          // default. On web the abort escapes
+                                          // package:http's browser client as
+                                          // an uncaught DOMException on every
+                                          // zoom-out, ahead of flutter_map's
+                                          // own silent handling of it.
+                                          //
+                                          // Removing the cause is the only
+                                          // reliable fix: with no abort
+                                          // trigger there is no AbortError to
+                                          // intercept. The cost is that
+                                          // obsolete tile requests run to
+                                          // completion on a fast zoom.
+                                          ? NetworkTileProvider(
+                                              abortObsoleteRequests: false,
+                                            )
                                           : FMTCTileProvider(
                                               stores: const {
                                                 'mapStore': BrowseStoreStrategy
