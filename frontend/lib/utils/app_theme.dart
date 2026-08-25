@@ -24,9 +24,83 @@ class MapPalette {
   // Evening Indigo from the brand palette.
   static const Color defaultPin = Color(0xFF3F51B5);
 
+  /// The brand's secondary. Named here because it was being written out as a
+  /// literal at every call site that wanted it.
+  static const Color accent = Color(0xFFFF4081);
+
   // Thermal energy tokens
   static const Color thermalCore = Color(0xFFFF3B30);
   static const Color thermalCorona = Color(0xFFFF9500);
+
+  /// The connection spectrum, warmest where a connection has waited longest.
+  ///
+  /// These were literals in three files, which is what makes DESIGN.md's Rare
+  /// Accent Rule ("high-chroma accents occupy <=10% of any screen") impossible
+  /// to hold: a rule about how much colour a surface carries can only be kept
+  /// if the colours are countable in one place.
+  static const MapSignal vital = MapSignal(
+    Color(0xFF14B8A6),
+    Color(0xFF00695C),
+    Color(0xFF5EEAD4),
+  );
+  static const MapSignal calm = MapSignal(
+    Color(0xFF6B7280),
+    Color(0xFF4B5563),
+    Color(0xFF9CA3AF),
+  );
+  static const MapSignal due = MapSignal(
+    thermalCorona,
+    Color(0xFFB45309),
+    Color(0xFFFCD34D),
+  );
+  static const MapSignal overdue = MapSignal(
+    Color(0xFFFF5A1F),
+    Color(0xFFC2410C),
+    Color(0xFFFB923C),
+  );
+  static const MapSignal critical = MapSignal(
+    thermalCore,
+    Color(0xFFB91C1C),
+    Color(0xFFF87171),
+  );
+
+  /// Trip status. Kept off the connection spectrum on purpose -- a cancelled
+  /// trip is not an overdue friendship, and reusing one spectrum for both
+  /// would make the app's warmest colour mean two different things.
+  static const MapSignal journeyConfirmed = MapSignal(
+    Color(0xFF2E7D32),
+    Color(0xFF2E7D32),
+    Color(0xFF81C784),
+  );
+  static const MapSignal journeyCancelled = MapSignal(
+    Color(0xFFC62828),
+    Color(0xFFC62828),
+    Color(0xFFE57373),
+  );
+  static const MapSignal journeyPlanned = MapSignal(
+    Color(0xFFEF6C00),
+    Color(0xFFEF6C00),
+    Color(0xFFFFB74D),
+  );
+}
+
+/// A colour that carries meaning, in the two strengths a meaning needs.
+///
+/// [vivid] is the saturated tone for a mark — an orb, a dot, a rule, a glow.
+/// [ink] is the same meaning at text contrast, which is a different colour in
+/// each appearance because 4.5:1 against the void and against daylight are not
+/// the same problem. Pairing them here is what stops a call site from reaching
+/// for the vivid tone as a text colour, which is the usual way an accent
+/// becomes an accessibility bug.
+class MapSignal {
+  final Color vivid;
+  final Color _inkLight;
+  final Color _inkDark;
+
+  const MapSignal(this.vivid, this._inkLight, this._inkDark);
+
+  Color ink(Brightness brightness) =>
+      brightness == Brightness.dark ? _inkDark : _inkLight;
 }
 
 /// Refractive Glass material constants. See DESIGN.md §4–5 and the LLC

@@ -92,7 +92,7 @@ class _NearbyStationsSectionState extends State<NearbyStationsSection> {
                             ),
                             child: const Icon(
                               Icons.train,
-                              color: Color(0xFFE65100),
+                              color: MapPalette.majorStation,
                             ),
                           ),
                           const SizedBox(width: 16),

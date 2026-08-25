@@ -19,7 +19,7 @@ class AirportBottomSheet extends StatelessWidget {
         : 'Regional Airport';
     return BaseBottomSheet(
       icon: Icons.flight,
-      color: const Color(0xFF1565C0),
+      color: MapPalette.airport,
       title: airport.name,
       subtitle: airport.iataCode,
       location: '${airport.city}, ${airport.country}',
@@ -39,28 +39,28 @@ class StationBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     IconData iconData = Icons.train;
-    Color color = const Color(0xFFE65100);
+    Color color = MapPalette.majorStation;
     String label = 'Station';
 
     switch (station.stationType) {
       case 'major_station':
         iconData = Icons.train;
-        color = const Color(0xFFE65100);
+        color = MapPalette.majorStation;
         label = 'Major Station';
         break;
       case 'commuter_rail_station':
         iconData = Icons.directions_railway;
-        color = const Color(0xFF00695C);
+        color = MapPalette.commuterRail;
         label = 'Commuter Rail';
         break;
       case 'subway_station':
         iconData = Icons.subway;
-        color = const Color(0xFF2E7D32);
+        color = MapPalette.subway;
         label = 'Subway Station';
         break;
       case 'regional_station':
         iconData = Icons.train;
-        color = const Color(0xFF607D8B);
+        color = MapPalette.regionalStation;
         label = 'Regional Station';
         break;
       default:

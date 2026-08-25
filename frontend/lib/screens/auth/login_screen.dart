@@ -28,6 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Amber, not the Aurora Pink accent: the DEV affordance should read as
   /// scaffolding rather than as part of the product surface.
+  // The local-only sign-in shortcut. Deliberately outside the brand
+  // palette: it must never read as a product surface.
   static const Color _devAccent = Color(0xFFFFB300);
 
   @override
@@ -178,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF3F51B5),
+                                    color: MapPalette.defaultPin,
                                     width: 1.5,
                                   ), // Evening Indigo
                                   borderRadius: BorderRadius.circular(16),
@@ -228,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF3F51B5),
+                                    color: MapPalette.defaultPin,
                                     width: 1.5,
                                   ), // Evening Indigo
                                   borderRadius: BorderRadius.circular(16),
@@ -591,7 +593,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               'Sign Up',
                               style: GoogleFonts.montserrat(
-                                color: const Color(0xFFFF4081), // Aurora Pink
+                                color: MapPalette.accent,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),

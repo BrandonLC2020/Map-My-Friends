@@ -323,14 +323,14 @@ class TripsScreen extends StatelessWidget {
   }
 
   Color _getStatusColor(BuildContext context, TripStatus status) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
     switch (status) {
       case TripStatus.booked:
-        return isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+        return MapPalette.journeyConfirmed.ink(brightness);
       case TripStatus.cancelled:
-        return isDark ? const Color(0xFFE57373) : const Color(0xFFC62828);
+        return MapPalette.journeyCancelled.ink(brightness);
       default:
-        return isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
+        return MapPalette.journeyPlanned.ink(brightness);
     }
   }
 }

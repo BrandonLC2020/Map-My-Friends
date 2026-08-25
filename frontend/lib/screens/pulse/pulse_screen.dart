@@ -260,9 +260,10 @@ class _SummaryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool caughtUp = attentionCount == 0;
-    final Color accent = caughtUp
-        ? const Color(0xFF14B8A6)
-        : const Color(0xFFFF5A1F);
+    // The same spectrum the roster reads on, so "caught up" and a fresh
+    // connection are the same colour rather than two teals that nearly match.
+    final MapSignal signal = caughtUp ? MapPalette.vital : MapPalette.overdue;
+    final Color accent = signal.ink(theme.brightness);
 
     final String headline;
     final String sub;

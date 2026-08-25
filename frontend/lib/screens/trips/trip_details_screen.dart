@@ -294,18 +294,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildStatusBadge(BuildContext context, TripStatus status) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    Color color;
-    switch (status) {
-      case TripStatus.booked:
-        color = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
-        break;
-      case TripStatus.cancelled:
-        color = isDark ? const Color(0xFFE57373) : const Color(0xFFC62828);
-        break;
-      default:
-        color = isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
-    }
+    final brightness = Theme.of(context).brightness;
+    final Color color = switch (status) {
+      TripStatus.booked => MapPalette.journeyConfirmed.ink(brightness),
+      TripStatus.cancelled => MapPalette.journeyCancelled.ink(brightness),
+      _ => MapPalette.journeyPlanned.ink(brightness),
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
