@@ -60,86 +60,89 @@ class _ImageEditorModalState extends State<ImageEditorModal> {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
-        children: <Widget>[
-          GlassHeader(
-            title: 'Edit Image',
-            actions: <HeaderAction>[
-              HeaderAction(
-                icon: Icons.check,
-                label: 'Save',
-                onPressed: _saveImage,
-              ),
-            ],
-          ),
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // The cropping area
-                        RepaintBoundary(
-                          key: _repaintBoundaryKey,
-                          child: Container(
-                            width: 300,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              // If circular, we clip it so the saved image is also circular?
-                              // Actually, standard practice is to save the square and let the UI mask it.
-                              // But if we want to save exactly what is seen...
-                              // Let's keep it simple: We capture the square area.
-                            ),
-                            child: ClipRect(
-                              child: InteractiveViewer(
-                                transformationController:
-                                    _transformationController,
-                                minScale: 0.5,
-                                maxScale: 4.0,
-                                boundaryMargin: const EdgeInsets.all(
-                                  double.infinity,
-                                ),
-                                child: Image.memory(
-                                  widget.imageBytes,
-                                  fit: BoxFit.cover,
+          children: <Widget>[
+            GlassHeader(
+              title: 'Edit Image',
+              actions: <HeaderAction>[
+                HeaderAction(
+                  icon: Icons.check,
+                  label: 'Save',
+                  onPressed: _saveImage,
+                ),
+              ],
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // The cropping area
+                          RepaintBoundary(
+                            key: _repaintBoundaryKey,
+                            child: Container(
+                              width: 300,
+                              height: 300,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                // If circular, we clip it so the saved image is also circular?
+                                // Actually, standard practice is to save the square and let the UI mask it.
+                                // But if we want to save exactly what is seen...
+                                // Let's keep it simple: We capture the square area.
+                              ),
+                              child: ClipRect(
+                                child: InteractiveViewer(
+                                  transformationController:
+                                      _transformationController,
+                                  minScale: 0.5,
+                                  maxScale: 4.0,
+                                  boundaryMargin: const EdgeInsets.all(
+                                    double.infinity,
+                                  ),
+                                  child: Image.memory(
+                                    widget.imageBytes,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
 
-                        // Overlay to indicate the crop area (this is NOT captured)
-                        IgnorePointer(
-                          child: Container(
-                            width: 300,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white, width: 2),
-                              shape: widget.isCircular
-                                  ? BoxShape.circle
-                                  : BoxShape.rectangle,
+                          // Overlay to indicate the crop area (this is NOT captured)
+                          IgnorePointer(
+                            child: Container(
+                              width: 300,
+                              height: 300,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                shape: widget.isCircular
+                                    ? BoxShape.circle
+                                    : BoxShape.rectangle,
+                              ),
                             ),
                           ),
-                        ),
 
-                        // Helper text
-                        const Positioned(
-                          bottom: 20,
-                          child: Text(
-                            'Pinch to zoom, drag to move',
-                            style: TextStyle(color: Colors.white70),
+                          // Helper text
+                          const Positioned(
+                            bottom: 20,
+                            child: Text(
+                              'Pinch to zoom, drag to move',
+                              style: TextStyle(color: Colors.white70),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
           ],
         ),
       ),

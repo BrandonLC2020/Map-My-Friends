@@ -131,7 +131,12 @@ class MapGlass {
   static const double sheen = 0.03;
 
   /// Base fill per appearance.
-  static const double tintLight = 0.10;
+  ///
+  /// Light sits lower than dark on purpose. The light body is a dark neutral
+  /// over a pale ground, so every point of alpha buys much more contrast than
+  /// it does in the void — at 0.10 the panel stopped reading as a lens and
+  /// started reading as a grey slab laid on the field.
+  static const double tintLight = 0.08;
   static const double tintDark = 0.12;
 
   /// The precision edge (DESIGN.md §5).
@@ -422,8 +427,31 @@ class AppTheme {
   static const Color _brandColor = Color(0xFF3F51B5);
   static const Color _secondaryColor = Color(0xFFFF4081);
 
-  // Standardized Text Theme
-  static TextTheme _buildTextTheme(Color color) {
+  /// How the type scale is built.
+  ///
+  /// Swappable because creating a GoogleFonts `TextStyle` starts a network
+  /// fetch the instant it is constructed — not when it is first painted — so
+  /// merely touching this class in an offline widget test raises an async
+  /// failure with no stable place to catch it. Tests point this at a local
+  /// face; production never reassigns it.
+  @visibleForTesting
+  static TextTheme Function(Color color) textThemeBuilder = buildBrandTextTheme;
+
+  /// Drops the memoised themes so a changed [textThemeBuilder] takes effect.
+  @visibleForTesting
+  static void resetThemeCache() {
+    _lightTheme = null;
+    _darkTheme = null;
+  }
+
+  static ThemeData? _lightTheme;
+  static ThemeData? _darkTheme;
+
+  static ThemeData get lightTheme => _lightTheme ??= _buildLightTheme();
+  static ThemeData get darkTheme => _darkTheme ??= _buildDarkTheme();
+
+  /// The brand scale: Montserrat for structure, Open Sans for reading.
+  static TextTheme buildBrandTextTheme(Color color) {
     return TextTheme(
       displayLarge: GoogleFonts.montserrat(
         fontSize: 57,
@@ -515,7 +543,7 @@ class AppTheme {
   }
 
   // Light Theme
-  static final ThemeData lightTheme = ThemeData(
+  static ThemeData _buildLightTheme() => ThemeData(
     useMaterial3: true,
     colorScheme:
         ColorScheme.fromSeed(
@@ -527,7 +555,7 @@ class AppTheme {
           onPrimaryContainer: Colors.indigo.shade900,
           onSecondaryContainer: const Color(0xFF4D002B), // High contrast pink
         ),
-    textTheme: _buildTextTheme(Colors.black87),
+    textTheme: textThemeBuilder(Colors.black87),
     iconTheme: const IconThemeData(color: Colors.black87, size: 24),
     // The flat ground of the Ambient Field. Screens that float over the field
     // set `backgroundColor: Colors.transparent`; this is what a surface that
@@ -543,7 +571,7 @@ class AppTheme {
       // Montserrat — the same drift the empty states had — and set a size the
       // dark theme did not share. Dark inherits titleLarge; light now uses the
       // same style in the brand colour, so the two appearances agree.
-      titleTextStyle: _buildTextTheme(_brandColor).titleLarge,
+      titleTextStyle: textThemeBuilder(_brandColor).titleLarge,
     ),
     // Material's expanding ink circle is the most recognisable thing about
     // Material, and it is a different interaction language from Thermal Glow:
@@ -559,6 +587,11 @@ class AppTheme {
         // bans drop shadows outright; a raised button is the Material default
         // leaking through, not a decision this system made.
         elevation: 0,
+        // And an action, not a tonal surface: Material's default fill is a
+        // near-white in light and a near-black in dark, both of which vanish
+        // against the Ambient Field.
+        backgroundColor: _brandColor,
+        foregroundColor: Colors.white,
         overlayColor: MapPalette.thermalCore,
         padding: const EdgeInsets.symmetric(
           horizontal: MapSpacing.md,
@@ -650,7 +683,7 @@ class AppTheme {
   );
 
   // Dark Theme
-  static final ThemeData darkTheme = ThemeData(
+  static ThemeData _buildDarkTheme() => ThemeData(
     useMaterial3: true,
     colorScheme:
         ColorScheme.fromSeed(
@@ -662,7 +695,7 @@ class AppTheme {
           onPrimaryContainer: const Color(0xFFE8EAF6), // Indigo 50
           onSecondaryContainer: const Color(0xFFFFE1F0), // Pink 50
         ),
-    textTheme: _buildTextTheme(Colors.white),
+    textTheme: textThemeBuilder(Colors.white),
     iconTheme: const IconThemeData(color: Colors.white, size: 24),
     scaffoldBackgroundColor: MapField.groundDark[1],
     appBarTheme: const AppBarTheme(
@@ -685,6 +718,11 @@ class AppTheme {
         // bans drop shadows outright; a raised button is the Material default
         // leaking through, not a decision this system made.
         elevation: 0,
+        // And an action, not a tonal surface: Material's default fill is a
+        // near-white in light and a near-black in dark, both of which vanish
+        // against the Ambient Field.
+        backgroundColor: _brandColor,
+        foregroundColor: Colors.white,
         overlayColor: MapPalette.thermalCore,
         padding: const EdgeInsets.symmetric(
           horizontal: MapSpacing.md,

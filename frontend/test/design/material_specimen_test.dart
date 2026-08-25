@@ -14,7 +14,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:map_my_friends/components/shared/ambient_field.dart';
 import 'package:map_my_friends/components/shared/chromatic_pulse.dart';
 import 'package:map_my_friends/components/shared/glass_container.dart';
@@ -217,10 +216,16 @@ Widget specimen({required Brightness brightness}) {
 
 void main() {
   setUpAll(() {
-    // The specimen is about material, colour, and spacing, none of which the
-    // typeface decides. Fetching Montserrat over the network mid-test makes
-    // the run flaky and offline-hostile for no gain.
-    GoogleFonts.config.allowRuntimeFetching = false;
+    // Render offline: the real theme, a local typeface. See
+    // AppTheme.textThemeBuilder for why this seam exists.
+    AppTheme.textThemeBuilder = (color) => Typography.material2021().black
+        .apply(bodyColor: color, displayColor: color);
+    AppTheme.resetThemeCache();
+  });
+
+  tearDownAll(() {
+    AppTheme.textThemeBuilder = AppTheme.buildBrandTextTheme;
+    AppTheme.resetThemeCache();
   });
 
   for (final brightness in Brightness.values) {
