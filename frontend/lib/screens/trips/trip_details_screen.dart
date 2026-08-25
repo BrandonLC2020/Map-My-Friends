@@ -9,6 +9,7 @@ import '../../utils/app_theme.dart';
 import '../../services/routing_service.dart';
 import '../../bloc/map/map_settings_cubit.dart';
 import '../../utils/window_size.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -440,6 +441,8 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      elevation: 0,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
       isScrollControlled: true,
       builder: (context) => _LegDetailsSheet(leg: leg),
     );
@@ -546,71 +549,64 @@ class _LegDetailsSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GlassContainer(
-        borderRadius: 24,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Leg Details',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
+    return GlassSheet(
+      padding: const EdgeInsets.all(MapSpacing.md),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Leg Details',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: onSurface,
+                  fontWeight: FontWeight.bold,
                 ),
-                IconButton(
-                  icon: Icon(Icons.close, color: onSurface),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInfoRow(context, 'Transport Type', leg.transportType),
+              ),
+              IconButton(
+                icon: Icon(Icons.close, color: onSurface),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildInfoRow(context, 'Transport Type', leg.transportType),
+          _buildInfoRow(
+            context,
+            'Booking Ref',
+            leg.bookingReference.isEmpty ? 'Not set' : leg.bookingReference,
+          ),
+          if (leg.departureTime != null)
             _buildInfoRow(
               context,
-              'Booking Ref',
-              leg.bookingReference.isEmpty ? 'Not set' : leg.bookingReference,
+              'Departure',
+              DateFormat('HH:mm, MMM d').format(leg.departureTime!),
             ),
-            if (leg.departureTime != null)
-              _buildInfoRow(
-                context,
-                'Departure',
-                DateFormat('HH:mm, MMM d').format(leg.departureTime!),
-              ),
-            if (leg.arrivalTime != null)
-              _buildInfoRow(
-                context,
-                'Arrival',
-                DateFormat('HH:mm, MMM d').format(leg.arrivalTime!),
-              ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Implement editing
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Editing will be implemented in the next iteration.',
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.edit),
-                label: const Text('Edit Details'),
-              ),
+          if (leg.arrivalTime != null)
+            _buildInfoRow(
+              context,
+              'Arrival',
+              DateFormat('HH:mm, MMM d').format(leg.arrivalTime!),
             ),
-          ],
-        ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Implement editing
+                Navigator.pop(context);
+                GlassToast.show(
+                  context,
+                  'Editing will be implemented in the next iteration.',
+                );
+              },
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit Details'),
+            ),
+          ),
+        ],
       ),
     );
   }

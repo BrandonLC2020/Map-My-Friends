@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui; // For ImageByteFormat
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'; // For RenderRepaintBoundary
+import 'glass_surfaces.dart';
 
 class ImageEditorModal extends StatefulWidget {
   final Uint8List imageBytes;
@@ -44,9 +45,7 @@ class _ImageEditorModalState extends State<ImageEditorModal> {
     } catch (e) {
       debugPrint('Error saving image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving image: $e')));
+        GlassToast.show(context, 'Error saving image: $e');
       }
     }
   }

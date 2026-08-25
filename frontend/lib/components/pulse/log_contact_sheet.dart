@@ -6,6 +6,7 @@ import '../../models/person.dart';
 import '../../utils/contact_recency.dart';
 import '../shared/thermal_response.dart';
 import '../../utils/app_theme.dart';
+import '../shared/glass_surfaces.dart';
 
 /// Bottom sheet for recording a touchpoint with [person]. Handles channel,
 /// date (with quick Today/Yesterday chips), an optional note, optional
@@ -36,14 +37,8 @@ class LogContactSheet extends StatefulWidget {
     onLog,
     required void Function(int cadenceDays) onSetCadence,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+    return GlassSheet.show<void>(
+      context,
       builder: (_) => LogContactSheet(
         person: person,
         recency: recency,

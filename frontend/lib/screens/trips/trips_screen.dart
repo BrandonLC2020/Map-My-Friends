@@ -10,6 +10,10 @@ import '../../components/shared/glass_empty_state.dart';
 import 'trip_details_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/chromatic_pulse.dart';
+import '../../components/shared/glass_surfaces.dart';
+import '../../components/shared/glass_inlay.dart';
+import '../../components/shared/thermal_response.dart';
+import '../../components/shared/thermal_button.dart';
 
 class TripsScreen extends StatelessWidget {
   final VoidCallback onNavigateToMap;
@@ -229,72 +233,85 @@ class TripsScreen extends StatelessWidget {
   }
 
   void _showStatusUpdateDialog(BuildContext context, Trip trip) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Update Trip Status'),
-        content: RadioGroup<TripStatus>(
-          groupValue: trip.status,
-          onChanged: (v) {
-            if (v == null) return;
-            context.read<TripBloc>().add(
-              SaveTrip(
-                name: trip.name,
-                startDate: trip.startDate,
-                endDate: trip.endDate,
-                status: v,
-              ),
-            );
-            Navigator.pop(context);
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: TripStatus.values
-                .map(
-                  (status) => ListTile(
-                    title: Text(status.name.toUpperCase()),
-                    leading: Radio<TripStatus>(value: status),
-                    onTap: () {
-                      context.read<TripBloc>().add(
-                        SaveTrip(
-                          name: trip.name,
-                          startDate: trip.startDate,
-                          endDate: trip.endDate,
-                          status: status,
-                        ),
-                      );
-                      Navigator.pop(context);
-                    },
+    // Choosing a status *is* the dialog, so each option is a thermal row that
+    // commits on tap. A radio plus a confirm button would be two steps for a
+    // decision the user already made when they touched the row.
+    GlassDialog.panel(
+      context,
+      title: 'Update Trip Status',
+      dismissLabel: 'Close',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: TripStatus.values.map((status) {
+          final bool selected = status == trip.status;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: MapSpacing.xs),
+            child: ThermalResponse(
+              borderRadius: MapGlass.radiusSm,
+              onTap: () {
+                context.read<TripBloc>().add(
+                  SaveTrip(
+                    name: trip.name,
+                    startDate: trip.startDate,
+                    endDate: trip.endDate,
+                    status: status,
                   ),
-                )
-                .toList(),
-          ),
-        ),
+                );
+                Navigator.pop(context);
+              },
+              child: GlassInlay(
+                strong: selected,
+                borderRadius: MapGlass.radiusSm,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: MapSpacing.sm,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      _getStatusIcon(status),
+                      size: 18,
+                      color: _getStatusColor(context, status),
+                    ),
+                    const SizedBox(width: MapSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        status.name.toUpperCase(),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    if (selected)
+                      Icon(
+                        Icons.check,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
   void _showDeleteConfirmation(BuildContext context, Trip trip) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Trip'),
-        content: Text('Are you sure you want to delete "${trip.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<TripBloc>().add(DeleteTrip(trip.id!));
-              Navigator.pop(context);
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+    // The destructive answer carries the thermal core and the cancel does not,
+    // so the dangerous option is the one that looks dangerous — Material gave
+    // both the same text-button weight.
+    GlassDialog.confirm(
+      context,
+      title: 'Delete Trip',
+      message:
+          'This removes "${trip.name}" and its itinerary. It cannot be '
+          'undone.',
+      confirmLabel: 'Delete',
+      tone: ThermalButtonTone.danger,
+    ).then((confirmed) {
+      if (!confirmed || !context.mounted) return;
+      context.read<TripBloc>().add(DeleteTrip(trip.id!));
+    });
   }
 
   IconData _getStatusIcon(TripStatus status) {

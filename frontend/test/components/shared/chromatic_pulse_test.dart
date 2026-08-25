@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_my_friends/components/shared/chromatic_pulse.dart';
 import 'package:map_my_friends/utils/app_theme.dart';
@@ -136,7 +135,7 @@ void main() {
             .first,
       );
       expect(node.label, 'Loading map');
-      expect(node.hasFlag(SemanticsFlag.isLiveRegion), isTrue);
+      expect(node.flagsCollection.isLiveRegion, isTrue);
 
       await tester.pumpWidget(_host(const SizedBox.shrink()));
       semantics.dispose();

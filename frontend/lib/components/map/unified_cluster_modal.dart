@@ -11,6 +11,7 @@ import '../../bloc/people/people_bloc.dart';
 import '../../utils/app_theme.dart';
 
 import '../../components/map/map_bottom_sheets.dart';
+import '../shared/glass_surfaces.dart';
 
 class UnifiedClusterModal extends StatelessWidget {
   final List<dynamic> items;
@@ -20,27 +21,12 @@ class UnifiedClusterModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 32),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-      ),
+    // Over a live map: the one place refraction costs nothing extra, because
+    // the scene behind the sheet is already being drawn.
+    return GlassSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -128,11 +114,9 @@ class UnifiedClusterModal extends StatelessWidget {
                   tooltip: 'Add as New Stop',
                   onPressed: () {
                     context.read<TripBloc>().add(AddStop(p));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Added ${p.firstName} as new stop'),
-                        duration: const Duration(seconds: 2),
-                      ),
+                    GlassToast.show(
+                      context,
+                      'Added ${p.firstName} as new stop',
                     );
                   },
                 ),
@@ -150,29 +134,22 @@ class UnifiedClusterModal extends StatelessWidget {
                     final stop = state.stops[index];
                     final tripBloc = context.read<TripBloc>();
                     final peopleBloc = context.read<PeopleBloc>();
-                    final messenger = ScaffoldMessenger.of(context);
 
                     tripBloc.add(LinkPersonToStop(p, index));
 
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Linked ${p.firstName} to stop ${String.fromCharCode(65 + index)}',
-                        ),
-                        duration: const Duration(seconds: 4),
-                        action: SnackBarAction(
-                          label: 'Set as Preferred',
-                          onPressed: () {
-                            final updatedPerson = p.copyWith(
-                              preferredAirportId: stop.airport?.id?.toString(),
-                              preferredStationId: stop.station?.id?.toString(),
-                              preferredAirport: stop.airport,
-                              preferredStation: stop.station,
-                            );
-                            peopleBloc.add(UpdatePerson(updatedPerson));
-                          },
-                        ),
-                      ),
+                    GlassToast.show(
+                      context,
+                      'Linked ${p.firstName} to stop ${String.fromCharCode(65 + index)}',
+                      actionLabel: 'Set as Preferred',
+                      onAction: () {
+                        final updatedPerson = p.copyWith(
+                          preferredAirportId: stop.airport?.id?.toString(),
+                          preferredStationId: stop.station?.id?.toString(),
+                          preferredAirport: stop.airport,
+                          preferredStation: stop.station,
+                        );
+                        peopleBloc.add(UpdatePerson(updatedPerson));
+                      },
                     );
                   },
                   itemBuilder: (context) {
@@ -242,12 +219,7 @@ class UnifiedClusterModal extends StatelessWidget {
             tooltip: 'Add to Trip',
             onPressed: () {
               context.read<TripBloc>().add(AddAirportStop(a));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Added ${a.name} to trip'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              GlassToast.show(context, 'Added ${a.name} to trip');
             },
           ),
           const Icon(Icons.chevron_right),
@@ -319,12 +291,7 @@ class UnifiedClusterModal extends StatelessWidget {
             tooltip: 'Add to Trip',
             onPressed: () {
               context.read<TripBloc>().add(AddStationStop(s));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Added ${s.name} to trip'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              GlassToast.show(context, 'Added ${s.name} to trip');
             },
           ),
           const Icon(Icons.chevron_right),

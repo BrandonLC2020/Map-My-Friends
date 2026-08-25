@@ -6,6 +6,7 @@ import '../../bloc/map/map_settings_cubit.dart';
 import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../utils/app_theme.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -17,19 +18,11 @@ class SettingsScreen extends StatelessWidget {
       body: BlocListener<LocationBloc, LocationState>(
         listener: (context, state) {
           if (state is LocationPermissionDenied) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied')),
-            );
+            GlassToast.show(context, 'Location permission denied');
           } else if (state is LocationPermissionDeniedForever) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Location permission denied forever'),
-              ),
-            );
+            GlassToast.show(context, 'Location permission denied forever');
           } else if (state is LocationLoaded) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Location loaded')));
+            GlassToast.show(context, 'Location loaded');
           }
         },
         child: ListView(

@@ -17,6 +17,7 @@ import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/glass_inlay.dart';
 import '../../components/shared/chromatic_pulse.dart';
 import '../../components/shared/thermal_response.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 class PersonDetailsScreen extends StatelessWidget {
   final String personId;
@@ -95,12 +96,9 @@ class PersonDetailsScreen extends StatelessWidget {
                         ElevatedButton.icon(
                           onPressed: () {
                             context.read<TripBloc>().add(AddStop(person));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Added ${person.firstName} to trip',
-                                ),
-                              ),
+                            GlassToast.show(
+                              context,
+                              'Added ${person.firstName} to trip',
                             );
                           },
                           icon: const Icon(Icons.add_location_alt_outlined),

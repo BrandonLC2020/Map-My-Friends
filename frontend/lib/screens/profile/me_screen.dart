@@ -22,6 +22,7 @@ import '../settings/settings_screen.dart';
 import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/chromatic_pulse.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -97,78 +98,56 @@ class _MeScreenState extends State<MeScreen> {
   }
 
   void _showImageSourceDialog() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Take a Photo'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
+    GlassSheet.actions(
+      context,
+      title: 'Profile photo',
+      actions: <SheetAction>[
+        SheetAction(
+          icon: Icons.photo_camera,
+          label: 'Take a Photo',
+          onTap: () => _pickImage(ImageSource.camera),
         ),
-      ),
+        SheetAction(
+          icon: Icons.photo_library,
+          label: 'Choose from Gallery',
+          onTap: () => _pickImage(ImageSource.gallery),
+        ),
+      ],
     );
   }
 
   void _showColorPicker() {
     Color pickerColor = Color(int.parse(_pinColor.replaceFirst('#', '0xFF')));
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Pick a Pin Color'),
-        content: SingleChildScrollView(
-          child: BlockPicker(
-            pickerColor: pickerColor,
-            onColorChanged: (color) {
-              setState(() {
-                _pinColor =
-                    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-              });
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Got it'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
+    GlassDialog.panel(
+      context,
+      title: 'Pick a Pin Color',
+      dismissLabel: 'Got it',
+      content: BlockPicker(
+        pickerColor: pickerColor,
+        onColorChanged: (color) {
+          setState(() {
+            _pinColor =
+                '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+          });
+        },
       ),
     );
   }
 
   void _showEmojiPicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: SizedBox(
-            height: 300,
-            child: EmojiPicker(
-              onEmojiSelected: (category, emoji) {
-                setState(() {
-                  _pinEmoji = emoji.emoji;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-        );
-      },
+    GlassSheet.show<void>(
+      context,
+      builder: (context) => SizedBox(
+        height: 300,
+        child: EmojiPicker(
+          onEmojiSelected: (category, emoji) {
+            setState(() {
+              _pinEmoji = emoji.emoji;
+            });
+            Navigator.pop(context);
+          },
+        ),
+      ),
     );
   }
 
@@ -255,9 +234,7 @@ class _MeScreenState extends State<MeScreen> {
                     });
                   }
                 } else if (state is ProfileError) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(state.message)));
+                  GlassToast.show(context, state.message);
                 }
               },
             ),
@@ -703,14 +680,9 @@ class _MeScreenState extends State<MeScreen> {
                                                 distanceUnit: _distanceUnit,
                                               ),
                                             );
-                                            ScaffoldMessenger.of(
+                                            GlassToast.show(
                                               context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Profile Saved'),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                              ),
+                                              'Profile Saved',
                                             );
                                           }
                                         },

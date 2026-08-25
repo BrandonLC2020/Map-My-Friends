@@ -513,12 +513,20 @@ class AppTheme {
       style: TextButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
         overlayColor: MapPalette.thermalCore,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
         overlayColor: MapPalette.thermalCore,
+        // Material's default here is a stadium, which is off the 8/16/30 scale
+        // entirely. Pills are for small status chips, not for actions.
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
@@ -631,12 +639,20 @@ class AppTheme {
       style: TextButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
         overlayColor: MapPalette.thermalCore,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: A11yConstants.minTouchSize,
         overlayColor: MapPalette.thermalCore,
+        // Material's default here is a stadium, which is off the 8/16/30 scale
+        // entirely. Pills are for small status chips, not for actions.
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapGlass.radiusSm),
+        ),
       ),
     ),
     iconButtonTheme: IconButtonThemeData(

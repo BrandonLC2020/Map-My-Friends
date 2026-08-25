@@ -13,6 +13,7 @@ import '../../utils/window_size.dart';
 import '../../utils/app_theme.dart';
 import '../../components/shared/glass_container.dart';
 import '../../components/shared/chromatic_pulse.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 /// Keep-in-Touch ("Pulse") screen: a relationship calendar plus a roster that
 /// color-codes each person by how overdue a touchpoint is, along the app's
@@ -81,7 +82,6 @@ class _PulseScreenState extends State<PulseScreen> {
 
   void _openLogSheet(Person person, ContactRecency recency) {
     final bloc = context.read<PulseBloc>();
-    final messenger = ScaffoldMessenger.of(context);
     LogContactSheet.show(
       context,
       person: person,
@@ -95,13 +95,10 @@ class _PulseScreenState extends State<PulseScreen> {
             note: note,
           ),
         );
-        messenger.showSnackBar(
-          SnackBar(
-            behavior: SnackBarBehavior.floating,
-            content: Text(
-              'Logged ${channel.label.toLowerCase()} with ${person.firstName}',
-            ),
-          ),
+        if (!mounted) return;
+        GlassToast.success(
+          context,
+          'Logged ${channel.label.toLowerCase()} with ${person.firstName}',
         );
       },
       onSetCadence: (days) {
@@ -123,13 +120,7 @@ class _PulseScreenState extends State<PulseScreen> {
             if (state is PulseLoaded) {
               _lastNonce = state.actionNonce;
               if (state.actionError != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    content: Text(state.actionError!),
-                  ),
-                );
+                GlassToast.failure(context, state.actionError!);
               }
             }
           },

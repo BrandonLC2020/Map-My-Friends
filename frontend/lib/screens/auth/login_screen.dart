@@ -11,6 +11,7 @@ import '../../utils/app_theme.dart';
 import '../../services/api_config.dart';
 import '../../components/shared/ambient_scaffold.dart';
 import '../../components/shared/chromatic_pulse.dart';
+import '../../components/shared/glass_surfaces.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,20 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showAuthError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.openSans(
-            color: Colors.white,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        backgroundColor: const Color(0xFFFF3B30), // Thermal core red
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    GlassToast.show(context, message);
   }
 
   @override
